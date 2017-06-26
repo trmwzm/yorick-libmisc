@@ -19,7 +19,7 @@ PKG_NAME = libmisc
 # include files for this package
 PKG_I= ascii.i convcorrel.i dbase.i fcomplex.i fmin.i fzero.i img.i linalg.i memfmap.i pocs.i rdf.i rotation.i \
        shellargs.i xplot0.i yut.i bicub.i coreg.i digfun.i fitpoly.i fpanels.i imbinavrg.i inpolygon.i lmfit.i \
-       plot.i poly_fit.i rdf-refac.i rwflat.i time.i xplot.i
+       plot.i poly_fit.i rdf-refac.i rwflat.i time.i xplot.i gaupro.i nninterp2.i
 # autoload file for this package, if any
 PKG_I_START =
 
