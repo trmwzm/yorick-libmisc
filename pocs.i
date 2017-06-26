@@ -1,0 +1,268 @@
+require, "dsp.i";
+require,"nfft.i";
+
+func filmsk (x,msk,bandfrac,beta=,niter=)
+/* DOCUMENT filmsk (x,msk,bandfrac,beta=,niter=)
+   first cut POCS (projection on convex set) extrapolation of
+   missing data (assumed regularly sampled)
+   USAGE:
+   X            original array with missing/bad data,
+   MSK          mask == 1 if *valid* data, conformable with X
+   BANDFRAC     fractional band to preserve
+   BETA         of kaiser window over preserved band
+   NITER        sic.
+   SEE ALSO:
+ */
+{
+  nx= numberof(x);
+  if (nx!=numberof(msk))
+    error,"mask and x not conformable.";
+  if (is_void(beta))
+    beta= 10.0;
+  if (is_void(bandfrac))
+    bandfrac= 0.9;
+  win= windex(kaiser(long(nx*bandfrac),beta),nx);
+  w= where(msk);
+  xx= (w-1.0)/nx-1/2.;
+  op= nfft_new(nx,xx);
+  if (is_void(niter))
+    niter= 5;
+  y= array(0.,nx);
+  for (it=1;it<=niter;it++) {
+    xf= op(x(w)-y(w),1);
+    xf= roll(xf)*win;
+    y+= roll(fft(xf).re)/nx;
+  }
+  return y;
+}
+
+func filmsk2 (x,msk,bandfrac,beta=,niter=)
+/* DOCUMENT filmsk2 (x,msk,bandfrac,beta=,niter=)
+   2-dimensional of nlayers X nx X ny
+   first cut POCS (projection on convex set) extrapolation of
+   missing data (assumed regularly sampled)
+   X            original array with missing/bad data,
+   MSK          mask == 1 if *valid* data, conformable with X
+   BANDFRAC     fractional band to preserve
+   BETA         of kaiser window over preserved band
+   NITER        sic.
+
+   SEE ALSO:
+ */
+{
+  dx= dimsof(x);
+  if (anyof(dx(-1:)!=dimsof(msk)(-1:)))
+      error,"mask and x OR x(-,..) not conformable.";
+  nx1= dx(-1);
+  nx2= dx(0);
+  if (is_void(beta))
+    beta= 10.0;
+  if (numberof(beta)==1)
+    beta= [beta(1),beta(1)];
+  if (is_void(bandfrac))
+    bandfrac= 0.9;
+  if (numberof(bandfrac)==1)
+    bandfrac= [bandfrac(1),bandfrac(1)];
+  win= windex(kaiser(long(nx1*bandfrac(1)),beta(1)),nx1) * \
+       windex(kaiser(long(nx2*bandfrac(2)),beta(2)),nx2)(-:1:nx1,..);
+  w= where(msk);
+  xx1= ((w-1)%nx1)*1./nx1-1./2;
+  xx2= ((w-1)/nx1)*1./nx2-1./2;
+  op = nfft_new(nx1, xx1, nx2, xx2);
+  if (is_void(niter))
+    niter= 5;
+  y= array(0.,dx);
+  for (it=1;it<=niter;it++) {
+    if (dx(1)==2) {
+      xf= op(x(w)-y(w),1);
+      xf= roll(xf)*win;
+      y+= roll(fft(xf).re)/(nx1*nx2);
+    } else if (dx(1)==3) {
+      for (j=1;j<=dx(2);j++) {
+        xf= op(x(j,w)-y(j,w),1);
+        xf= roll(xf)*win;
+        y(j,..)+= roll(fft(xf).re)/(nx1*nx2);
+      }
+    } else
+      if (it==1)error,"dimsof(x)(1)== 2 or 3 [nlayer,nx,ny])";
+  }
+  return y;
+}
+
+func equispaced (y,x,n,bandfrac,&x10,&it,beta=,niter=,pad=,splin=,tol=)
+/* DOCUMENT equispaced (y,x,n,bandfrac,beta=,niter=,pad=,splin=,tol=)
+
+   m= 100;
+   n= 2*m;
+   p=8;
+   scale= [.1,.1];
+   offset= 10.;
+   x= random(m)*scale(1);
+   y= offset+scale(2)+sin(2*pi*p*x/scale(1))
+   local x10;
+   yy= equispaced(y,x,n,0.9,x10,pad=.001);
+   fma;plg,yy,span(x10(1),x10(2),n);plg,y,x,type=0,marker='\3',color="red";
+   SEE ALSO:
+ */
+{
+  ny= numberof(y);
+  if (numberof(x)!=ny)
+    error,"NX!=NY.";
+  if (is_void(beta))
+    beta= 10.0;
+  if (is_void(bandfrac))
+    bandfrac= 0.9;
+  if (is_void(tol))
+    tol= 1e-4;
+
+  yav= avg(y);
+  y-= yav;
+
+  xpp= abs(x(ptp));
+  x/= xpp;
+  dx= 1./ny;
+
+  win= windex(kaiser(long(n*bandfrac),beta),n);
+
+  pad= is_void(pad)? 0: pad;
+  x1= min(x)-pad;
+  x0= max(x)+pad+dx;
+  x10= [x1,x0];
+
+  xx= (x-x1)/(x0-x1)-0.5;
+  op= nfft_new(n,xx);
+
+  yy= array(0.,n);
+  xx= span(x1,x0,n);
+  ya= y(rms);
+  if (is_void(niter))
+    niter= 100;
+
+  it= 0;
+  dy= y;
+  toli= dt= 1;
+  while (it<niter && dt>tol) {
+    if (it>0) {
+      dy= splin==1? y-spline(yy,xx,x): y-interp(yy,xx,x);
+      dya= dy(rms);
+      dt= toli-dya/ya;
+      toli= dya/ya;
+    }
+    xf= op(dy,1);
+    xf= roll(xf)*win;
+    yy+= roll(fft(xf).re)/n;
+    it+= 1;
+  }
+  if (it==niter)
+    write,"WARNING pocs/equispaced max iterations reached: "+pr1([toli,dt]);
+  x10*= xpp;
+  yy+= yav;
+
+ return yy;
+}
+
+func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&resid,&it,beta=,niter=,pad=,tol=)
+/* DOCUMENT equispaced (y,x,n,bandfrac,&y10,&x10,&resid,&it,beta=,niter=,pad=,tol=)
+
+   N is First dimension length and that dim corresponds to X
+   M is Second dimension length and that dim corresponds to Y
+
+   k= 10000;
+   n= 500;
+   m= 600;
+   p= [4,4];
+   x= random(k);
+   y= random(k)
+   z= sin(2*pi*p(1)*x)*sin(2*pi*p(2)*y);
+   local y10, x10;
+   resid= 1; // *** must be non-void to trigger computation
+   zz= equispaced2(z,y,x,n,m,0.5,y10,x10,res);
+   fma;pli,zz;
+   SEE ALSO:
+ */
+{
+  d= dimsof(x,y,z);
+  un= array(structof(z),d);
+  z+= un;
+  y+= un;
+  x+= un; un= [];
+  nn= numberof(y);
+
+  if (is_void(beta))
+    beta= 10.0;
+  if (numberof(beta)==1)
+    beta= [beta(1),beta(1)];
+  if (is_void(bandfrac))
+    bandfrac= 0.9;
+  if (numberof(bandfrac)==1)
+    bandfrac= [bandfrac(1),bandfrac(1)];
+  if (is_void(tol))
+    tol= 5e-4;
+  if (is_void(niter))
+    niter= 400;
+
+  zav= avg(z);
+  z-= zav;
+  xav= avg(x);
+  x-= xav;
+  yav= avg(y);
+  y-= yav;
+
+  xpp= abs(x(ptp));
+  x/= xpp;
+  ypp= abs(y(ptp));
+  y/= ypp;
+
+  dx= 1./sqrt(nn);
+  dy= 1./sqrt(nn);
+
+  win= windex(kaiser(max(1,long(n*bandfrac(1))),beta(1)),n) *   \
+       windex(kaiser(max(1,long(m*bandfrac(2))),beta(2)),m)(-:1:n,..);
+
+  pad= is_void(pad)? [0,0]: (numberof(pad)==1? [pad(1),pad(1)]: pad);
+  x1= min(x)-pad(1);
+  x0= max(x)+pad(1)+dx;
+  x10= [x1,x0];
+  y1= min(y)-pad(1);
+  y0= max(y)+pad(1)+dy;
+  y10= [y1,y0];
+
+  op= nfft_new(n,(x-x1)/(x0-x1)-0.5,m,(y-y1)/(y0-y1)-0.5);
+
+  zz= array(0.,n,m);
+  xx= span(x1,x0,n)(,-:1:m);
+  yy= span(y1,y0,m)(-:1:n,);
+  za= z(*)(rms);
+
+  it= 0;
+  dz= z;
+  toli= dt= 1;
+  while (it<niter && dt>tol) {
+    if (it>0) {
+      dz= z-interp2(y,x,zz,yy,xx);
+      dza= dz(*)(rms);
+      dt= toli-dza/za;
+      if (dt<0)
+        error,"increasing RMS.";
+      toli= dza/za;
+    }
+    xf= op(dz,1);
+    xf= roll(xf)*win;
+    zz+= roll(fft(xf).re)/(n*m);
+    it+= 1;
+  }
+  if (it==niter)
+    write,"WARNING pocs/equispaced2 max iterations reached: "+pr1([toli,dt]);
+
+  if (!is_void(resid))
+    resid= z-interp2(y,x,zz,yy,xx);
+
+  x10*= xpp;
+  y10*= ypp;
+  x10+= xav;
+  y10+= yav;
+
+  zz+= zav;
+
+  return zz;
+}
