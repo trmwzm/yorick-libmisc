@@ -21,7 +21,7 @@ PKG_I= ascii.i convcorrel.i dbase.i fcomplex.i fmin.i fzero.i img.i linalg.i mem
        shellargs.i xplot0.i yut.i bicub.i coreg.i digfun.i fitpoly.i fpanels.i imbinavrg.i inpolygon.i lmfit.i \
        plot.i poly_fit.i rdf-refac.i rwflat.i time.i xplot.i gaupro.i nninterp2.i
 # autoload file for this package, if any
-PKG_I_START =
+PKG_I_START = libmisc-start.i
 
 # override macros Makepkg sets for rules and other macros
 # Y_HOME and Y_SITE in Make.cfg may not be correct (e.g.- relocatable)
@@ -45,9 +45,11 @@ clean:
 install:
 	mkdir -p $(DEST_Y_SITE)/i
 	cp -p $(PKG_I) $(DEST_Y_SITE)/i/
+	cp -p $(PKG_I_START) $(DEST_Y_SITE)/i-start/
 
 uninstall:
 	-cd $(DEST_Y_SITE)/i; rm $(PKG_I)
+	-rm $(DEST_Y_SITE)/i-start/libmisc-start.i
 
 # -------------------------------------------- package build rules
 
