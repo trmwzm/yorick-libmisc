@@ -2498,6 +2498,46 @@ func oxtypeq (o1,o2,nodim=)
   return tf;
 }
 
+func oxyeq (o1,o2,nodim=)
+/* DOCUMENT oxyeq (o1,o2)
+   recursive oxy object identity
+ */
+{
+  s1= o1(*,);
+  s2= o2(*,);
+  ss2= sort(s2);
+  if (numberof(s1))
+    s1= s1(ss2);
+  if (numberof(s2))
+    s2= s2(ss2);
+  if (anyof(s1!=s2))
+    return 0
+  else
+    tf= 1;
+
+  for (i=1; i<=o1(*); i++) {
+    o1i= s1(i)? o1(s1(i)): o1(noop(i));
+    o2i= s2(i)? o2(s2(i)): o2(noop(i));
+    if (is_obj(o1i))
+      tf*= oxyeq(o1i,o2i);
+    else {
+      if (is_numerical(o1i)) {
+        tt= allof(o1i==o2i);
+        if (tt==0) {
+          write,(s1(i)? s1(i): pr1(i)),format="warning: problem with %s - ";
+          write,2.0*avg(o1i-o2i)/avg(o1i+o2i),format="mean rel. diff.: %lg\n";
+        } else
+          tt= 1;
+      }
+      tf*= structof(o1i)==structof(o2i) && \
+           (nodim==1 || allof(dimsof(o1i)==dimsof(o2i))) &&
+           tt;
+    }
+  }
+  return tf;
+}
+
+
 GRPOXSV= "_grp_";
 
 func oxsave (args)
