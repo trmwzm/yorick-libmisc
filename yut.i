@@ -2512,31 +2512,35 @@ func oxyeq (o1,o2,nodim=)
     s2= s2(ss2);
   if (anyof(s1!=s2))
     return 0
-  else
-    tf= 1;
+    else
+      tf= 1;
 
   for (i=1; i<=o1(*); i++) {
     o1i= s1(i)? o1(s1(i)): o1(noop(i));
     o2i= s2(i)? o2(s2(i)): o2(noop(i));
-    if (is_obj(o1i))
+    if (is_obj(o1i)) {
       tf*= oxyeq(o1i,o2i);
-    else {
+    } else {
       if (is_numerical(o1i)) {
         tt= allof(o1i==o2i);
         if (tt==0) {
           write,(s1(i)? s1(i): pr1(i)),format="warning: problem with %s - ";
           write,2.0*avg(o1i-o2i)/avg(o1i+o2i),format="mean rel. diff.: %lg\n";
-        } else
-          tt= 1;
+        }
+      } else if (is_string(o1i)) {
+        tt= allof(o1i==o2i);
+        if (tt==0) {
+          write,(s1(i)? s1(i): pr1(i)),format="warning: problem with %s - ";
+          write,o1i,o2i,format="string comparison s1 vs. s2: %s != %s\n";
+        }
       }
-      tf*= structof(o1i)==structof(o2i) && \
-           (nodim==1 || allof(dimsof(o1i)==dimsof(o2i))) &&
-           tt;
+      tf*= structof(o1i)==structof(o2i) &&               \
+        (nodim==1 || allof(dimsof(o1i)==dimsof(o2i))) && \
+        tt;
     }
   }
   return tf;
 }
-
 
 GRPOXSV= "_grp_";
 
@@ -3056,7 +3060,7 @@ func oxnml(args)
 }
 wrap_args,oxnml;
 
-func oxmap (f,oo,w,..,create=)
+func oxmap (f,oo,..,create=,w=)
 /* DOCUMENT ob=  oxmap (f,oo,w,oi1,oi2,oi3,create=);
    map func F on group objects
 
@@ -3066,22 +3070,26 @@ func oxmap (f,oo,w,..,create=)
    SEE ALSO:
  */
 {
-  oi= save();
+  oi= save(string(0),f,string(0),oo);
   n= more_args();  // numberof input groups
   if (n>8) error,"... limited to 8 inputs :)";
   for (i=1 ; i<=n ; i++)
     save, oi, string(0), next_arg();
+  n= oi(*);
 
-  if (is_integer(w))
-    if (is_scalar(w))
-      w= indgen(w);
-  else if (is_range(w))
-    if (print(w)==":")
-      w= indgen(oo(*));
-    else
-      w= indgen(w);
+  if (is_void(w))
+    w= indgen(oo(*));
   else
-    error,"dimension, index array, or range accepted.";
+    if (is_integer(w))
+      if (is_scalar(w))
+        w= indgen(w);
+      else if (is_range(w))
+        if (print(w)==":")
+          w= indgen(oo(*));
+        else
+          w= indgen(w);
+      else
+        error,"dimension, index array, or range accepted.";
 
   m= numberof(w);
   k= oo(*);
