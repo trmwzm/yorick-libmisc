@@ -638,8 +638,56 @@ func normproj(a, norm) {unorm= normvec(norm); return a-unorm*(a*unorm)(sum,..)(-
 
 /*---------------------------------------------------------------------------*/
 
-func strconcat(strarr) {
-    return strarr(sum);
+func strconcat(strarr,spacer)
+{
+  if (is_voi(spacer))
+    spacer= string(0);
+  return strpart((strarr+spacer)(sum),:-strlen(spacer));
+}
+
+/*---------------------------------------------------------------------------*/
+
+func strtranslate(s, tr)
+/* DOCUMENT sp= strtranslate(s, tr);
+   Convert a string or an array of strings given a translation table TR.
+   TR must be an array of 256 char (this is not checked).
+
+   SEE ALSO: strtolower, strtoupper, strtrtable.
+*/
+{
+  d= dimsof(s);
+  if (d(1)==0)
+    if (s==string(0))
+      return string(0);
+    else
+      return string(&tr(1+*pointer(s)));
+
+  r= array(string, d);
+  w= where(s!=string(0));
+  n= numberof(w);
+  for (i=1; i<=n; i++)
+    r(w(i))= string(&tr(1+*pointer(s(w(i)))));
+
+  return r;
+}
+
+/*---------------------------------------------------------------------------*/
+
+func strtrtable(in, out, &tr)
+/* DOCUMENT tr= strtrtable(in, out);
+   -or- strtrtable, in, out, tr;
+   Create or modify translation table TR so that characters that belongs to
+   IN array will produce corresponding characters in OUT array.  IN and OUT
+   must be conformable arrays of char's.
+
+   SEE ALSO: strtranslate, strtolower, strtoupper.
+*/
+{
+  if (is_void(tr))
+    tr= char(indgen(0:255));
+  tr(in+1)= char(out);
+  //tr(in)= char(out);
+  return tr;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -1662,8 +1710,10 @@ func normal (f,y,x,&area,center=)
 
 func firstupcase(s,n=,p=)
 {
-  if (is_void(n)) n= 30;
-  if (is_void(p)) p= "(^[A-Z])|(( +)([a-z]))";
+  if (is_void(n))
+    n= 30;
+  if (is_void(p))
+    p= "(^[A-Z])|(( +)([a-z]))";
   s= streplace(s,[0,1],strcase(1,strpart(s,1:1)));
   w= strgrep(p,s,sub=[1,2],n=n);
   ss= strpart(s,w);
@@ -1767,6 +1817,73 @@ func strcombine( str_array, delim)
   }
 
   return catstr;
+
+}
+
+/* ------------------------------------------------------------------------- */
+
+func nameofstream(f)
+{
+  print_format,300;
+  sf= print(f);
+  print_format;
+  if (typeof(f)=="stream") {
+    return strconcat(strtrim(strtok(sf,":")([4,2])));
+  } else if (typeof(f)=="text_stream") {
+    return strtrim(strtok(strtok(sf,":")(4),":")(2));
+  } else {
+    error,"not a stream";
+  }
+}
+
+/* ------------------------------------------------------------------------ */
+
+func typeconv(typestr,var)
+/* DOCUMENT typeconv(typestr,var)
+ * Convert variable VAR to type TYPESTR, and return the converted variable
+ * TYPESTR may be one of the following:
+ * "char", "int", "long", "float", "double", "complex", "fcomplex", "string"
+ * NOTE: for "fcomplex" imaginary parts are ZERO, and are the "inner-most" index
+ *       2 of 2.
+ * SEE ALSO: typeof, array
+ */
+{
+
+  str = strcase(0,typestr);
+
+  if (str == "char") {
+    return ( char(var));
+  } else if (str == "short") {
+    return ( short(var));
+  } else if (str == "int") {
+    return ( int(var));
+  } else if (str == "long") {
+    return ( long(var));
+  } else if (str == "float") {
+    return ( float(var));
+  } else if (str == "double") {
+    return ( double(var));
+  } else if (str == "complex") {
+    return ( complex(var));
+  } else if (str == "fcomplex") {
+    dvar = dimsof(var);
+    tvar = typeof(var);
+    if(tvar == "complex"){
+      return complexcast(float,var);
+    }else if(tvar == "float"){
+      return transpose([var,array(0.0f,dvar)],[dvar(1)+1,1]);
+    }else if(tvar == "double"){
+      return transpose([float(var),array(0.0f,dvar)],[dvar(1)+1,1]);
+    }else if(is_integer(var)){
+      return typeconv(str, float(var));
+    }else{
+      error,"var is "+tvar;
+    }
+  } else if (str == "string") {
+    return ( string(var));
+  } else {
+    error, "Invalid type '" + str + "'";
+  }
 
 }
 
@@ -3060,9 +3177,9 @@ func oxnml(args)
 }
 wrap_args,oxnml;
 
-func oxmap (f,oo,..,create=,w=)
-/* DOCUMENT ob=  oxmap (f,oo,w,oi1,oi2,oi3,create=);
-   map func F on group objects
+func oxmap (f,oo,..)
+/* DOCUMENT ob=  oxmap (f,oi1,oi2,oi3,..);
+     map func F on one/multiple group objects
 
      oo(i)= f(oi1(i)); // for 1 input
      oo(i)= f(oi1(i),oi2(i),oi3(i),oi4(i)); // for 4 inputs
@@ -3070,61 +3187,79 @@ func oxmap (f,oo,..,create=,w=)
    SEE ALSO:
  */
 {
-  oi= save(string(0),f,string(0),oo);
+  if (!is_void(oo))
+    oi= save(string(0),oo);
   n= more_args();  // numberof input groups
-  if (n>8) error,"... limited to 8 inputs :)";
   for (i=1 ; i<=n ; i++)
     save, oi, string(0), next_arg();
   n= oi(*);
+  if (n==0 || n>8)
+    error,"... limited to 1 to 8 inputs :)";
 
-  if (is_void(w))
-    w= indgen(oo(*));
-  else
-    if (is_integer(w))
-      if (is_scalar(w))
-        w= indgen(w);
-      else if (is_range(w))
-        if (print(w)==":")
-          w= indgen(oo(*));
-        else
-          w= indgen(w);
-      else
-        error,"dimension, index array, or range accepted.";
-
-  m= numberof(w);
-  k= oo(*);
-  if (k<max(w))
-    if (create!=1)
-      error,"not that many goup members";
-    else
-      for (i=k;i<=max(w);i++)
-        save, oo, string(0), [];
-
-  for (i=1 ; i<=m ; i++) {
-    if (n==0)
-      save, oo, w(i), f();
-    else if (n==1)
-      save, oo, w(i), f(oi(1,noop(i)));
+  for (o= save(),i=1 ; i<=oo(*) ; i++)
+    if (n==1)
+      save, o, string(0), f(oi(1,noop(i)));
     else if (n==2)
-      save, oo, w(i), f(oi(1,noop(i)),oi(2,noop(i)));
+      save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)));
     else if (n==3)
-      save, oo, w(i), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)));
+      save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)));
     else if (n==4)
-      save, oo, w(i), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)));
+      save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)));
     else if (n==5)
-      save, oo, w(i), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)),\
+      save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)), \
                            oi(5,noop(i)));
     else if (n==6)
-      save, oo, w(i), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)),\
+      save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)), \
                         oi(5,noop(i)),oi(6,noop(i)));
     else if (n==7)
-      save, oo, w(i), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)),\
+      save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)), \
                         oi(5,noop(i)),oi(6,noop(i)),oi(7,noop(i)));
     else if (n==8)
-      save, oo, w(i), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)),\
+      save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)), \
                         oi(5,noop(i)),oi(6,noop(i)),oi(7,noop(i)),oi(8,noop(i)));
-  }
-  return oo;
+  return o;
+}
+
+func oxdir (dn)
+/* DOCUMENT oxdir (dn)
+   scan dir tree and output a void-valued oxy objext with keys==file/dir-names;
+   use:
+   ----
+   func rdrdf (o, dn)
+   {
+     oo= save();
+     dn= strpart(dn,0:0)=="/"? dn: dn+"/";
+     for (i=1;i<=o(*);i++) {
+       if (is_void(o(noop(i))))
+         p= rdf(dn+o(*,i));
+       else if (is_obj(o(noop(i)))>0)
+         rdrdf,o(noop(i)),dn+o(*,i);
+       else
+         error,"unknown type";
+     }
+   }
+   rdrdf,oxdir(dn),dn;
+
+   SEE ALSO:
+ */
+{
+  dn= strpart(dn,0:0)=="/"? dn: dn+"/";
+  local d;
+  l= lsdir(dn,d);
+  if (structof(l)==long)
+    error,"not a directory";
+  o= save();
+  for (i=1;i<=numberof(l);i++)
+    if (l(i)!=string(0))
+      save,o,l(i),[];
+    else
+      l(i);
+  for (i=1;i<=numberof(d);i++)
+    if (d(i)!=string(0))
+      save,o,d(i),oxdir(dn+d(i));
+    else
+      d(i);
+  return o;
 }
 
 func oxarr (args)

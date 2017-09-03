@@ -1,4 +1,5 @@
 require, "fcomplex.i";
+require, "yut.i";
 
 /* -------------------------------------------------------------------------*/
 
@@ -117,72 +118,3 @@ func readFlat(f,typ,dims,offset,name=,sl=,pc=,i86=,sun=,sgi64=){
  }
 
 }
-
-/* ------------------------------------------------------------------------- */
-/* ------------------------------------------------------------------------- */
-
-func nameofstream(f){
- print_format,300;
- sf= print(f);
- print_format;
- if (typeof(f)=="stream"){
-   return strconcat(strtrim(strtok(sf,":")([4,2])));
- }else if(typeof(f)=="text_stream"){
-   return strtrim(strtok(strtok(sf,":")(4),":")(2));
- }else{
-   error,"not a stream";
- }
-}
-
-/* ------------------------------------------------------------------------- */
-/* ------------------------------------------------------------------------ */
-
-func typeconv(typestr,var)
-/* DOCUMENT typeconv(typestr,var)
- * Convert variable VAR to type TYPESTR, and return the converted variable
- * TYPESTR may be one of the following:
- * "char", "int", "long", "float", "double", "complex", "fcomplex", "string"
- * NOTE: for "fcomplex" imaginary parts are ZERO, and are the "inner-most" index
- *       2 of 2.
- * SEE ALSO: typeof, array
- */
-{
-
-str = strcase(0,typestr);
-
-if (str == "char") {
-   return ( char(var));
-} else if (str == "short") {
-   return ( short(var));
-} else if (str == "int") {
-   return ( int(var));
-} else if (str == "long") {
-   return ( long(var));
-} else if (str == "float") {
-   return ( float(var));
-} else if (str == "double") {
-   return ( double(var));
-} else if (str == "complex") {
-   return ( complex(var));
-} else if (str == "fcomplex") {
-   dvar = dimsof(var);
-   tvar = typeof(var);
-   if(tvar == "complex"){
-     return complexcast(float,var);
-   }else if(tvar == "float"){
-     return transpose([var,array(0.0f,dvar)],[dvar(1)+1,1]);
-   }else if(tvar == "double"){
-     return transpose([float(var),array(0.0f,dvar)],[dvar(1)+1,1]);
-   }else if(is_integer(var)){
-     return typeconv(str, float(var));
-   }else{
-      error,"var is "+tvar;
-   }
-} else if (str == "string") {
-   return ( string(var));
-} else {
-   error, "Invalid type '" + str + "'";
-}
-
-}
-
