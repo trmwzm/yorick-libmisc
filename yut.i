@@ -3060,9 +3060,9 @@ func oxnml(args)
 }
 wrap_args,oxnml;
 
-func oxmap (f,oo,..,create=,w=)
-/* DOCUMENT ob=  oxmap (f,oo,w,oi1,oi2,oi3,create=);
-   map func F on group objects
+func oxmap (f,oo,..)
+/* DOCUMENT ob=  oxmap (f,oi1,oi2,oi3,..);
+     map func F on one/multiple group objects
 
      oo(i)= f(oi1(i)); // for 1 input
      oo(i)= f(oi1(i),oi2(i),oi3(i),oi4(i)); // for 4 inputs
@@ -3070,61 +3070,37 @@ func oxmap (f,oo,..,create=,w=)
    SEE ALSO:
  */
 {
-  oi= save(string(0),f,string(0),oo);
+  if (!is_void(oo))
+    oi= save(string(0),oo);
   n= more_args();  // numberof input groups
-  if (n>8) error,"... limited to 8 inputs :)";
   for (i=1 ; i<=n ; i++)
     save, oi, string(0), next_arg();
   n= oi(*);
+  if (n==0 || n>8)
+    error,"... limited to 1 to 8 inputs :)";
 
-  if (is_void(w))
-    w= indgen(oo(*));
-  else
-    if (is_integer(w))
-      if (is_scalar(w))
-        w= indgen(w);
-      else if (is_range(w))
-        if (print(w)==":")
-          w= indgen(oo(*));
-        else
-          w= indgen(w);
-      else
-        error,"dimension, index array, or range accepted.";
-
-  m= numberof(w);
-  k= oo(*);
-  if (k<max(w))
-    if (create!=1)
-      error,"not that many goup members";
-    else
-      for (i=k;i<=max(w);i++)
-        save, oo, string(0), [];
-
-  for (i=1 ; i<=m ; i++) {
-    if (n==0)
-      save, oo, w(i), f();
-    else if (n==1)
-      save, oo, w(i), f(oi(1,noop(i)));
+  for (o= save(),i=1 ; i<=oo(*) ; i++)
+    if (n==1)
+      save, o, string(0), f(oi(1,noop(i)));
     else if (n==2)
-      save, oo, w(i), f(oi(1,noop(i)),oi(2,noop(i)));
+      save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)));
     else if (n==3)
-      save, oo, w(i), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)));
+      save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)));
     else if (n==4)
-      save, oo, w(i), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)));
+      save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)));
     else if (n==5)
-      save, oo, w(i), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)),\
+      save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)), \
                            oi(5,noop(i)));
     else if (n==6)
-      save, oo, w(i), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)),\
+      save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)), \
                         oi(5,noop(i)),oi(6,noop(i)));
     else if (n==7)
-      save, oo, w(i), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)),\
+      save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)), \
                         oi(5,noop(i)),oi(6,noop(i)),oi(7,noop(i)));
     else if (n==8)
-      save, oo, w(i), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)),\
+      save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)), \
                         oi(5,noop(i)),oi(6,noop(i)),oi(7,noop(i)),oi(8,noop(i)));
-  }
-  return oo;
+  return o;
 }
 
 func oxarr (args)
