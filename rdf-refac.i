@@ -1,14 +1,14 @@
 require,"yut.i";
 
 scratch= save(scratch, tmp);
-tmp= save(get,put,set,unitfac,fixunit,item)
+tmp= save(get,put,set,unitcof,fixunit,item)
 func rdf (base,f,&key,&val,&unit,&cm)
 /* DOCUMENT rdf (&f,&key,&val,&unit,&cm)
  */
 {
   ob= base(:);
 
-   // read file
+  // read file
   if (structof(f)==string)
     f= open(f,"r");
   txt= rdfile(f);
@@ -70,7 +70,7 @@ func rdf (base,f,&key,&val,&unit,&cm)
   }
 
   kv= save();
-  univ= ob(unitfac,);
+  univ= ob(unitcof,);
   nun= 10;
   for (i=1;i<=numberof(key);i++) {
     if (unit(i)!=string(0) && unit(i)!="" && unit(i)!="&unit" && unit(i)!="-") {
@@ -78,17 +78,8 @@ func rdf (base,f,&key,&val,&unit,&cm)
       m= us!=string(0);
       if (anyof(m)) {
         us= us(where(m));
-        dunit=
-        for (j=1;j<=numberof(us);j++) {
-          ut= strpart(us(j),strword(us(j),"*/^()",nun));
-          m= ut!=string(0);
-          if (anyof(m)) {
-            ut= ut(where(m));
-            for (k=1;k<=numberof(ut);k++)
-              if (is_obj(univ,ut(k),1)<0)
-                error,"unknown unit: "+ut(k)+".";
-          }
-        }
+        if (anyof((m=is_obj(univ,us,1)<0)))
+          error,"unknown unit: "+(us(where(m))+" ")(sum)+".";
       } else
         unit(i)= string(0);
     }
@@ -136,7 +127,7 @@ func set (key, val, unit, comment)
 }
 func get (key,typestrct,dims,unit=,verbose=)
 {
-  use, kv;
+  use, kv, fixunit;
 
   key= strcase(0,strtrim(key));
   si= strfind("  ",key);
@@ -191,8 +182,7 @@ func get (key,typestrct,dims,unit=,verbose=)
         if (!sread(stmp(i),out(i)))
           error,"error reading variable.";
     }
-    if (typestrct!=string)
-      out= use_method(fixunit,out,unitin=v(unit),unitout=unit);
+    out= use_method(fixunit,out,uin=v(unit),uout=unit);
   }
   if (typestrct==complex)
     out= out(1,..)+1i*out(2,..);
@@ -295,65 +285,61 @@ func item (f,key,val,unit,comment,update=,tab=,tablen=)
 
   return f;
 }
-func fixunit (dat,unitin=,unitout=)
+func fixunit (dat,uin=,uout=)
 {
+  // dat, scalar or array, if not string (else scalar only)
+  // unit-in[out] is a scalar string with a single descriptor, or several, comma separated
   use, univ;
-
-  if (!is_void(unitin))
-    unitin= strcase(0,unitin);
-  if (!is_void(unitout))
-    unitout= strcase(0,unitout);
-
-  dd= dimsof(dat);
+  if (is_string(dat))
+    return dat;
+  d= dimsof(dat);
   nd= numberof(dat);
 
-  if (!is_void(unitin)) {
-    un= strtrim(unitin);
-    un= strpart(un,strword(un,",",10));
-    wun= un!=string(0);
-    if (anyof(wun)) {
-      un= un(where(wun));
-      nun= numberof(un);
-      if (nun==nd) {
-        for (i=1;i<=nd;i++) {
-           tu= univ(un(i));
-           if(numberof(tu)==2)dat(i)+=tu(2);
-           dat(i) *= tu(1);
-        }
-      } else if (nun==1) {
-        tu= univ(un(1));
-        if(numberof(tu)==2)dat +=tu(2);
-        dat *= tu(1);
-      } else {
-        error,"incorrect numberof units in RDF file";
-      }
+  uin= is_void(uin)? string(0): strcase(0,strtrim(uin));
+  uout= is_void(uout)? string(0): strcase(0,strtrim(uout));
+
+  nun= 10;
+  s= strpart(uin,strword(uin," ,",nun));
+  m= s!=string(0);
+  uin= anyof(m)? s(where(m)): string(0);
+  nuin= numberof(uin);
+  if (nuin>1 && nuin!=nd)
+    error,"numbreof unit descriptors IN not same as numberof values.";
+  uin+= array(string(0),nd);
+  uin= reform(uin,d);
+
+  s= strpart(uout,strword(uout," ,",nun));
+  m= s!=string(0);
+  uout= anyof(m)? s(where(m)): string(0);
+  nuout= numberof(uout);
+  if (nuout>1 && nuout!=nd)
+    error,"numbreof unit descriptors OUT not same as numberof values.";
+  uout+= array(string(0),nd);
+  uout= reform(uout,d);
+
+  for (i=1;i<=nd;i++) {
+    if (uin(i)!=string(0) && uin(i)!="-" && uin(i)!="&") {
+      tu= univ(uin(i));
+      if (strgrepm("^db",uin(i)))
+        dat(i)= 10^(dat(i)/10);
+      if (numberof(tu)==2)
+        dat(i)+=tu(2);
+      dat(i)*= tu(1);
     }
   }
-  if (!is_void(unitout)) {
-    un= strtrim(unitout);
-    un= strpart(un,strword(un,",",10));
-    wun= un!=string(0);
-    if (anyof(wun)) {
-      un= un(where(wun));
-      nun= numberof(un);
-      if (nun==nd) {
-        for (i=1;i<=nd;i++) {
-           tu= univ(un(i));
-           dat(i) /= tu(1);
-           if(numberof(tu)==2)dat(i)-=tu(2);
-        }
-      } else if(nun==1) {
-        tu= univ(un(1));
-        dat /= tu(1);
-        if (numberof(tu)==2)dat -=tu(2) ;
-      } else {
-        error,"incorrect numberof units in RDF file";
-      }
+  for (i=1;i<=nd;i++) {
+    if (uout(i)!=string(0) && uout(i)!="-" && uout(i)!="&") {
+      tu= univ(uout(i));
+      dat(i)/= tu(1);
+      if (numberof(tu)==2)
+        dat(i)-=tu(2);
+      if (strgrepm("^db",uout(i)))
+        dat(i)= 10*log10(dat(i));
     }
   }
   return dat;
 }
-func unitfac (dum)
+func unitcof (dum)
 {
   u= save();
   //length
