@@ -1,7 +1,15 @@
 require,"yut.i";
 
+// Keyword   (Units*)   [dimensions*]   {element*}   Operator    Values   Comments*
+// * == optional
+// keys not case sensitive, spaces==tabs, but number of space is significant
+// reserved characters not in keys: (,  ),   [,   ],   {,   },  <,  >,  =,  !,  and ;
+// reserved characters not in values: ;
+// reserved keywords: COMMENT, OPERATOR, PREFIX, SUFFIX, and INCLUDE
+// multiple values in Units or Value fields are separated with: commas, tabs, or spaces.
+
 scratch= save(scratch, tmp);
-tmp= save(get,put,set,unitcof,fixunit,item)
+tmp= save(get,put,set,unitcof,fixunit,item,add,getline,getfile);
 func rdf (base,f,&key,&val,&unit,&cm)
 /* DOCUMENT rdf (&f,&key,&val,&unit,&cm)
  */
@@ -9,33 +17,36 @@ func rdf (base,f,&key,&val,&unit,&cm)
   ob= base(:);
 
   // read file
+  if (structof(f)==string) {
+    fnm= f;
+    f= open(f,"r");
+  } else
+    fnm= nameofstream(f);
+  txt= ob(getfile,f,dirname(fnm));
+
+  // TBP deal with INCLUDE
+
+  // read file
   if (structof(f)==string)
     f= open(f,"r");
-  txt= rdfile(f);
+  // ready to be processed
+  strtrim, txt;
   save, ob, txt;
 
-  // start processing, find comment char
-  strtrim, txt;
-  ltxt= strlen(txt);
+  // TBP deal with COMMENT =
   scom= [";","#","!"];
   ncom= numberof(scom);
   icom= array(0,[2,numberof(txt),ncom]);
   for (i=1;i<=numberof(scom);i++)
     icom(..,i)= strfind(scom(i),txt)(1,..);
 
+  // TBP deal with OPERATOR =
   // find =
   weq= strfind("=", txt)(1,..);
 
   // look for valid key=val
-  for (m=0,i=1;i<=numberof(scom);i++)
-    m|= weq<icom(..,i);
-
-  ikv= where(m);
-  if (numberof(ikv)==0)
-    error,"RDF file void.";
-  else
-    txt= txt(ikv);
-  save,ob,ikv;
+  for (m=1,i=1;i<=numberof(scom);i++)
+    m&= weq<icom(..,i);
 
   txt= strpart(txt,strword(txt,scom(sum),2));
   cm= strtrim(txt(2,));                                            // comments
@@ -46,21 +57,29 @@ func rdf (base,f,&key,&val,&unit,&cm)
   unit= strpart(txt,strgrep("\\([-a-zA-Z0-9,^\\/\\*]*\\)$",txt));  // "(units)", nil no conversion, - no unit.
   unit= strpart(unit,2:-1);                                        // "(units)"
   key= strcase(0,strtrim(strpart(txt,strgrep("(^[a-zA-Z0-9\, \._\/\\-]*)",txt))));
-  key= key(where(key!=string(0)));
 
-  wk= key=="suffix";
-  if (anyof(wk)) {              // dealing with suffix !kludge!
-    iwk= wk(cum)(2:)+1;
-    suf= strcase(0,val(where(wk)));
+  // look for valid key=val
+  m&= key!=string(0);
+
+  sf= key=="suffix";
+  m&= !sf;
+  if (anyof(sf)) {              // dealing with suffix !kludge!
+    isf= sf(cum)(2:)+1;
+    suf= strcase(0,val(where(sf)));
     suf= _("",strpart(suf,strword(suf,"\"",2))(1,..));
-    key+= " "+suf(iwk);
-    key= strtrim(key);
-    wk= where(!wk);
-    key= key(wk);
-    val= val(wk);
-    unit= unit(wk);
-    cm= cm(wk);
+    key(isf)+= " "+suf(isf);
   }
+
+  ikv= where(m);
+  if (numberof(ikv)==0)
+    error,"RDF file void.";
+  else
+    txt= txt(ikv);
+  save,ob,ikv;
+
+  cm= cm(ikv); val= val(ikv); unit= unit(ikv); key= key(ikv);
+
+  key= strtrim(key);
   strcase,0,unit;
 
   si= strfind("  ",key);
@@ -73,7 +92,7 @@ func rdf (base,f,&key,&val,&unit,&cm)
   univ= ob(unitcof,);
   nun= 10;
   for (i=1;i<=numberof(key);i++) {
-    if (unit(i)!=string(0) && unit(i)!="" && unit(i)!="&unit" && unit(i)!="-") {
+    if (unit(i)!=string(0) && unit(i)!="" && unit(i)!="&" && unit(i)!="-") {
       us= strpart(unit(i),strword(unit(i)," ,",nun)); //" ,*/^"
       m= us!=string(0);
       if (anyof(m)) {
@@ -83,17 +102,69 @@ func rdf (base,f,&key,&val,&unit,&cm)
       } else
         unit(i)= string(0);
     }
-    save,kv,key(i),save(val=val(i),comment=cm(i),unit=unit(i),textline=ikv(i));
+    save,kv,key(i),save(val=val(i),comment=cm(i),unit=unit(i));
   }
-  save, ob, kv, univ;
+
+  pr1_table = strtrtable(44,32);
+  strtrtable,91,32,pr1_table;
+  strtrtable,93,32,pr1_table;
+
+  save, ob, kv, univ, pr1_table;
 
   return ob;
 }
-func set (key, val, unit, comment)
+func getfile (f,dir)
 {
-  use, kv;
+  txt= rdfile(f);
+
+  // TBP deal with the backlash continuation
+  for (ot=save(),i=1;i<=numberof(txt);)
+    save,ot,string(0),use_method(getline,txt,i);
+  txt= array(string,ot(*));
+  for (i=1;i<=ot(*);i++)
+    txt(i)= ot(noop(i));
+
+  m= strgrepm("^include *=",txt,case=1);
+  if (anyof(m)) {
+    txt= txt(where(!m));
+    w= where(m);
+    for (i=1;i<=numberof(m);i++) {
+
+      txt= _(txt,use_method,);
+    }
+
+  }
+  return txt;
+}
+func getline (t,&i)
+{
+  // grab l=t(i); if end \ crop & add next(=i+1) to l & blank (i+1)
+  n= numberof(t);
+  if (i>n || i<0) {
+    i= i+1;
+    return string(0);
+  } else {
+    l= strtrim(t(i));
+    l= strgrepm("^\\\\",l)? strpart(l,2:0): l;
+    i= i+1;
+    l= strgrepm("\\\\$",l)? strpart(l,1:-1)+use_method(getline,t,i): l;
+    return l;
+  }
+}
+func add (o)
+{
+  use, txt, ikv, kv;
+  len= numberof(txt);
+  n= kv(*);
+  txt= _(txt,o(txt));
+  ikv= _(ikv,o(ikv)+len);
+  save,kv,[],o(kv);
+}
+func set (key, val, unit=, comment=)
+{
+  use, kv, univ;
   if (is_void(unit))
-    unit= "-";
+    unit= string(0);
   if (is_void(comment))
     comment= string(0);
   si= strfind("  ",key);
@@ -124,6 +195,17 @@ func set (key, val, unit, comment)
     s= streplace(s,strfind("]",s,n=20),"");
     save, v, val=s;
   }
+  nun= 10;
+  us= strpart(unit,strword(unit," ,",nun)); //" ,*/^"
+  m= us!=string(0);
+  if (anyof(m)) {
+    us= us(where(m));
+    if (anyof((m=is_obj(univ,us,1)<0)))
+      error,"unknown unit: "+(us(where(m))+" ")(sum)+".";
+  }
+  save, v, unit;
+  save, v, comment;
+  save, kv, noop(key), v;
 }
 func get (key,typestrct,dims,unit=,verbose=)
 {
@@ -198,39 +280,49 @@ func get (key,typestrct,dims,unit=,verbose=)
   }
   return out;
 }
-func put (fo,upper=,tablen=)
+func put (fo,upper=,tablen=,orig=)
 {
-  use, kv;
-  key_list= kv(*,);
-  if (is_void(key_list))
-    return;
-  n= numberof(key_list);
-  itm= array(string,n);
-  for (i=1;i<=n;i++) {
-    itm(i)= kv(noop(i),textline);
+  use, kv, item, ikv;
+
+  for (ot=save(),i=1;i<=kv(*);i++) {
+    key= kv(*,i);
+    if (upper==1)
+      key= firstupcase(key);
+    save, ot, string(0), use_method(item,fo,key,kv(noop(i),val),kv(noop(i),unit), \
+                                    kv(noop(i),comment),tab=1,tablen=tablen);
   }
-  i= array(long,n);
-  sread,itm,i;
-  si= sort(i);
-  key_list= key_list(si);
-  if (upper==1)
-    ku= firstupcase(key_list);
-  else
-    eq_nocopy, ku, key_list;
-  for(i=1;i<=n;i++){
-    itm= h_get(obj, key_list(i));
-    fo= use_method(item,fo,ku(i),itm(1),itm(2),itm(3),  \
-                 tab=1,tablen=tablen);
+
+  if (orig==1) {
+    t= use(txt);
+    for (i=1;i<=numberof(ikv);i++)
+      t(ikv(i))= ot(noop(i));
+    ot= save();
+    for (i=1;i<=numberof(t);i++)
+      save, ot, string(0), t(i);
   }
+
+  if (typeof(fo)!="text_stream")
+    fo= create(fo);
+
+  for (i=1;i<=ot(*);i++)
+    write,fo,ot(noop(i)),linesize=200,format="%s\n";
+
   return fo;
 }
-func item (f,key,val,unit,comment,update=,tab=,tablen=)
+func item (f,key,val,unit,comment,tab=,tablen=)
 {
+  use, pr1_table;
+
   if (is_void(tablen))
     tablen= 26;
   key= strtrim(key);
-  unit= strtrim(unit);
-  if (unit!=string(0)&&!is_void(unit))
+  si= strfind("  ",key);
+  while(anyof(si(2,)!=-1)){   // replace double spaces
+    key= streplace(key,si," ");
+    si= strfind("  ",key);
+  }
+  unit= strtrim(strcase(0,unit));
+  if (unit!=string(0) && !is_void(unit))
     unit= " ("+unit+") ";
   else
     unit= string(0);
@@ -245,45 +337,15 @@ func item (f,key,val,unit,comment,update=,tab=,tablen=)
   }
   sout+= "= ";
   if (structof(val)!=string) {
-    sout+= strtranslate(pr1(val),PR1_TABLE);
+    sout+= strtranslate(pr1(val),pr1_table);
   } else {
     sout += val;
   }
   sout+= "  ";
-  if (!is_void(comment)&&comment!=string(0)&&comment!="")
-    sout+= "  !"+comment;
+  if (!is_void(comment) && comment!=string(0) && comment!="")
+    sout+= "  ! "+comment;
 
-  if (update) {
-    if(typeof(f)!="text_stream")
-      f= open(f,"r");
-    nlm= 2000;
-    lines= rdline(f, nlm);
-    fnm= nameofstream(f);
-    close,f;
-    nl= sum(lines!=string(0));
-    if (nl==nlm)
-      write,"WARNING: increase max lines in writeRDFitem";
-    w= where(strmatch(strcase(0,lines),strcase(0,key)));
-    nw= numberof(w);
-    if (nw==1) {
-      lines(w)= sout;
-    } else if(nw>1) {
-      error,"multiple key matches found";
-    } else {
-      error,"KEY NOT FOUND! "+key;
-    }
-    if (nl) {
-      f= open(fnm,"w");
-      write, f, lines(1:nl), format="%s\n",linesize=160;
-    }
-    return f;
-  }
-  if (typeof(f)!="text_stream")
-    f= create(f);
-
-  write,f,sout,linesize=200,format="%s\n";
-
-  return f;
+  return sout;
 }
 func fixunit (dat,uin=,uout=)
 {

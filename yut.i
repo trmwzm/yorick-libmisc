@@ -638,8 +638,56 @@ func normproj(a, norm) {unorm= normvec(norm); return a-unorm*(a*unorm)(sum,..)(-
 
 /*---------------------------------------------------------------------------*/
 
-func strconcat(strarr) {
-    return strarr(sum);
+func strconcat(strarr,spacer)
+{
+  if (is_voi(spacer))
+    spacer= string(0);
+  return strpart((strarr+spacer)(sum),:-strlen(spacer));
+}
+
+/*---------------------------------------------------------------------------*/
+
+func strtranslate(s, tr)
+/* DOCUMENT sp= strtranslate(s, tr);
+   Convert a string or an array of strings given a translation table TR.
+   TR must be an array of 256 char (this is not checked).
+
+   SEE ALSO: strtolower, strtoupper, strtrtable.
+*/
+{
+  d= dimsof(s);
+  if (d(1)==0)
+    if (s==string(0))
+      return string(0);
+    else
+      return string(&tr(1+*pointer(s)));
+
+  r= array(string, d);
+  w= where(s!=string(0));
+  n= numberof(w);
+  for (i=1; i<=n; i++)
+    r(w(i))= string(&tr(1+*pointer(s(w(i)))));
+
+  return r;
+}
+
+/*---------------------------------------------------------------------------*/
+
+func strtrtable(in, out, &tr)
+/* DOCUMENT tr= strtrtable(in, out);
+   -or- strtrtable, in, out, tr;
+   Create or modify translation table TR so that characters that belongs to
+   IN array will produce corresponding characters in OUT array.  IN and OUT
+   must be conformable arrays of char's.
+
+   SEE ALSO: strtranslate, strtolower, strtoupper.
+*/
+{
+  if (is_void(tr))
+    tr= char(indgen(0:255));
+  tr(in+1)= char(out);
+  //tr(in)= char(out);
+  return tr;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -1662,8 +1710,10 @@ func normal (f,y,x,&area,center=)
 
 func firstupcase(s,n=,p=)
 {
-  if (is_void(n)) n= 30;
-  if (is_void(p)) p= "(^[A-Z])|(( +)([a-z]))";
+  if (is_void(n))
+    n= 30;
+  if (is_void(p))
+    p= "(^[A-Z])|(( +)([a-z]))";
   s= streplace(s,[0,1],strcase(1,strpart(s,1:1)));
   w= strgrep(p,s,sub=[1,2],n=n);
   ss= strpart(s,w);
@@ -1767,6 +1817,73 @@ func strcombine( str_array, delim)
   }
 
   return catstr;
+
+}
+
+/* ------------------------------------------------------------------------- */
+
+func nameofstream(f)
+{
+  print_format,300;
+  sf= print(f);
+  print_format;
+  if (typeof(f)=="stream") {
+    return strconcat(strtrim(strtok(sf,":")([4,2])));
+  } else if (typeof(f)=="text_stream") {
+    return strtrim(strtok(strtok(sf,":")(4),":")(2));
+  } else {
+    error,"not a stream";
+  }
+}
+
+/* ------------------------------------------------------------------------ */
+
+func typeconv(typestr,var)
+/* DOCUMENT typeconv(typestr,var)
+ * Convert variable VAR to type TYPESTR, and return the converted variable
+ * TYPESTR may be one of the following:
+ * "char", "int", "long", "float", "double", "complex", "fcomplex", "string"
+ * NOTE: for "fcomplex" imaginary parts are ZERO, and are the "inner-most" index
+ *       2 of 2.
+ * SEE ALSO: typeof, array
+ */
+{
+
+  str = strcase(0,typestr);
+
+  if (str == "char") {
+    return ( char(var));
+  } else if (str == "short") {
+    return ( short(var));
+  } else if (str == "int") {
+    return ( int(var));
+  } else if (str == "long") {
+    return ( long(var));
+  } else if (str == "float") {
+    return ( float(var));
+  } else if (str == "double") {
+    return ( double(var));
+  } else if (str == "complex") {
+    return ( complex(var));
+  } else if (str == "fcomplex") {
+    dvar = dimsof(var);
+    tvar = typeof(var);
+    if(tvar == "complex"){
+      return complexcast(float,var);
+    }else if(tvar == "float"){
+      return transpose([var,array(0.0f,dvar)],[dvar(1)+1,1]);
+    }else if(tvar == "double"){
+      return transpose([float(var),array(0.0f,dvar)],[dvar(1)+1,1]);
+    }else if(is_integer(var)){
+      return typeconv(str, float(var));
+    }else{
+      error,"var is "+tvar;
+    }
+  } else if (str == "string") {
+    return ( string(var));
+  } else {
+    error, "Invalid type '" + str + "'";
+  }
 
 }
 
