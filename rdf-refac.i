@@ -12,11 +12,16 @@ scratch= save(scratch, tmp);
 tmp= save(get,put,set,unitcof,fixunit,item,add,getline,getfile);
 func rdf (base,f,&key,&val,&unit,&cm)
 /* DOCUMENT rdf (&f,&key,&val,&unit,&cm)
- */
+   fn= "/u/mah-r12a/trm/spl-pband/jprp-pcal/test2/jprp.pcf";
+   o= rdf(fn);
+   ll= o(get,"starting lat/lon",double,[1,2],unit="deg");
+   o,set,"starting lat/lon",ll-1,unit="rad";
+   o,put,create("~/qqq.rdf"),upper=1,orig=1;
+*/
 {
   ob= base(:);
 
-  // read file
+  // read file: handle backlash continuations and includes
   if (structof(f)==string) {
     fnm= f;
     f= open(f,"r");
@@ -24,28 +29,29 @@ func rdf (base,f,&key,&val,&unit,&cm)
     fnm= nameofstream(f);
   txt= ob(getfile,f,dirname(fnm));
 
-  // TBP deal with INCLUDE
-
-  // read file
-  if (structof(f)==string)
-    f= open(f,"r");
-  // ready to be processed
-  strtrim, txt;
+  // ready to be processed, save "original," minus includes & continuations
   save, ob, txt;
 
-  // TBP deal with COMMENT =
-  scom= [";","#","!"];
+  // process COMMENT =
+  m= strgrepm("^ *comment *(\\( *[ &-]* *\\)|) *=",txt,case=1);
+  if (anyof(m)) {
+    s= txt(where(m)(1));   // take first, dump subsequent
+    scom= [strpart(s,strgrep("^ *(comment|COMMENT) *(\\( *[ &-]* *\\)|) *= *(.*) *$",s,sub=3))];
+  } else
+    scom= [";","#","!"];
   ncom= numberof(scom);
   icom= array(0,[2,numberof(txt),ncom]);
-  for (i=1;i<=numberof(scom);i++)
+  for (i=1;i<=ncom;i++)
     icom(..,i)= strfind(scom(i),txt)(1,..);
 
-  // TBP deal with OPERATOR =
-  // find =
+  // *TODO* deal with OPERATOR =
+
+  // find operator (=)
   weq= strfind("=", txt)(1,..);
 
-  // look for valid key=val
-  for (m=1,i=1;i<=numberof(scom);i++)
+  // look for valid key=val, excluding comment character declaration(s)
+  m= !m;
+  for (i=1;i<=ncom;i++)
     m&= weq<icom(..,i);
 
   txt= strpart(txt,strword(txt,scom(sum),2));
@@ -137,7 +143,7 @@ func getfile (f,dir)
         save, ot, string(0), txt(j:w(i)-1);
       j= w(i)+1;
       s= txt(w(i));
-      fnm=strpart(s,strgrep("(^[iI][nN][cC][lL][uU][dD][eE] *=) *(.*$)",s,sub=2));
+      fnm=strpart(s,strgrep("(^ *[iI][nN][cC][lL][uU][dD][eE] *=) *(.*$)",s,sub=2));
       fnm= strpart(fnm,1:1)=="/"? fnm: dir+fnm;
       save, ot, string(0),getfile(open(fnm," r"),dir);
       if (i==numberof(w) && w(i)<numberof(txt))
