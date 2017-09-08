@@ -125,15 +125,29 @@ func getfile (f,dir)
     txt(i)= ot(noop(i));
 
   m= strgrepm("^include *=",txt,case=1);
+  if (is_void(dir))
+    dir= "./";
+  else
+    dir= strpart(dir,0:0)=="/"? dir: dir+"/";
   if (anyof(m)) {
     txt= txt(where(!m));
     w= where(m);
-    for (i=1;i<=numberof(m);i++) {
-
-      txt= _(txt,use_method,);
+    for (ot=save(),i=1,j=1;i<=numberof(w);i++) {
+      if (j<w(i))
+        save, ot, string(0), txt(j:w(i)-1);
+      j= w(i)+1;
+      s= txt(w(i));
+      fnm=strpart(s,strgrep("(^[iI][nN][cC][lL][uU][dD][eE] *=) *(.*$)",s,sub=2));
+      fnm= strpart(fnm,1:1)=="/"? fnm: dir+fnm;
+      save, ot, string(0),getfile(open(fnm," r"),dir);
+      if (i==numberof(w) && w(i)<numberof(txt))
+        save, ot, string(0), txt(j:0);
     }
-
+    txt= [];
+    for (i=1;i<=ot(*);i++)
+      txt= _(txt,ot(noop(i)));
   }
+
   return txt;
 }
 func getline (t,&i)
