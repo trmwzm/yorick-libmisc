@@ -3220,6 +3220,48 @@ func oxmap (f,oo,..)
   return o;
 }
 
+func oxdir (dn)
+/* DOCUMENT oxdir (dn)
+   scan dir tree and output a void-valued oxy objext with keys==file/dir-names;
+   use:
+   ----
+   func rdrdf (o, dn)
+   {
+     oo= save();
+     dn= strpart(dn,0:0)=="/"? dn: dn+"/";
+     for (i=1;i<=o(*);i++) {
+       if (is_void(o(noop(i))))
+         p= rdf(dn+o(*,i));
+       else if (is_obj(o(noop(i)))>0)
+         rdrdf,o(noop(i)),dn+o(*,i);
+       else
+         error,"unknown type";
+     }
+   }
+   rdrdf,oxdir(dn),dn;
+
+   SEE ALSO:
+ */
+{
+  dn= strpart(dn,0:0)=="/"? dn: dn+"/";
+  local d;
+  l= lsdir(dn,d);
+  if (structof(l)==long)
+    error,"not a directory";
+  o= save();
+  for (i=1;i<=numberof(l);i++)
+    if (l(i)!=string(0))
+      save,o,l(i),[];
+    else
+      l(i);
+  for (i=1;i<=numberof(d);i++)
+    if (d(i)!=string(0))
+      save,o,d(i),oxdir(dn+d(i));
+    else
+      d(i);
+  return o;
+}
+
 func oxarr (args)
 /* DOCUMENT  oxarr (o,mbnm,bad=,ireg=)
    extract array from a (oxy) group of oxy objects with member name MBNM

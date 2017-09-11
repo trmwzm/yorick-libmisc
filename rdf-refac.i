@@ -12,6 +12,7 @@ scratch= save(scratch, tmp);
 tmp= save(get,put,set,unitcof,fixunit,item,add,getline,getfile);
 func rdf (base,f,&key,&val,&unit,&cm)
 /* DOCUMENT rdf (&f,&key,&val,&unit,&cm)
+   ... still some not so good old code in this ...
    fn= "/u/mah-r12a/trm/spl-pband/jprp-pcal/test2/jprp.pcf";
    o= rdf(fn);
    ll= o(get,"starting lat/lon",double,[1,2],unit="deg");
@@ -136,16 +137,18 @@ func getfile (f,dir)
   else
     dir= strpart(dir,0:0)=="/"? dir: dir+"/";
   if (anyof(m)) {
-    txt= txt(where(!m));
     w= where(m);
+    if (numberof(w))
+      inc= txt(where(m));
     for (ot=save(),i=1,j=1;i<=numberof(w);i++) {
       if (j<w(i))
         save, ot, string(0), txt(j:w(i)-1);
       j= w(i)+1;
-      s= txt(w(i));
+      s= inc(i);
       fnm=strpart(s,strgrep("(^ *[iI][nN][cC][lL][uU][dD][eE] *=) *(.*$)",s,sub=2));
       fnm= strpart(fnm,1:1)=="/"? fnm: dir+fnm;
-      save, ot, string(0),getfile(open(fnm," r"),dir);
+      write,fnm,format="getfile: %s\n";
+      save, ot, string(0),use_method(getfile,open(fnm,"r"),dir);
       if (i==numberof(w) && w(i)<numberof(txt))
         save, ot, string(0), txt(j:0);
     }
