@@ -120,6 +120,15 @@ func rdf (base,f,&key,&val,&unit,&cm)
 
   return ob;
 }
+func add (o)
+{
+  use, txt, ikv, kv;
+
+  len= numberof(txt);
+  save, txt=_(txt,o(txt));
+  save, ikv=_(ikv,o(ikv)+len);
+  save, kv= save([],kv,[],o(kv));
+}
 func getfile (f,dir)
 {
   txt= rdfile(f);
@@ -147,7 +156,6 @@ func getfile (f,dir)
       s= inc(i);
       fnm=strpart(s,strgrep("(^ *[iI][nN][cC][lL][uU][dD][eE] *=) *(.*$)",s,sub=2));
       fnm= strpart(fnm,1:1)=="/"? fnm: dir+fnm;
-      write,fnm,format="getfile: %s\n";
       save, ot, string(0),use_method(getfile,open(fnm,"r"),dir);
       if (i==numberof(w) && w(i)<numberof(txt))
         save, ot, string(0), txt(j:0);
