@@ -9,37 +9,97 @@ require,"yut.i";
 // multiple values in Units or Value fields are separated with: commas, tabs, or spaces.
 
 scratch= save(scratch, tmp);
-tmp= save(get,put,set,unitcof,fixunit,item,add,getline,getfile);
-func rdf (base,f,&key,&val,&unit,&cm)
-/* DOCUMENT rdf (&f,&key,&val,&unit,&cm)
-   ... still some not so good old code in this ...
-   fn= "/u/mah-r12a/trm/spl-pband/jprp-pcal/test2/jprp.pcf";
+tmp= save(get,put,set,unitcof,fixunit,item,add,getline,getfile,mkk);
+func rdf (base,f,vo)
+/* DOCUMENT rdf();
+            rdf(f); // with F as a filename string, or textstream
+            rdf("key",save(val="val",unit="unit",comment="comment"));
+            rdf(["k1,"k2],save(string(0),save(val,unit,comment),string(0),save(val,unit,comment));
+
+   ... use ...
+   fn= "jprp.pcf";
    o= rdf(fn);
    ll= o(get,"starting lat/lon",double,[1,2],unit="deg");
    o,set,"starting lat/lon",ll-1,unit="rad";
    o,put,create("~/qqq.rdf"),upper=1,orig=1;
+   fn2= "/u/mah-r12a/trm/spl-pband/jprp-pcal/test2/uavsar.icf";
+   oo= rdf(fn2);
+   o,add,oo;
+
+   o= rdf();
+   o=rdf("single key",save(val="1",unit="m",comment="more"));
+   o(get,"single key",long,[0]);
+   o(get,"single key",long);
+   o(get,"single key",string);
+
+   o,add,rdf("another key",save(val="2",unit="m/s",comment="speed"));
+
 */
 {
   ob= base(:);
 
+  // defaults
+  scom= [";","#","!"];    // comment delim
+  sop= "=";               // key val operator
+  sres= "][(){}<>=!;";  // reserved chars n key/unit, in addition sres=";" in value field
+  // stash
+  save, ob, scom, sop, sres;
+
+  // setup units
+  univ= ob(unitcof,);
+  // setup val num format translation table
+  pr1_table = strtrtable(44,32);
+  strtrtable,91,32,pr1_table;
+  strtrtable,93,32,pr1_table;
+  // stash
+  save, ob, univ, pr1_table;
+
   // read file: handle backlash continuations and includes
   if (structof(f)==string) {
-    fnm= f;
-    f= open(f,"r");
-  } else
+    if (is_void(vo)) {
+      fnm= f;
+      f= open(f,"r");
+    } else if (is_obj(vo)>0) {
+      // deal with multiple key/val inputs
+      if (is_scalar(f)) {
+        f= [f];
+        vo= save(string(0),vo);
+      }
+      n= numberof(f);
+      ikv= indgen(n);
+      txt= array(string,n);
+      kv= save();
+      for (i=1;i<=n;i++) {
+        if (allof((vo(noop(i),*,)(-,)==["val","unit","comment"])(sum,))) {
+          kk= ob(mkk,f(i));
+          txt(i)= ob(item,kk,vo(noop(i),val),vo(noop(i),unit), \
+                     vo(noop(i),comment),tab=1,tablen=tablen);
+          save, kv, noop(kk), vo(noop(i));
+        } else
+          error,"value object ought to have: val, unit, comment members.";
+      }
+      save, ob, txt, ikv, kv;
+      return ob;
+    } else
+      error,"expecting scalar or group of save(val,unit,comment).";
+  } else if (typeof(f)=="text_stream") {
     fnm= nameofstream(f);
-  txt= ob(getfile,f,dirname(fnm));
+  } else if (is_void(f)) {   // empty object
+    save,ob,txt=[],ikv=[],kv=[];
+    return ob;
+  }
 
-  // ready to be processed, save "original," minus includes & continuations
+  txt= ob(getfile,f,dirname(fnm));
+  // stash, ready to be processed, save "original," minus includes & continuations
   save, ob, txt;
 
   // process COMMENT =
   m= strgrepm("^ *comment *(\\( *[ &-]* *\\)|) *=",txt,case=1);
-  if (anyof(m)) {
+  if (anyof(m)) {   // RESET comment delim default
     s= txt(where(m)(1));   // take first, dump subsequent
     scom= [strpart(s,strgrep("^ *(comment|COMMENT) *(\\( *[ &-]* *\\)|) *= *(.*) *$",s,sub=3))];
-  } else
-    scom= [";","#","!"];
+    save, ob, scom;
+  }
   ncom= numberof(scom);
   icom= array(0,[2,numberof(txt),ncom]);
   for (i=1;i<=ncom;i++)
@@ -48,7 +108,7 @@ func rdf (base,f,&key,&val,&unit,&cm)
   // *TODO* deal with OPERATOR =
 
   // find operator (=)
-  weq= strfind("=", txt)(1,..);
+  weq= strfind(sop, txt)(1,..);
 
   // look for valid key=val, excluding comment character declaration(s)
   m= !m;
@@ -58,12 +118,13 @@ func rdf (base,f,&key,&val,&unit,&cm)
   txt= strpart(txt,strword(txt,scom(sum),2));
   cm= strtrim(txt(2,));                                            // comments
   txt= strtrim(txt(1,));                                           // keyval
-  txt= strpart(txt,strword(txt,"=",2));
+  txt= strpart(txt,strword(txt,sop,2));
+
   val= strtrim(txt(2,..));                                         // vals
   txt= strtrim(txt(1,));
   unit= strpart(txt,strgrep("\\([-a-zA-Z0-9,^\\/\\*]*\\)$",txt));  // "(units)", nil no conversion, - no unit.
   unit= strpart(unit,2:-1);                                        // "(units)"
-  key= strcase(0,strtrim(strpart(txt,strgrep("(^[a-zA-Z0-9\, \._\/\\-]*)",txt))));
+  key= strtrim(strpart(txt,strgrep("[^"+sres+"]+",txt))):
 
   // look for valid key=val
   m&= key!=string(0);
@@ -72,7 +133,7 @@ func rdf (base,f,&key,&val,&unit,&cm)
   m&= !sf;
   if (anyof(sf)) {              // dealing with suffix !kludge!
     isf= sf(cum)(2:)+1;
-    suf= strcase(0,val(where(sf)));
+    suf= val(where(sf));
     suf= _("",strpart(suf,strword(suf,"\"",2))(1,..));
     key(isf)+= " "+suf(isf);
   }
@@ -86,17 +147,14 @@ func rdf (base,f,&key,&val,&unit,&cm)
 
   cm= cm(ikv); val= val(ikv); unit= unit(ikv); key= key(ikv);
 
-  key= strtrim(key);
+  // check & format keys:
+  key= ob(mkk,key);
+
+  // format units
   strcase,0,unit;
 
-  si= strfind("  ",key);
-  while (anyof(si(2,)!=-1)) {   // replace double spaces
-    key= streplace(key,si," ");
-    si= strfind("  ",key);
-  }
-
+  // make key-val database
   kv= save();
-  univ= ob(unitcof,);
   nun= 10;
   for (i=1;i<=numberof(key);i++) {
     if (unit(i)!=string(0) && unit(i)!="" && unit(i)!="&" && unit(i)!="-") {
@@ -112,11 +170,7 @@ func rdf (base,f,&key,&val,&unit,&cm)
     save,kv,key(i),save(val=val(i),comment=cm(i),unit=unit(i));
   }
 
-  pr1_table = strtrtable(44,32);
-  strtrtable,91,32,pr1_table;
-  strtrtable,93,32,pr1_table;
-
-  save, ob, kv, univ, pr1_table;
+  save, ob, kv;  // what to do
 
   return ob;
 }
@@ -125,9 +179,12 @@ func add (o)
   use, txt, ikv, kv;
 
   len= numberof(txt);
-  save, txt=_(txt,o(txt));
-  save, ikv=_(ikv,o(ikv)+len);
-  save, kv= save([],kv,[],o(kv));
+  txt= _(txt,o(txt));
+  ikv= _(ikv,o(ikv)+len);
+  if (is_void(kv))
+    kv= o(kv);
+  else
+    save, kv, [], o(kv);
 }
 func getfile (f,dir)
 {
@@ -315,11 +372,16 @@ func put (fo,upper=,tablen=,orig=)
 {
   use, kv, item, ikv;
 
+  if (is_void(kv)) {
+    write,"rdf is void. No file written.",format="WANING: %s\n";
+    return [];
+  }
+
   for (ot=save(),i=1;i<=kv(*);i++) {
     key= kv(*,i);
     if (upper==1)
       key= firstupcase(key);
-    save, ot, string(0), use_method(item,fo,key,kv(noop(i),val),kv(noop(i),unit), \
+    save, ot, string(0), use_method(item,key,kv(noop(i),val),kv(noop(i),unit), \
                                     kv(noop(i),comment),tab=1,tablen=tablen);
   }
 
@@ -340,7 +402,21 @@ func put (fo,upper=,tablen=,orig=)
 
   return fo;
 }
-func item (f,key,val,unit,comment,tab=,tablen=)
+func mkk (key) // make/check key[s]
+{
+  use, scom, sop, sres;
+  m= !strgrepm("^[^"+sres+"]+$",key);
+  if (anyof(m))
+    error,"restricted char in key";
+  key= strcase(0,strtrim(key));
+  si= strfind("  ",key);
+  while(anyof(si(2,)!=-1)){   // replace double spaces **NOT STANDARD**
+    key= streplace(key,si," ");
+    si= strfind("  ",key);
+  }
+  return key;
+}
+func item (key,val,unit,comment,tab=,tablen=)
 {
   use, pr1_table;
 
