@@ -9,7 +9,7 @@ require,"yut.i";
 // multiple values in Units or Value fields are separated with: commas, tabs, or spaces.
 
 scratch= save(scratch, tmp);
-tmp= save(get,put,set,unitcof,fixunit,item,add,getline,getfile,mkk);
+tmp= save(get,put,set,unitcof,fixunit,item,add,getline,getfile,mkk,mkv);
 func rdf (base,f,vo)
 /* DOCUMENT rdf();
             rdf(f); // with F as a filename string, or textstream
@@ -72,7 +72,7 @@ func rdf (base,f,vo)
       for (i=1;i<=n;i++) {
         if (allof((vo(noop(i),*,)(-,)==["val","unit","comment"])(sum,))) {
           kk= ob(mkk,f(i));
-          txt(i)= ob(item,kk,vo(noop(i),val),vo(noop(i),unit), \
+          txt(i)= ob(item,kk,ob(mkv,vo(noop(i),val)),vo(noop(i),unit),  \
                      vo(noop(i),comment),tab=1,tablen=tablen);
           save, kv, noop(kk), vo(noop(i));
         } else
@@ -266,23 +266,8 @@ func set (key, val, unit=, comment=)
     error,"key not found";
 
   v= kv(noop(key));
-  if (structof(val)==string) {
-    save, v, val=val;
-  } else {
-    sv= structof(val);
-    if (sv==double||sv==float) {
-      s= [swrite(val, format="%#.16g ")+" "](sum);
-    } else if (sv==long||sv==int||sv==short||sv==char) {
-      s= [swrite(val, format="%d")+" "](sum);
-    } else if (sv==complex) {
-      s=  [swrite(val.re,val.im,format="(%#.16g, %#.16g) ")+" "](sum);
-    } else if (sv==string) {
-      s= [swrite(val, format="%s")+" "](sum);
-    }
-    s= streplace(s,strfind("[",s,n=20),"");
-    s= streplace(s,strfind("]",s,n=20),"");
-    save, v, val=s;
-  }
+  save, v, val=use_method(mkv,val);
+
   nun= 10;
   us= strpart(unit,strword(unit," ,",nun)); //" ,*/^"
   m= us!=string(0);
@@ -415,6 +400,26 @@ func mkk (key) // make/check key[s]
     si= strfind("  ",key);
   }
   return key;
+}
+func mkv (val)
+{
+  if (structof(val)==string) {
+    return val;
+  } else {
+    sv= structof(val);
+    if (sv==double||sv==float) {
+      s= [swrite(val, format="%#.16g ")+" "](sum);
+    } else if (sv==long||sv==int||sv==short||sv==char) {
+      s= [swrite(val, format="%d")+" "](sum);
+    } else if (sv==complex) {
+      s=  [swrite(val.re,val.im,format="(%#.16g, %#.16g) ")+" "](sum);
+    } else if (sv==string) {
+      s= [swrite(val, format="%s")+" "](sum);
+    }
+    s= streplace(s,strfind("[",s,n=20),"");
+    s= streplace(s,strfind("]",s,n=20),"");
+    return s;
+  }
 }
 func item (key,val,unit,comment,tab=,tablen=)
 {
