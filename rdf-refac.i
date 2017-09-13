@@ -124,7 +124,7 @@ func rdf (base,f,vo)
   txt= strtrim(txt(1,));
   unit= strpart(txt,strgrep("\\([-a-zA-Z0-9,^\\/\\*]*\\)$",txt));  // "(units)", nil no conversion, - no unit.
   unit= strpart(unit,2:-1);                                        // "(units)"
-  key= strtrim(strpart(txt,strgrep("[^"+sres+"]+",txt))):
+  key= strtrim(strpart(txt,strgrep("[^"+sres+"]+",txt)));
 
   // look for valid key=val
   m&= key!=string(0);
