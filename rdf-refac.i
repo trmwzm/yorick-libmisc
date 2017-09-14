@@ -85,7 +85,7 @@ func rdf (base,f,vo)
   } else if (typeof(f)=="text_stream") {
     fnm= nameofstream(f);
   } else if (is_void(f)) {   // empty object
-    save,ob,txt=[],ikv=[],kv=[];
+    save,ob,txt=[],ikv=[],kv=save();
     return ob;
   }
 
@@ -105,8 +105,7 @@ func rdf (base,f,vo)
   for (i=1;i<=ncom;i++)
     icom(..,i)= strfind(scom(i),txt)(1,..);
 
-  // *TODO* deal with OPERATOR =
-
+  // *TODO* deal with OPERATOR = ... which I have never seen in an RDF file
   // find operator (=)
   weq= strfind(sop, txt)(1,..);
 
@@ -115,13 +114,13 @@ func rdf (base,f,vo)
   for (i=1;i<=ncom;i++)
     m&= weq<icom(..,i);
 
-  txt= strpart(txt,strword(txt,scom(sum),2));
-  cm= strtrim(txt(2,));                                            // comments
-  txt= strtrim(txt(1,));                                           // keyval
-  txt= strpart(txt,strword(txt,sop,2));
-
-  val= strtrim(txt(2,..));                                         // vals
-  txt= strtrim(txt(1,));
+  // get all the fields
+  txt= strtrim(strpart(txt,strword(txt,scom(sum),2)));
+  cm= txt(2,..);                                            // comments
+  txt= txt(1,..);                                           // keyval
+  txt= strtrim(strpart(txt,strword(txt,sop,2)));
+  val= txt(2,..);                                         // vals
+  txt= txt(1,..);
   unit= strpart(txt,strgrep("\\([-a-zA-Z0-9,^\\/\\*]*\\)$",txt));  // "(units)", nil no conversion, - no unit.
   unit= strpart(unit,2:-1);                                        // "(units)"
   key= strtrim(strpart(txt,strgrep("[^"+sres+"]+",txt)));
@@ -129,6 +128,7 @@ func rdf (base,f,vo)
   // look for valid key=val
   m&= key!=string(0);
 
+  // handle SUFFIX with a kludge
   sf= key=="suffix";
   m&= !sf;
   if (anyof(sf)) {              // dealing with suffix !kludge!
@@ -176,15 +176,9 @@ func rdf (base,f,vo)
 }
 func add (o)
 {
-  use, txt, ikv, kv;
-
-  len= numberof(txt);
-  txt= _(txt,o(txt));
-  ikv= _(ikv,o(ikv)+len);
-  if (is_void(kv))
-    kv= o(kv);
-  else
-    save, kv, [], o(kv);
+  save, use, txt=_(use(txt),o(txt)), \
+             ikv=_(use(ikv),o(ikv)+numberof(txt));
+  save, use(kv), [], o(kv);
 }
 func getfile (f,dir)
 {
