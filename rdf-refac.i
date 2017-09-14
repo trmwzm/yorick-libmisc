@@ -442,11 +442,7 @@ func item (key,val,unit,comment,tab=,tablen=)
     sout= key + unit;
   }
   sout+= "= ";
-  if (structof(val)!=string) {
-    sout+= strtranslate(pr1(val),pr1_table);
-  } else {
-    sout += val;
-  }
+  sout+= strtranslate(use_method(mkv,val),pr1_table);
   sout+= "  ";
   if (!is_void(comment) && comment!=string(0) && comment!="")
     sout+= "  ! "+comment;
