@@ -3220,6 +3220,62 @@ func oxmap (f,oo,..)
   return o;
 }
 
+scratch= save(scratch,tmp);
+tmp= save(add,pop);
+func oxlist (base,..)
+/* DOCUMENT l= oxlist();
+            l= oxlist(a1, a2, ..);
+            l, add, a1, a2;
+            l, add, a1, oxlist(b1, b2, ..);
+            l, pop, 2;
+            l, pop, 1:3; // return L(1:3)
+   add: append any number of arguments. If one arg is
+        an OXLIST object, add only its list/group.
+   pop: if void arg then arg==1, if argument is an integer N smaller
+        than list length, remove N last list members
+        if arg N is a range, extract list(N)
+
+   example:
+   l= oxlist(pi,save(ji="ho",string(0),[]),sin);
+   l,add,indgen(3);
+   l,add,oxlist(create("q"));
+   l,pop,2;
+   SEE ALSO:
+ */
+{
+  ob= base(:);
+  l= save();
+  save,ob,l;
+  save, ob, membs=ob(*,);
+  while (more_args()>0)
+    ob,add,next_arg();
+  return ob;
+}
+func pop (n)
+{
+  use, l;
+  n= is_void(n)? 1: n;
+  if (is_range(n))
+    l= l(n);
+  else
+    l= l(*)>n? l(1:-n): save();
+}
+func add (o,..)
+{
+  use,l,membs;
+  do {
+    if (is_obj(o)>0 &&
+        o(*)==numberof(membs)+1 &&
+        allof((o(*,)(-,:-1)==membs)(,sum)))
+      save,l,[],o(l);
+    else
+      save,l,string(0),o;
+    o= next_arg();
+  } while (more_args()>0)
+}
+oxlist= closure(oxlist,restore(tmp));
+restore, scratch;
+
 func oxdir (dn)
 /* DOCUMENT oxdir (dn)
    scan dir tree and output a void-valued oxy objext with keys==file/dir-names;
