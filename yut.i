@@ -3222,20 +3222,29 @@ func oxmap (f,oo,..)
 
 scratch= save(scratch,tmp);
 tmp= save(add,pop);
-func oxlist (base,..)
+func oxlist (base,..,flat=)
 /* DOCUMENT l= oxlist();
             l= oxlist(a1, a2, ..);
             l, add, a1, a2;
             l, add, a1, oxlist(b1, b2, ..);
             l, pop, 2;
             l, pop, 1:3; // return L(1:3)
+   *!* all pointers *!*
+       o= save();
+       l= oxlist(o);
+       save,o,pi;
+       l(l,1,pi)==pi;
+   PURPOSE: general list object, with self-referencing/pointers if sublist/tree,
+            unless FLAT==1 in which case sub(ox)lists are unrolled/inserted inline.
    add: append any number of arguments. If one arg is
-        an OXLIST object, add only its list/group.
+        an OXLIST object and FLAT==1, only insert "inline" its list/group.
    pop: if void arg then arg==1, if argument is an integer N smaller
-        than list length, remove N last list members
-        if arg N is a range, extract list(N)
-
-   example:
+        than list length, remove N last list members, if arg N is a range,
+        extract list(N)
+        IF subroutine call, the list is cropped to REMAINING objects,
+        IF function call, the returned OXLIST containing SELECTED objects,
+        original object unchanged.
+   EXAMPLE:
    l= oxlist(pi,save(ji="ho",string(0),[]),sin);
    l,add,indgen(3);
    l,add,oxlist(create("q"));
@@ -3248,24 +3257,39 @@ func oxlist (base,..)
   save,ob,l;
   save, ob, membs=ob(*,);
   while (more_args()>0)
-    ob,add,next_arg();
+    ob,add,next_arg(),flat=flat;
   return ob;
 }
 func pop (n)
 {
   use, l;
   n= is_void(n)? 1: n;
-  if (is_range(n))
-    l= l(n);
-  else
-    l= l(*)>n? l(1:-n): save();
+  if (is_range(n)) {
+    m= array(char,l(*));
+    m(n)= 1;
+  }
+  if (am_subroutine())
+    if (is_range(n))
+      l= l(where(!m));
+    else
+      l= l(*)>n? l(1:-n): save();
+  else {
+    if (is_range(n))
+      ll= l(where(m));
+    else
+      ll= n>0? l(-n+1:): save();
+    o= oxlist();
+    save,o,l=ll;
+    return o;
+  }
 }
-func add (o,..)
+func add (o,..,flat=)
 {
   use,l,membs;
   do {
-    if (is_obj(o)>0 &&
-        o(*)==numberof(membs)+1 &&
+    if (flat==1 && \
+        is_obj(o)>0 && \
+        o(*)==numberof(membs)+1 && \
         allof((o(*,)(-,:-1)==membs)(,sum)))
       save,l,[],o(l);
     else
@@ -3399,15 +3423,24 @@ func use_kdef (args)
    sets default value of listed keywords from context object,
    if found as members.
    usage ....
-   func line (y, x, color=) {use_keydef, use(), color; plg, y, x, color=color;}
-   graph= save(line, color="blue");
-   graph, line, radom(10), random(10);
-   graph, line, radom(10), random(10),color="red";
+   graph= save(plg_);
+   func plg_ (y, x, color=, type=) {
+     use_kdef, use(), color, type;
+     plg, y, x, color=color, type=type;
+   }
+   graph= restore(graph);
+   save, graph, color="blue",type=3;
+   fma;
+   graph, plg_, random(10), random(10);
+   graph, plg_, random(10), random(10),color="red";
+   graph, plg_, random(10), random(10),type=0;
  */
 {
   obj= args(1);
-  if (is_void(obj)) return [] /* do nothing if not in oxy context */
-  if (!is_obj(obj)) error, "expecting an oxy object has first argument";
+  if (is_void(obj))
+    return []; /* do nothing if not in oxy context */
+  if (!is_obj(obj))
+    error, "expecting an oxy object has first argument";
   for (i=2; i<=args(0); i++)
     if (is_void(args(i)) && args(0,i)==0 && is_obj(obj,args(-,i),1)==0)
       args, i, obj(args(-,i));
