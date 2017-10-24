@@ -161,8 +161,8 @@ func equispaced (y,x,n,bandfrac,&x10,&it,beta=,niter=,pad=,splin=,tol=)
  return yy;
 }
 
-func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&resid,&it,beta=,niter=,pad=,tol=)
-/* DOCUMENT equispaced2 (z,y,x,nx,xy,bandfrac,&y10,&x10,&resid,&it,beta=,niter=,pad=,tol=)
+func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it,beta=,niter=,pad=,tol=,errequi=)
+/* DOCUMENT equispaced2 (z,y,x,nx,xy,bandfrac,&y10,&x10,&err,&it,beta=,niter=,pad=,tol=,errequi=)
 
    N is First dimension length and that dim corresponds to X
    M is Second dimension length and that dim corresponds to Y
@@ -175,7 +175,7 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&resid,&it,beta=,niter=,pad=,tol=
    y= random(k)
    z= sin(2*pi*p(1)*x)*sin(2*pi*p(2)*y);
    local y10, x10;
-   resid= 1; // *** must be non-void to trigger computation
+   err= 1; // *** must be non-void to trigger computation
    zz= equispaced2(z,y,x,n,m,0.2,y10,x10,res);
    fma;pli,zz;
    SEE ALSO:
@@ -251,16 +251,19 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&resid,&it,beta=,niter=,pad=,tol=
       toli= dza/za;
     }
     xf= op(dz,1);
-    xf= roll(xf)*win;
-    zz+= roll(fft(xf).re)/(n*m);
+    zz+= roll(fft(roll(xf)*win).re)/(n*m);
     it+= 1;
   }
   if (it==niter)
     write,"WARNING pocs/equispaced2 max iterations reached: "+pr1([toli,dt]);
 
-  if (!is_void(resid)) {
-    resid= z-interp2(y,x,zz,yy,xx);
-    resid= reform(resid,d);
+  if (!is_void(err)) {
+    if (errequi) {
+      err= roll(fft(roll(xf)).re)/(n*m);
+    } else {
+      err= z-interp2(y,x,zz,yy,xx);
+      err= reform(err,d);
+    }
   }
 
   x10*= xpp;
