@@ -1,4 +1,5 @@
 require, "yut.i";
+require, "dsp.i";
 
 func gaupro_1 (m, sig=, expf=, gau=, cutlo=, cuthi=, pad=)
 /* DOCUMENT

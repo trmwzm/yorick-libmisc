@@ -3244,6 +3244,8 @@ func oxlist (base,..,flat=)
         IF subroutine call, the list is cropped to REMAINING objects,
         IF function call, the returned OXLIST containing SELECTED objects,
         original object unchanged.
+   !CAUTION! calling oxlist() is identical to oxlist([])
+
    EXAMPLE:
    l= oxlist(pi,save(ji="ho",string(0),[]),sin);
    l,add,indgen(3);
@@ -3256,8 +3258,12 @@ func oxlist (base,..,flat=)
   l= save();
   save,ob,l;
   save, ob, membs=ob(*,);
-  while (more_args()>0)
+  n= more_args();
+  write,n,format="more_args starts= %i\n";
+  while ((i=more_args())>0) {
+    write,i,format="more_args add= %i\n";
     ob,add,next_arg(),flat=flat;
+  }
   return ob;
 }
 func pop (n)

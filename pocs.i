@@ -162,7 +162,7 @@ func equispaced (y,x,n,bandfrac,&x10,&it,beta=,niter=,pad=,splin=,tol=)
 }
 
 func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&resid,&it,beta=,niter=,pad=,tol=)
-/* DOCUMENT equispaced (y,x,n,bandfrac,&y10,&x10,&resid,&it,beta=,niter=,pad=,tol=)
+/* DOCUMENT equispaced2 (z,y,x,nx,xy,bandfrac,&y10,&x10,&resid,&it,beta=,niter=,pad=,tol=)
 
    N is First dimension length and that dim corresponds to X
    M is Second dimension length and that dim corresponds to Y
@@ -176,7 +176,7 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&resid,&it,beta=,niter=,pad=,tol=
    z= sin(2*pi*p(1)*x)*sin(2*pi*p(2)*y);
    local y10, x10;
    resid= 1; // *** must be non-void to trigger computation
-   zz= equispaced2(z,y,x,n,m,0.5,y10,x10,res);
+   zz= equispaced2(z,y,x,n,m,0.2,y10,x10,res);
    fma;pli,zz;
    SEE ALSO:
  */
@@ -187,6 +187,10 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&resid,&it,beta=,niter=,pad=,tol=
   y+= un;
   x+= un; un= [];
   nn= numberof(y);
+
+  z= z(*);
+  y= y(*);
+  x= x(*);
 
   if (is_void(beta))
     beta= 10.0;
@@ -240,7 +244,7 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&resid,&it,beta=,niter=,pad=,tol=
   while (it<niter && dt>tol) {
     if (it>0) {
       dz= z-interp2(y,x,zz,yy,xx);
-      dza= dz(*)(rms);
+      dza= dz(rms);
       dt= toli-dza/za;
       if (dt<0)
         error,"increasing RMS.";
@@ -254,8 +258,10 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&resid,&it,beta=,niter=,pad=,tol=
   if (it==niter)
     write,"WARNING pocs/equispaced2 max iterations reached: "+pr1([toli,dt]);
 
-  if (!is_void(resid))
+  if (!is_void(resid)) {
     resid= z-interp2(y,x,zz,yy,xx);
+    resid= reform(resid,d);
+  }
 
   x10*= xpp;
   y10*= ypp;
