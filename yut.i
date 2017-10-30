@@ -2465,6 +2465,37 @@ func limitsexp (frac,panel=)
   return limits();
 }
 
+func vparray(nx,ny,xm,xM,ym,yM,xgap=,ygap=)
+/* DOCUMENT
+   nx= 2;
+   ny= 5;
+   xm= 70; xM= 880; ym= 70; yM= 680;
+   xwindow,0,height=600,width=920,units=2,viewport=vparray(nx,ny,xm,xM,ym,yM,xgap=35,ygap=25),size=8;
+   for (i=1;i<=nx*ny;i++) {
+     plsys,i;
+     plg,[0,1];
+   }
+   SEE ALSO:
+*/
+{
+  xg= is_void(xgap)? 0: xgap/2;
+  yg= is_void(ygap)? 0: ygap/2;
+
+  x= span(xm+xg,xM-xg,nx+1);
+  y= span(ym+yg,yM-yg,ny+1);
+  xy= transpose([x(..,-:1:ny+1), y(-:1:nx+1,..)],2);
+
+  plm,xy(2,..),xy(1,..);
+  i= indgen(nx);
+  j= indgen(ny);
+
+  ij1= ((j(-,..)-1)*(nx+1)+i)(*);
+  ij2= ij1+1;
+  ij3= ij1+(nx+1);
+
+  return transpose([xy(1,ij1)+xg,xy(1,ij2)-xg,xy(2,ij1)+yg,xy(2,ij3)-yg]);
+}
+
 /************************************************************************/
 
 func lssys (directory, &dirs, dir=)
