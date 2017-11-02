@@ -640,7 +640,7 @@ func normproj(a, norm) {unorm= normvec(norm); return a-unorm*(a*unorm)(sum,..)(-
 
 func strconcat(strarr,spacer)
 {
-  if (is_voi(spacer))
+  if (is_void(spacer))
     spacer= string(0);
   return strpart((strarr+spacer)(sum),:-strlen(spacer));
 }
