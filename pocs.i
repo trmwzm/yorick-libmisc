@@ -170,7 +170,7 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it,beta=,niter=,pad=,tol=,e
    k= 10000;
    n= 500;
    m= 600;
-   p= [4,4];
+   p= [1,4];
    x= random(k);
    y= random(k)
    z= sin(2*pi*p(1)*x)*sin(2*pi*p(2)*y);
@@ -236,7 +236,7 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it,beta=,niter=,pad=,tol=,e
   zz= array(0.,n,m);
   xx= span(x1,x0,n)(,-:1:m);
   yy= span(y1,y0,m)(-:1:n,);
-  za= z(*)(rms);
+  za= z(rms);
 
   it= 0;
   dz= z;
