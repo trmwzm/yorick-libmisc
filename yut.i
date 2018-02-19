@@ -2889,7 +2889,7 @@ func oxrestore (args)
 wrap_args,oxrestore;
 
 func oxwrite (f,o,&onm,lvl)
-/* DOCUMENT oxwrite, ob, "obname";
+/* DOCUMENT oxwrite, ob, ["object name", if void  "cfg"], doc=;
    #include "qq.i";
    oxwrite,open("q.i","w"),o3,"ob";
    TODO: fix for groups
@@ -2906,10 +2906,9 @@ func oxwrite (f,o,&onm,lvl)
   nidnt= 2
   lvl= is_void(lvl)? 1: lvl+1;
   idnt1= lvl==1? "": strchar(char(array(32,nidnt*(lvl-1))));
-  idnt2= idnt1+"  ";
+  idnt2= strchar(char(array(32,nidnt*lvl)))
 
-  tablen= 26;
-
+  // only on call
   if (is_string(onm)) {
     onm= save(string(0),onm);
     // stash scratch
@@ -2921,8 +2920,7 @@ func oxwrite (f,o,&onm,lvl)
         format="scratch= save(scratch%s);\n\n";
     }
   }
-  s= swrite(onm(0),format=idnt1+"%s= save();");
-  sl= tablen*(strlen(s)/tablen+1)-strlen(s);
+  s= swrite(onm(0),format="\n"+idnt1+"%s= save(); {");
   write,f,s,format="%s\n";
 
   print_format,float="%.9g",double="%.9g",complex="%.9g+%.9gi";
@@ -2934,17 +2932,19 @@ func oxwrite (f,o,&onm,lvl)
     } else {
       s= swrite(onm(0),o(*,i),pr1(oi)(*)(sum),\
              format=idnt2+"%s, %s"+(o(*,i)? "=": "string(0),")+" %s;");
-      sl= tablen*(strlen(s)/tablen+1)-strlen(s);
       write,f,s,format="%s\n";
     }
   }
   print_format;
 
   if (onm(*)>1) {
-    write,f,onm(-1),onm(0),format=idnt1+"save, %s, %s;\n\n";
+    write,f,onm(-1),onm(0),format=idnt1+"} save, %s, %s;\n";
     onm= onm(:-1);
-  } else
+  } else {
+    write,f,"}",format="%s\n";
+    write,f,"";
     write,f,"restore, scratch;",format="%s\n";
+  }
   return f;
 }
 func oxisfunc (o)
