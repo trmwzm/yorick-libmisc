@@ -2888,17 +2888,25 @@ func oxrestore (args)
 }
 wrap_args,oxrestore;
 
-func oxwrite (f,o,&onm,odoc)
-/* DOCUMENT oxwrite, ob, "obname", odoc;
+func oxwrite (f,o,&onm,lvl)
+/* DOCUMENT oxwrite, ob, "obname";
    #include "qq.i";
-   oxwrite,open("q.i","w"),o3,"ob",oxcomdoc ("qq.i","ob");
+   oxwrite,open("q.i","w"),o3,"ob";
    TODO: fix for groups
    SEE ALSO: oxsave,oxread,oxcopy,oxtypeq;
  */
 {
-  if (is_string(f)) f= open(f,"w");
+  if (is_string(f))
+    f= open(f,"w");
 
-  if (is_void(onm)) onm= "cfg";
+  if (is_void(onm))
+    onm= "cfg";
+
+  // object indentation level
+  nidnt= 2
+  lvl= is_void(lvl)? 1: lvl+1;
+  idnt1= lvl==1? "": strchar(char(array(32,nidnt*(lvl-1))));
+  idnt2= idnt1+"  ";
 
   tablen= 26;
 
@@ -2913,12 +2921,8 @@ func oxwrite (f,o,&onm,odoc)
         format="scratch= save(scratch%s);\n\n";
     }
   }
-  s= swrite(onm(0),format="%s= save();");
+  s= swrite(onm(0),format=idnt1+"%s= save();");
   sl= tablen*(strlen(s)/tablen+1)-strlen(s);
-
-  if (is_obj(odoc,"help",1)>=0 && odoc("help")!="")
-    if ((sh=odoc("help"))!="")
-      s= swrite(s,"// "+sh,format="%s"+array(" ",sl)(sum)+"%s");
   write,f,s,format="%s\n";
 
   print_format,float="%.9g",double="%.9g",complex="%.9g+%.9gi";
@@ -2926,24 +2930,21 @@ func oxwrite (f,o,&onm,odoc)
     oi= o(noop(i));
     if (is_obj(oi)) {
       save, onm, string(0), o(*,i);
-      f= oxwrite(f,oi,onm,(!is_void(odoc)? odoc(i+1):[]));
+      f= oxwrite(f,oi,onm,lvl);
     } else {
       s= swrite(onm(0),o(*,i),pr1(oi)(*)(sum),\
-             format="save, %s, %s"+(o(*,i)? "=": "string(0),")+" %s;");
+             format=idnt2+"%s, %s"+(o(*,i)? "=": "string(0),")+" %s;");
       sl= tablen*(strlen(s)/tablen+1)-strlen(s);
-      if (is_obj(odoc) && i+1<=odoc(*))
-        if (odoc(i+1)!="")
-          s= swrite(s,"// "+odoc(i+1),format="%s"+array(" ",sl)(sum)+"%s");
       write,f,s,format="%s\n";
     }
   }
   print_format;
 
   if (onm(*)>1) {
-    write,f,onm(-1),onm(0),onm(0),format="save, %s, %s= %s(:);\n";
+    write,f,onm(-1),onm(0),format=idnt1+"save, %s, %s;\n\n";
     onm= onm(:-1);
   } else
-    write,f,"\nrestore, scratch;",format="%s\n";
+    write,f,"restore, scratch;",format="%s\n";
   return f;
 }
 func oxisfunc (o)
@@ -2953,54 +2954,6 @@ func oxisfunc (o)
   for (i=1;i<=n;i++)
     m(i)= is_func(o(noop(i)));
   return m;
-}
-func oxcomdoc (f,nm)
-/* DOCUMENT
- */
-{
-  l= text_lines(f);
-  ln= strlen(l);
-  ms= !strgrepm("scratch",l);
-  s1= strgrep("^ *save.*=",l,n=1);
-  s11= strgrep("^ *save.*= .*\\( *: *\\)",l,n=1);
-  m1= s1(2,)>0 & ms & !(s11(2,)>0);
-  s2= strgrep("^.*= *save *\\(",l,n=1);
-  m2= s2(2,)>0 & ms;
-  s3= strgrep("//",l,n=1);
-  // comments
-  m= s3(2,)>0;
-  // lines to edit
-  mm= (m1 | m2);
-  c= array("",numberof(ln));
-  if (anyof(m)) {
-    w= where(m);
-    s3(1,w)= s3(2,w);
-    s3(2,w)= ln(w);
-    c(w)= strtrim(strpart(l,s3))(w);
-  }
-  if (anyof(mm)) {
-    ww= where(mm);
-    l(ww)= (strpart(l,s2)+strpart(l,s1))(ww);
-  }
-  if (anyof(m2)) {
-    w2= where(m2);
-    l(w2)+= "help=";
-  }
-  l(ww)+= swrite(c(ww),format="\"%s\"");
-  if (anyof(m1)) {
-    w1= where(m1);
-    l(w1)+= ";";
-  }
-  if (anyof(m2)) {
-    w2= where(m2);
-    l(w2)+= ");";
-  }
-  if (is_void(nm))
-    return l;
-  l= streplace(l,strgrep("^ *"+nm+" *=",l,n=1),"_o_=");
-  l= streplace(l,strgrep(", *"+nm+" *,",l,n=1),",_o_,");
-  include,l,1;
-  return _o_;
 }
 
 func oxedit (args)
