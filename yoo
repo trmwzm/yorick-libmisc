@@ -2,5 +2,4 @@
 # get rlwrap here: http://utopia.knoware.nl/~hlub/rlwrap/
 
 [ -d "$HOME/dev/yorick/logs/" ] || eval "mkdir -p $HOME/dev/yorick/logs/"
-
 rlwrap --remember -c -b "(){}[],^%$#@\"\";:''|\\" -l $HOME/dev/yorick/logs/yolog.`date +%F.%R` yorick
