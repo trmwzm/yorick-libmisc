@@ -1,28 +1,53 @@
-scratch= save(scratch, tmp); tmp= save(_eval,digfun_type);
-func digfun (base,y,x,decim=,type=)
-/* DOCUMENT
+require, "imbinavrg.i";
+require, "poly_fit.i";
+
+scratch= save(scratch, tmp);
+tmp= save(_eval, scale, elacs, digfun_type);
+func digfun (base, y, x, decim=, type=)
+/* DOCUMENT f= digfun (y, x, decim=, type=)
+   F is a closure evaluating Y(X) using
+   predifined instance types.
  */
 {
-  if (!is_void(type))
-    return base(digfun_type,type,y,x,decim=decim);
-
   ob= base(:);
-  save, ob, type="digfun";
+
+  save, ob, type= "digfun";
   save, ob, a= 0.0;            // fit parameter
-  save, ob, xmin= 0.0;
-  save, ob, xmax= 0.0;
-  save, ob, dx= 0.0;
-  save, ob, yav= 0.0;
-  return closure(ob,_eval);
+
+  op= save(digfun_lin, digfun_splinelsq, digfun_spline, \
+           digfun_poly);    //  ,digfun_cheby
+  save, ob, op;
+
+  if (!is_void(type))
+    return ob(digfun_type,type,y,x,decim=decim);
+
+  return ob;
 }
 func _eval (x,deriv=,integ=,deriv2=)
 {
   error,"virtual func";
 }
-func digfun_type (type,y,x,decim=)
+func scale (&y, &x)
 {
-  return save(digfun_lin,digfun_splinelsq,digfun_spline,                \
-              digfun_fft,digfun_cheby)(noop(type),y,x,decim=decim);
+  xmin= min(x);
+  xmax= max(x);
+  ymin= min(y);
+  ymax= max(y);
+  save, use, xmin, xmax, ymin, ymax;
+
+  x= (x-ymin)/(xmax-xmin) - 0.5;
+  y= (y-ymin)/(ymax-ymin) - 0.5;
+}
+func elacs (&y, &x)
+{
+  use, xmin, xmax, ymin, ymax;
+  x= xmin+(x+0.5)*(xmax-xmin);
+  y= ymin+(y+0.5)*(ymax-ymin);
+}
+func digfun_type (type, y, x, decim=)
+{
+  use, op;
+  return op(noop(type),y,x,decim=decim);
 }
 digfun= closure(digfun,restore(tmp)); restore, scratch;
 
@@ -33,9 +58,9 @@ func digfun_splinelsq (base,y,x,decim=)
    discontinuous second derivatives
  */
 {
-  ob= digfun().function;
+  ob= digfun.data;
 
-  save, ob, [], base(:); //  clobber eval
+  save, ob, [], base(:); //  clobber eval, scale, elacs
 
   d= dimsof(y,x);
   if (is_void(d))
@@ -91,7 +116,7 @@ scratch= save(scratch, tmp); tmp= save(_eval);
 func digfun_spline (base,y,x,decim=)
 /* DOCUMENT */
 {
-  ob= digfun().function;
+  ob= digfun.data;
 
   save, ob, [], base(:);
 
@@ -107,7 +132,7 @@ func digfun_spline (base,y,x,decim=)
 
   x10= [x(1),x(0)];
   y10= [y(1),y(0)];
-  
+
   x= reform(x(1:decim*nf),[2,decim,nf])(avg,..);
   y= reform(y(1:decim*nf),[2,decim,nf])(avg,..);
 
@@ -116,7 +141,7 @@ func digfun_spline (base,y,x,decim=)
     y= _(y10(1),y,y10(2));
     nf+= 2;
   }
-  
+
   yav= y(avg);
   y-= yav;
 
@@ -169,9 +194,9 @@ func digfun_lin (base,y,x,decim=)
    discontinuous second derivatives
  */
 {
-  ob= digfun().function;
+  ob= digfun.data;
 
-  save, ob, [], base(:); //  clobber eval
+  save, ob, [], base(:); //  clobber _eval
 
   d= dimsof(y,x);
   if (is_void(d))
@@ -185,7 +210,7 @@ func digfun_lin (base,y,x,decim=)
 
   x10= [x(1),x(0)];
   y10= [y(1),y(0)];
-  
+
   x= reform(x(1:decim*nf),[2,decim,nf])(avg,..);
   y= reform(y(1:decim*nf),[2,decim,nf])(avg,..);
 
@@ -228,18 +253,14 @@ func _eval (x,deriv=,deriv2=,integ=)
 }
 digfun_lin= closure(digfun_lin,restore(tmp));restore, scratch;
 
-
-scratch= save(scratch, tmp); tmp= save(_eval);
-func digfun_fft (base,y,x,decim=)
-/* DOCUMENT m= digfun_fft (base,y,x,decim=)
-            m= digfun (base,y,x,decim=,type="digfun_fft")
-   discontinuous second derivatives
+scratch= save (scratch, tmp); tmp= save(_eval);
+func digfun_poly (base, y, x, decim=, degree=)
+/* DOCUMENT m= digfun_poly(y,x,decim=)
+            m= digfun(y,x,decim=,type="digfun_poly")
  */
 {
-  ob= digfun().function;
+  ob= digfun.data;
 
-  error,"nothing yet";
-  
   save, ob, [], base(:); //  clobber eval
 
   d= dimsof(y,x);
@@ -253,60 +274,61 @@ func digfun_fft (base,y,x,decim=)
   nf= n/decim;
 
   // binning
-  x= reform(x(1:decim*nf),[2,decim,nf])(avg,..);
-  y= reform(y(1:decim*nf),[2,decim,nf])(avg,);
+  x10= [];
+  y= binavrg(y,x,nf,x10);
+  x= span(x10(1),x10(2),nf+1)(zcen);
+  m= y==0.0;
+  if (anyof(m)) {
+    w= where(m);
+    nw= where(!m);
+    y(w)= interp(y(nw),x(nw),x(w));
+  }
 
-  yav= y(avg);
-
-  save, ob, xmin= min(x);
-  save, ob, xmax= max(x);
-  save, ob, dx= (ob(xmax)-ob(xmin))/(nf-1);
-  save, ob, yav= yav;
-  save, ob, decim;
-
-  xf= span(ob(xmin),ob(xmax),nf);
-  yf= spline(y,x,xf,dydx0=0.0,dydx1=0.0);
-  
-  a= xf(-:1:4,..);
-  a(2,..)= yf;
-  a(3,..)= ((a(2,:-1)-a(2,2:))/(a(1,:-1)-a(1,2:)))(pcen);
-  a(4,..)= ((a(3,:-1)-a(3,2:))/(a(1,:-1)-a(1,2:)))(pcen);
-
+  ob, scale, y,x;
+  a= poly1_fit(y,x,(is_void(degree)? 5: degree));
   save, ob, a;
-  save, ob, type="digfun_fft";
+  save, ob, type="digfun_poly";
 
   return closure(ob,_eval);
 }
-func _eval (x,deriv=,deriv2=,integ=)
+func _eval (x,deriv=)
 {
-  use, a,yav;
-  out= x;
+  use_method, elacs, 1, x;
   if (deriv==1)
-    return interp(a(3,..),a(1,..),x);
-  else if (deriv2==1)
-    return interp(a(4,..),a(1,..),x);
-  else if (integ==1)
-    return yav*x+integ(a(2,..),a(1,..),x);
+    y= poly1_deriv(x, use(a));
   else
-    return yav+interp(a(2,..),a(1,..),x);
+    y= poly1(x, use(a));
+  use_method, elacs, y, 1;
+  return y;
 }
-digfun_fft= closure(digfun_fft,restore(tmp));restore, scratch;
-#if 0
-func test (decim=,type=)
+digfun_poly= closure(digfun_poly,restore(tmp));restore, scratch;
+#if 1
+func test (n=,decim=,type=)
 {
   if (is_void(n))
     n= 1000;
-  x= span(0,5.,n);
+  xmax= 1;
+
+  x= span(0,xmax,n);
   y= sin(2*pi*x);
 
   f= digfun(y,x,type=type,decim=decim);
 
-  xx= span(1.,4.,n)+random_n(n)/(3*n);
+
+  l= char(indgen(0:128));l(95+1)=l(45+1);
+  type= string(&(l(strchar(type)+1)));
+
+  xx= span(1.,xmax-1,n)+random_n(n)/(3*n);
   window,0;
   fma;
   plg,sin(2*pi*xx)-f(xx),xx;
+  pltitle,"F residual: type= "+type+", decim= "+pr1(decim)+", n="+pr1(n);
+  limits;
+
   window,1;
   fma;
   plg,2*pi*cos(2*pi*xx)-f(xx,deriv=1),xx;
+  pltitle,"dF/dX residual:type= "+type+", decim= "+pr1(decim)+", n="+pr1(n);
+  limits;
 }
 #endif
