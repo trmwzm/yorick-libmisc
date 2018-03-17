@@ -5,6 +5,8 @@ func binavrg (z, x, fac, &x10, badval=, badvalout=)
    Number of bins from fraction FRAC (if real) of input, or fixed (if FRAC integer).
      - trailing dimension of Z expected equal to that of X ("ni" below.)
      - bin ~boundaries~ returned in X10
+   IFF provided *and* non-nil the bin boundaries extrema are taken from X10
+   otherwise there are computed to have bin centers at MIN/MAX(X)
 
    no= numberof(g);
    output grid boundaries: go= span(x10(1),x10(2),no+1); ZCEN for bin center
@@ -33,10 +35,13 @@ func binavrg (z, x, fac, &x10, badval=, badvalout=)
   if (dz(1)==1)
     zo= zo(-,..);
 
-  x1= x(min);
-  x0= x(max);
-  dx= (x0-x1)/no;
-  x10= [x1-dx/2,x0+dx/2];
+  if (is_void(x10)) {
+    x1= x(min);
+    x0= x(max);
+    dx= (x0-x1)/no;
+    x10= [x1-dx/2,x0+dx/2];
+  }
+
   go= span(x10(1),x10(2),no+1);
 
   for (il=1; il<=dimsof(z)(2); il++) {
