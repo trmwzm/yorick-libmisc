@@ -18,8 +18,12 @@ func digfun (base, y, x, type=, degree=)
            digfun_poly);    //  ,digfun_cheby
   ob, op=op;
 
-  if (is_void(type))
-    error,"Must supply digfun TYPE, which is one of: "+(strpart(op(*,),8:)+" ")(sum);
+  clsn= "digfun";
+  typs= strpart(op(*,),strlen(clsn)+2:);
+  if (is_void(y))
+    return typs;
+  if (is_void(type) || noneof(type==typs))
+    error,"Must supply digfun TYPE, which is one of: "+(typs+" ")(sum);
 
   dy= dimsof(y);
   if (dy(0)!=dimsof(x)(0))
@@ -34,7 +38,7 @@ func digfun (base, y, x, type=, degree=)
   ob, stats, y, x;
   ob, scale, y, x;
 
-  return ob(digfun_type,"digfun_"+type,ob,y,x,degree=degree);
+  return ob(digfun_type,clsn+"_"+type,ob,y,x,degree=degree);
 }
 func eval (x, deriv=, deriv2=, integ=)
 {
