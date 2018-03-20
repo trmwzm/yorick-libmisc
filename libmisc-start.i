@@ -21,3 +21,5 @@ if (anyof(m)) {
   }
 }
 restore,tmp;
+
+pldefault, marks=0;
