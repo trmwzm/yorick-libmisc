@@ -12,18 +12,18 @@ func digfun (base, y, x, type=, degree=)
    for SPLINELSQ, DEGREE is the numberof knots.
  */
 {
-  ob= base(:);
-
+  clsn= "digfun";
   op= save(digfun_lin, digfun_splinelsq, digfun_spline, \
            digfun_poly);    //  ,digfun_cheby
-  ob, op=op;
-
-  clsn= "digfun";
   typs= strpart(op(*,),strlen(clsn)+2:);
   if (is_void(y))
     return typs;
   if (is_void(type) || noneof(type==typs))
     error,"Must supply digfun TYPE, which is one of: "+(typs+" ")(sum);
+
+  ob= base(:);
+
+  ob, op=op;
 
   dy= dimsof(y);
   if (dy(0)!=dimsof(x)(0))
@@ -81,7 +81,8 @@ func scale (&y, &x)
 {
   use, xmin, xmax, ymin, ymax;
   x= (x-xmin)/(xmax-xmin)-0.5;
-  y= (y-ymin)/(ymax-ymin)-0.5;
+  m= ymax==ymin;
+  y= (y-ymin)/(ymax-ymin+m)-0.5;
 }
 func elacs (&y, &x,deriv=,deriv2=,integ=)
 {
