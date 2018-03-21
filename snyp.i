@@ -53,6 +53,7 @@ restore, scratch;
 
 /*---------------------------------------------------------*/
 
+scratch= save(scratch, tmp);
 func tmp(args) {
   n = args(0);
   a = n? array(string, n) : [];
@@ -65,31 +66,37 @@ func tmp(args) {
 wrap_args, tmp;
 wrapped_closure = save(tmp, closure_data="Hello, world!");
 wrapped_closure = closure(wrapped_closure, tmp);
+restore, scratch;
+
 
 /*---------------------------------------------------------*/
 
+scratch= save(scratch,tmp);
 tmp= save(add);
-func obj (base,a)
+func obj (base, a)
 /* DOCUMENT obj (base,dat)
 */
 {
   ob= base(:);
-  save,ob,type="obj";
-  save,ob,a;
+  ob, type="obj";
+  save, ob, a;
 
   return ob;
 }
 func  add (o)
 {
   oo= use();
-  if (!am_subroutine()) oo= oo(:);
-  save,oo,a=o(a)+oo(a);
+  if (!am_subroutine())
+    oo= oo(:);
+  oo, a=o(a)+oo(a);
   return oo;
 }
 obj= closure(obj, restore(tmp));
+restore, scratch;
 
+scratch= save(scratch,tmp);
 tmp= save(mm);
-func obj2 (base,a,p)
+func obj2 (base, a, p)
 /* DOCUMENT obj2 (base)
 */
 {
@@ -99,7 +106,7 @@ func obj2 (base,a,p)
     p= 1;
 
   save, ob, [], base(:);
-  save,ob,type="obj2",p;
+  ob, type="obj2", p=p;
   return ob;
 }
 func  mm (o)
@@ -110,16 +117,17 @@ func  mm (o)
   return oo;
 }
 obj2= closure(obj2, restore(tmp));
+restore, scratch;
 
 a= [];
-o1=obj(1);
-o2=obj(2);
-o3=o1(add,o2);
+o1= obj(1);
+o2= obj(2);
+o3= o1(add,o2);
 if (o1(a)!=1 || o2(a)!=2 || o3(a)!=3 || !is_void(a)) error;
 a= [];
-o1=obj2(1);
-o2=obj2(2);
-o3=o1(add,o2);
+o1= obj2(1);
+o2= obj2(2);
+o3= o1(add,o2);
 if (o1(a)!=1 || o2(a)!=2 || o3(a)!=3 || !is_void(a)) error;
 
 /*-------------- same as above with explicit constructors ---------------*/
@@ -171,14 +179,14 @@ obj2= closure(restore(tmp),mk);
 restore,scratch;
 
 a= [];
-o1=obj(1);
-o2=obj(2);
-o3=o1(add,o2);
+o1= obj(1);
+o2= obj(2);
+o3= o1(add,o2);
 if (o1(a)!=1 || o2(a)!=2 || o3(a)!=3 || !is_void(a)) error;
 a= [];
-o1=obj2(1);
-o2=obj2(2);
-o3=o1(add,o2);
+o1= obj2(1);
+o2= obj2(2);
+o3= o1(add,o2);
 if (o1(a)!=1 || o2(a)!=2 || o3(a)!=3 || !is_void(a)) error;
 
 
@@ -271,6 +279,7 @@ func eval(x)
 }
 oxo_a= closure(oxo_a,restore(tmp)); restore, scratch;
 
+/* -------------------------- hu? -------------------------- */
 #if 0
 func test (nx)
 {
