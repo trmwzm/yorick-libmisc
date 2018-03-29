@@ -1,40 +1,40 @@
 require, "fcomplex.i";
 
 func eval(code, tmp=, debug=)
-/* DOCUMENT eval, code;
+    /* DOCUMENT eval, code;
        -or- eval(code);
-     Evaluates CODE given as a string or as an array of strings (considered
-     as  different lines  in the  script).  Since  CODE can  be dynamically
-     build,   this  routine   allows  the   execution  of   virtually  (see
-     hints/restrictions below)  any Yorick's code  (e.g. dynamic definition
-     of  structures,  of functions,  etc.).   For  instance, the  following
-     statement defines a new structure:
+       Evaluates CODE given as a string or as an array of strings (considered
+       as  different lines  in the  script).  Since  CODE can  be dynamically
+       build,   this  routine   allows  the   execution  of   virtually  (see
+       hints/restrictions below)  any Yorick's code  (e.g. dynamic definition
+       of  structures,  of functions,  etc.).   For  instance, the  following
+       statement defines a new structure:
        eval, "struct NewStruct {string a; long b; float c, d;}";
 
-     Since  the script  gets evaluated  at the  scope level  of  the "eval"
-     routine some local variables of the  "eval" routine may be used in the
-     script:
+       Since  the script  gets evaluated  at the  scope level  of  the "eval"
+       routine some local variables of the  "eval" routine may be used in the
+       script:
        "eval_tmp"    contains  the  name of  the temporary script  file and
-                     must not be changed by the script;
+       must not be changed by the script;
        "eval_debug"  contains the value of  the keyword DEBUG and  must not
-                     be changed by the script;
+       be changed by the script;
        "eval_code"   contains the value of the argument CODE;
        "eval_result" is  returned by  "eval", its  contents may  be defined
-                     into the script to provide a returned value.
-     Note: impredictible  results may  occur if CODE  changes the  value of
-     symbols "eval_tmp" and "eval_debug".
+       into the script to provide a returned value.
+       Note: impredictible  results may  occur if CODE  changes the  value of
+       symbols "eval_tmp" and "eval_debug".
 
-     Keyword TMP  can be  used to  specify the file  name of  the temporary
-     script.  The default file name is:
+       Keyword TMP  can be  used to  specify the file  name of  the temporary
+       script.  The default file name is:
        "$YORICK_EVAL_TMP"      if environment variable "YORICK_EVAL_TMP" is
-                               set;
+       set;
        "/tmp/$USER-eval_tmp.i" if environment variable "USER" set;
        "~/.eval_tmp.i"         otherwise.
-     If  keyword DEBUG  is true  (non-zero and  non-nil), the  name  of the
-     temporary file is printed out and the file is not removed.
+       If  keyword DEBUG  is true  (non-zero and  non-nil), the  name  of the
+       temporary file is printed out and the file is not removed.
 
 
-   SEE ALSO: include. */
+       SEE ALSO: include. */
 {
   /* Dump script into a temporary file. */
   if (is_void(tmp)) {
@@ -62,12 +62,12 @@ func eval(code, tmp=, debug=)
 }
 
 func pwd(nil)
-/* DOCUMENT pwd
+    /* DOCUMENT pwd
        -or- pwd()
-     Prints out (subroutine form) or returns (function form) full path
-     of current working directory.
+       Prints out (subroutine form) or returns (function form) full path
+       of current working directory.
 
-   SEE ALSO: cd, lsdir. */
+       SEE ALSO: cd, lsdir. */
 {
   if (! is_void(nil)) error, "unexpected non-nil argument";
   dir= cd(".");
@@ -78,8 +78,8 @@ func pwd(nil)
 local unref; /* needed for documentation */
 func __unref(&x) /* interpreted version */
 /* DOCUMENT unref(x)
-     returns X, destroying X in the process (useful to deal with temporary
-     big arrays).  Written after Yorick's FAQ.
+   returns X, destroying X in the process (useful to deal with temporary
+   big arrays).  Written after Yorick's FAQ.
    SEE ALSO: eq_nocopy, swap. */
 {
   local y;
@@ -92,10 +92,10 @@ if (is_func(unref) != 2) unref=  __unref;
 
 local swap; /* needed for documentation */
 func __swap(&a, &b) /* interpreted version */
-/* DOCUMENT swap, a, b;
-     Exchanges  the contents  of variables  A and  B without  requiring any
-     temporary copy.
-   SEE ALSO: eq_nocopy, unref. */
+    /* DOCUMENT swap, a, b;
+       Exchanges  the contents  of variables  A and  B without  requiring any
+       temporary copy.
+       SEE ALSO: eq_nocopy, unref. */
 {
   local tmp;
   eq_nocopy, tmp, a;
@@ -116,19 +116,19 @@ func topcpu (nil)
   nu= strmatch(unm,"mahuika")? 128: 16;
 
   rc=  ["RCfile for \"top with windows\"		# shameless braggin'",\
-       "Id:a, Mode_altscr=0, Mode_irixps=1, Delay_time=5.000, Curwin=0",\
-       "Def	fieldscur=AEHIOQTWKNMbcdfgjplrsuvyzX",\
-       "	winflags=30009, sortindx=10, maxtasks=1",\
-       "	summclr=1, msgsclr=1, headclr=3, taskclr=1",\
-       "Job	fieldscur=ABcefgjlrstuvyzMKNHIWOPQDX",\
-       "	winflags=62777, sortindx=0, maxtasks=0",\
-       "	summclr=6, msgsclr=6, headclr=7, taskclr=6",\
-       "Mem	fieldscur=ANOPQRSTUVbcdefgjlmyzWHIKX",\
-       "	winflags=62777, sortindx=13, maxtasks=0",\
-       "	summclr=5, msgsclr=5, headclr=4, taskclr=5",\
-       "Usr	fieldscur=ABDECGfhijlopqrstuvyzMKNWX",\
-       "	winflags=62777, sortindx=4, maxtasks=0",\
-       "	summclr=3, msgsclr=3, headclr=2, taskclr=3"];
+        "Id:a, Mode_altscr=0, Mode_irixps=1, Delay_time=5.000, Curwin=0",\
+        "Def	fieldscur=AEHIOQTWKNMbcdfgjplrsuvyzX",\
+        "	winflags=30009, sortindx=10, maxtasks=1",\
+        "	summclr=1, msgsclr=1, headclr=3, taskclr=1",\
+        "Job	fieldscur=ABcefgjlrstuvyzMKNHIWOPQDX",\
+        "	winflags=62777, sortindx=0, maxtasks=0",\
+        "	summclr=6, msgsclr=6, headclr=7, taskclr=6",\
+        "Mem	fieldscur=ANOPQRSTUVbcdefgjlmyzWHIKX",\
+        "	winflags=62777, sortindx=13, maxtasks=0",\
+        "	summclr=5, msgsclr=5, headclr=4, taskclr=5",\
+        "Usr	fieldscur=ABDECGfhijlopqrstuvyzMKNWX",\
+        "	winflags=62777, sortindx=4, maxtasks=0",\
+        "	summclr=3, msgsclr=3, headclr=2, taskclr=3"];
 
   q= write(open(get_home()+".toprc","w"),rc,format="%s\n");
   tnm= "/tmp/.topq";
@@ -146,43 +146,43 @@ func topcpu (nil)
 /*---------------------------------------------------------------------------*/
 
 func nint (x)
-/* DOCUMENT nint(x)
-     returns nearest integer (int)
- */
+    /* DOCUMENT nint(x)
+       returns nearest integer (int)
+    */
 {
-  x= x +.5
+  x= x +.5;
   return long(x)-long(x<=0);
 }
 
 func is_null(var)
-/* DOCUMENT is_null(var)
- * is true if VAR is void, or a null pointer
- * SEE_ALSO: is_integer, is_number, is_array, typeof
-*/
+    /* DOCUMENT is_null(var)
+     * is true if VAR is void, or a null pointer
+     * SEE_ALSO: is_integer, is_number, is_array, typeof
+     */
 {
   vartype= typeof(var);
 
   return (vartype == "void") ||
-    ( (vartype == "pointer") && !dimsof(var)(1) && (var == pointer(0)) );
+      ( (vartype == "pointer") && !dimsof(var)(1) && (var == pointer(0)) );
 }
 
 /*-------------------------------------------------------------------------------------*/
 
 func struct_element(stru,&name,&type,&strutype)
-/* DOCUMENT struct_element, stru, name, type, strutype;
-      -or-  struct_element(stru,,type)
-      -or-  ...
+    /* DOCUMENT struct_element, stru, name, type, strutype;
+       -or-  struct_element(stru,,type)
+       -or-  ...
 
-  Extract as string format :
-  name : name of each element of the structure
-  type : the type of each element of the structure, as typeof(stru.elem)
-  struname : the typeof of the structure as typeof(stru);
+       Extract as string format :
+       name : name of each element of the structure
+       type : the type of each element of the structure, as typeof(stru.elem)
+       struname : the typeof of the structure as typeof(stru);
 
-  The function return name.
-  The stru input could be a struct_definition or a variable.
+       The function return name.
+       The stru input could be a struct_definition or a variable.
 
-  SEE ALSO: struct_include, struct_set_value, struct_fitsRead
- */
+       SEE ALSO: struct_include, struct_set_value, struct_fitsRead
+    */
 {
   local name,type;
   if (typeof(stru) != "struct_definition") stru= structof(stru);
@@ -206,10 +206,10 @@ func struct_element(stru,&name,&type,&strutype)
 /*-------------------------------------------------------------------------------------*/
 
 func is_member(stru,membstr,membtyp)
-/* DOCUMENT is_member(stru,membstr[,membtyp])
-   test whether a structure member name [and type] is found in object
-   SEE ALSOL struct_element
- */
+    /* DOCUMENT is_member(stru,membstr[,membtyp])
+       test whether a structure member name [and type] is found in object
+       SEE ALSOL struct_element
+    */
 {
   local name,type;
   if (typeof(stru) != "struct_definition") stru= structof(stru);
@@ -226,58 +226,58 @@ func is_member(stru,membstr,membtyp)
 
 /*-------------------------------------------------------------------------------------*/
 
-func structeq(structDef1, structDef2, noname =) {
-/* DOCUMENT structeq(structDef1, structDef2, noname =)
-  in principle equivalent to structDef1==structDef2
-  BUT this may help getting around the problem encountered
-  when the struture is reDEFINED after the structure instance is allocated
-  in which case structof(structInst)==structDef2 is FALSE.
-  The noname=1 flag enables to check the structure CONTENT only.
- */
+func structeq (structDef1, structDef2, noname =) {
+  /* DOCUMENT structeq(structDef1, structDef2, noname =)
+     in principle equivalent to structDef1==structDef2
+     BUT this may help getting around the problem encountered
+     when the struture is reDEFINED after the structure instance is allocated
+     in which case structof(structInst)==structDef2 is FALSE.
+     The noname=1 flag enables to check the structure CONTENT only.
+  */
 
- if (is_void(structDef1)||is_void(structDef2))return 0;
+  if (is_void(structDef1)||is_void(structDef2))return 0;
 
- if (typeof(structDef1) != "struct_definition"
-  ||typeof(structDef2)  !="struct_definition")error,"structeq(structDef1, structDef2)";
+  if (typeof(structDef1) != "struct_definition"
+      ||typeof(structDef2)  !="struct_definition")error,"structeq(structDef1, structDef2)";
 
- if (structDef1==structDef2)return 1;
+  if (structDef1==structDef2)return 1;
 
- if (!is_void(noname)&&noname==1) {
-   arInst= print(structDef1)(2:-1);
-   arDef= print(structDef2)(2:-1);
- } else {
-   arInst= print(structDef1)(1:-1);
-   arDef= print(structDef2)(1:-1);
- }
- if (numberof(arInst)!=numberof(arDef))return 0;
- weq= arInst!=arDef;
- if (anyof(weq)) {
-   weq= where(weq);
-   arInst= arInst(weq)
-   arDef= arDef(weq)
- } else {
-   return 1;
- }
- nl= weq(sum);
- for (i=1;i<=nl;i++) {
-   weq= strmatch(arInst,arDef(i));
-   if (noneof(weq)) {
-     return 0;
-   } else {
-     arInst= arInst(where(!weq));
-   }
- }
- return 1;
+  if (!is_void(noname)&&noname==1) {
+    arInst= print(structDef1)(2:-1);
+    arDef= print(structDef2)(2:-1);
+  } else {
+    arInst= print(structDef1)(1:-1);
+    arDef= print(structDef2)(1:-1);
+  }
+  if (numberof(arInst)!=numberof(arDef))return 0;
+  weq= arInst!=arDef;
+  if (anyof(weq)) {
+    weq= where(weq);
+    arInst= arInst(weq)
+        arDef= arDef(weq)
+        } else {
+    return 1;
+  }
+  nl= weq(sum);
+  for (i=1;i<=nl;i++) {
+    weq= strmatch(arInst,arDef(i));
+    if (noneof(weq)) {
+      return 0;
+    } else {
+      arInst= arInst(where(!weq));
+    }
+  }
+  return 1;
 }
 
 func ref(var,noscalar=)
-/* DOCUMENT ref(var,noscalar=)
-   Returns reference to ("address of") variable VAR,
-   or null, if IS_VOID(VAR) is true.
-   If NOSCALAR==1, a null value is returned if IS_SCALAR(VAR) is true.
-   (Extension of operator "&" Yorick-style; no-op in IDL)
-   SEE ALSO: is_scalar
- */
+    /* DOCUMENT ref(var,noscalar=)
+       Returns reference to ("address of") variable VAR,
+       or null, if IS_VOID(VAR) is true.
+       If NOSCALAR==1, a null value is returned if IS_SCALAR(VAR) is true.
+       (Extension of operator "&" Yorick-style; no-op in IDL)
+       SEE ALSO: is_scalar
+    */
 {
   if (param_set(noscalar)) {
     if (is_scalar(var) && !(typeof(var) == "struct_instance"))
@@ -288,11 +288,11 @@ func ref(var,noscalar=)
 }
 
 func deref(ptr)
-/* DOCUMENT deref(ptr)
-   Deference pointer PTR, but return null value if PTR is itself null.
-   (Error-free version of Yorick-style "*" operator; no-op in IDL)
-   SEE ALSO: ref, *
- */
+    /* DOCUMENT deref(ptr)
+       Deference pointer PTR, but return null value if PTR is itself null.
+       (Error-free version of Yorick-style "*" operator; no-op in IDL)
+       SEE ALSO: ref, *
+    */
 {
 
   NULL= [];
@@ -305,8 +305,8 @@ func deref(ptr)
 /* ------------------------------------------------------------------------ */
 
 func check_file (fnm,..,quiet=)
-/* DOCUMENT check_file (fnm)
- */
+    /* DOCUMENT check_file (fnm)
+     */
 {
   list= _lst(fnm(1));
   nf= 1;
@@ -318,7 +318,7 @@ func check_file (fnm,..,quiet=)
     nfi= 1;
     while (nfi<numberof(fnm)) list= _cat(list,fnm(1+nfi++));
     nf+= nfi
-  }
+        }
   for (j=1;j<=nf;j++)
     if (!open((fnm=_car(list,j)),"r",1))
       if (quiet)
@@ -332,8 +332,8 @@ func check_file (fnm,..,quiet=)
 /* ------------------------------------------------------------------------ */
 
 func check_dir (fnm,..,quiet=)
-/* DOCUMENT check_dir (fnm)
- */
+    /* DOCUMENT check_dir (fnm)
+     */
 {
   list= _lst(fnm(1));
   nf= 1;
@@ -345,13 +345,13 @@ func check_dir (fnm,..,quiet=)
     nfi= 1;
     while (nfi<numberof(fnm)) list= _cat(list,fnm(1+nfi++));
     nf+= nfi
-  }
+        }
   for (j=1;j<=nf;j++)
-   if (structof(lsdir((fnm=_car(list,j))))==long)
-     if (quiet)
-       return 0;
-     else
-       error,"***Directory: "+fnm+" not found";
+    if (structof(lsdir((fnm=_car(list,j))))==long)
+      if (quiet)
+        return 0;
+      else
+        error,"***Directory: "+fnm+" not found";
 
   return 1;
 }
@@ -359,10 +359,10 @@ func check_dir (fnm,..,quiet=)
 /* -------------------------------------------------------------------*/
 
 func diradd(s1,s2)
-/* DOCUMENT diradd(s1,s2)==s1+s2
-   unless s2 is ABSOLUTE path in that case == s2
-   SEE ALSO:
- */
+    /* DOCUMENT diradd(s1,s2)==s1+s2
+       unless s2 is ABSOLUTE path in that case == s2
+       SEE ALSO:
+    */
 {
   return (strpart(s2,1:1)=="/"? s2: s1+s2);
 }
@@ -370,11 +370,11 @@ func diradd(s1,s2)
 /* -------------------------------------------------------------------*/
 
 func waitff(fls,tlim,dt=)
-/* DOCUMENT waitff (fls,tlim,dt=)
-   wait for files FLS, with max TLIM (secs), check at interval DT (secs, default 5)
-   returns time in secs.
-   SEE ALSO:
- */
+    /* DOCUMENT waitff (fls,tlim,dt=)
+       wait for files FLS, with max TLIM (secs), check at interval DT (secs, default 5)
+       returns time in secs.
+       SEE ALSO:
+    */
 {
   t= 0;
   dt= is_void(dt)? 5: dt;
@@ -394,10 +394,10 @@ func waitff(fls,tlim,dt=)
 /* ------------------------------------------------------------------------ */
 
 func runwaitsafe (cmd,v=,tlim=,dt=)
-/* DOCUMENT runwaitsafe (cmd,v=,tlim=)
+    /* DOCUMENT runwaitsafe (cmd,v=,tlim=)
 
-   SEE ALSO:
- */
+       SEE ALSO:
+    */
 {
   utime= 0;
   timestamp, utime;
@@ -416,19 +416,19 @@ func runwaitsafe (cmd,v=,tlim=,dt=)
 /* ------------------------------------------------------------------------ */
 
 func sread_n(s, &n0, &n1, &n2, &n3, &n4, &n5, &n6, &n7, &n8, &n9)
-/* DOCUMENT sread_n, f, n0, n1, n2, ...
-     grabs the next numbers N0, N1, N2, ... from string s, skipping over
-     any whitespace, comma, semicolon, or colon delimited tokens which
-     are not numbers.  (Actually, only the first and last characters of
-     the token have to look like a number -- 4xxx3 would be read as 4.)
-     ***WARNING*** at most ten Ns are allowed
-     The Ns can be arrays, provided all have the same dimensions.
-     EXAMPLE:
-      a=b=c=[1,2]
-      sread_n,"1;2;3;4;5;6",a,b,c;a;b;c;
+    /* DOCUMENT sread_n, f, n0, n1, n2, ...
+       grabs the next numbers N0, N1, N2, ... from string s, skipping over
+       any whitespace, comma, semicolon, or colon delimited tokens which
+       are not numbers.  (Actually, only the first and last characters of
+       the token have to look like a number -- 4xxx3 would be read as 4.)
+       ***WARNING*** at most ten Ns are allowed
+       The Ns can be arrays, provided all have the same dimensions.
+       EXAMPLE:
+       a=b=c=[1,2]
+       sread_n,"1;2;3;4;5;6",a,b,c;a;b;c;
 
-   SEE ALSO: sread, read_n, rdline
- */
+       SEE ALSO: sread, read_n, rdline
+    */
 {
   n= numberof(n0);
   for (i=1 ; i<=n ; i++) {
@@ -455,7 +455,7 @@ func sread_n_worker(&s, &var, i)
     s= tok(2);
     len= strlen(tok(1));
     if (len && strmatch("0123456789.",strpart(tok(1), len:len)) &&
-       (indirect? sread(tok(1), value) : sread(tok(1), var))) {
+        (indirect? sread(tok(1), value) : sread(tok(1), var))) {
       if (indirect) var(i)= value;
       return;
     }
@@ -466,11 +466,11 @@ func sread_n_worker(&s, &var, i)
 /* ------------------------------------------------------------------------ */
 
 func dim_conform( dimsof_a, dimsof_b, &dimout)
-/* DOCUMENT  dim_conform(dimsof_a, dimsof_b, )
-  Returns 1 if the two arrays with dimensions DIMSOF_A and DIMSOF_B are
-  conformable. dimout is as dimout=dimsof(a,b)
-  void dims are interpreted as no-op not as op wiyh void.
- */
+    /* DOCUMENT  dim_conform(dimsof_a, dimsof_b, )
+       Returns 1 if the two arrays with dimensions DIMSOF_A and DIMSOF_B are
+       conformable. dimout is as dimout=dimsof(a,b)
+       void dims are interpreted as no-op not as op wiyh void.
+    */
 {
   if (is_void(dimsof_a) && is_void(dimsof_b)) return 1;
   if ((is_void(dimsof_a)&&!is_void((dimout=dimsof_b))) || \
@@ -510,10 +510,10 @@ func dim_conform( dimsof_a, dimsof_b, &dimout)
 /* ------------------------------------------------------------------------ */
 
 func matmatseq (a, b, atr=, btr=)
-/* DOCUMENT c= matmatseq(a,b)
-   lame kludge for c(,,..)= a(,+,..)*b(+,,..)
-   where (..)'s are id!
- */
+    /* DOCUMENT c= matmatseq(a,b)
+       lame kludge for c(,,..)= a(,+,..)*b(+,,..)
+       where (..)'s are id!
+    */
 {
   if (atr&&btr) {
     c= array(structof(a(1)*b(1)),dimsof(a(1,..)(-,..),b(,1,..)(,-,..)));  // do the broadcasting
@@ -538,11 +538,11 @@ func matmatseq (a, b, atr=, btr=)
 /*---------------------------------------------------------------------------*/
 
 func matvecseq (a, b, atr=)
-/* DOCUMENT c= matvecseq(a,b)
-   lame kludge for c(,..)= a(,+,..)*b(+,..)
-   if atr==1 same kludge for c(,..)= a(+,..)*b(+,..)
-    where .. are id!
- */
+    /* DOCUMENT c= matvecseq(a,b)
+       lame kludge for c(,..)= a(,+,..)*b(+,..)
+       if atr==1 same kludge for c(,..)= a(+,..)*b(+,..)
+       where .. are id!
+    */
 {
   if (atr) {
     dab= dimsof(a(1,..),b(1,..)(-,..));
@@ -565,9 +565,9 @@ levi_civita(1,2,3)=levi_civita(3,1,2)=levi_civita(2,3,1)=1;
 levi_civita(3,2,1)=levi_civita(2,1,3)=levi_civita(1,3,2)=-1;
 
 func crossvec (a,b,seq=) {
-/* DOCUMENT crossvec(a,b,seq=)
-   for one to one sequence of cross products, specify seq == 1
- */
+  /* DOCUMENT crossvec(a,b,seq=)
+     for one to one sequence of cross products, specify seq == 1
+  */
   da= dimsof(a);
   db= dimsof(b);
 
@@ -585,9 +585,9 @@ func crossvec (a,b,seq=) {
 }
 
 func dotcross (a,b,c,seq=) {
-/* DOCUMENT dotcross(a,b,c,seq=)
-   for one to one sequence of dotcross products, specify seq == 1
- */
+  /* DOCUMENT dotcross(a,b,c,seq=)
+     for one to one sequence of dotcross products, specify seq == 1
+  */
   da= dimsof(a);
   db= dimsof(b);
   dc= dimsof(c);
@@ -605,11 +605,11 @@ func dotcross (a,b,c,seq=) {
 }
 
 func rotvec (a,w,q,seq=) {
-/* DOCUMENT rotvec (a,w,q,seq=)
-   a: vector to rotate
-   w: rotation vector axis and rotation: right-handed w/ hat(w)
-   q: rotation angle [rtadians]
- */
+  /* DOCUMENT rotvec (a,w,q,seq=)
+     a: vector to rotate
+     w: rotation vector axis and rotation: right-handed w/ hat(w)
+     q: rotation angle [rtadians]
+  */
   da= dimsof(a);
   dw= dimsof(w);
 
@@ -648,12 +648,12 @@ func strconcat(strarr,spacer)
 /*---------------------------------------------------------------------------*/
 
 func strtranslate(s, tr)
-/* DOCUMENT sp= strtranslate(s, tr);
-   Convert a string or an array of strings given a translation table TR.
-   TR must be an array of 256 char (this is not checked).
+    /* DOCUMENT sp= strtranslate(s, tr);
+       Convert a string or an array of strings given a translation table TR.
+       TR must be an array of 256 char (this is not checked).
 
-   SEE ALSO: strtolower, strtoupper, strtrtable.
-*/
+       SEE ALSO: strtolower, strtoupper, strtrtable.
+    */
 {
   d= dimsof(s);
   if (d(1)==0)
@@ -674,14 +674,14 @@ func strtranslate(s, tr)
 /*---------------------------------------------------------------------------*/
 
 func strtrtable(in, out, &tr)
-/* DOCUMENT tr= strtrtable(in, out);
-   -or- strtrtable, in, out, tr;
-   Create or modify translation table TR so that characters that belongs to
-   IN array will produce corresponding characters in OUT array.  IN and OUT
-   must be conformable arrays of char's.
+    /* DOCUMENT tr= strtrtable(in, out);
+       -or- strtrtable, in, out, tr;
+       Create or modify translation table TR so that characters that belongs to
+       IN array will produce corresponding characters in OUT array.  IN and OUT
+       must be conformable arrays of char's.
 
-   SEE ALSO: strtranslate, strtolower, strtoupper.
-*/
+       SEE ALSO: strtranslate, strtolower, strtoupper.
+    */
 {
   if (is_void(tr))
     tr= char(indgen(0:255));
@@ -694,24 +694,25 @@ func strtrtable(in, out, &tr)
 
 func rjmread (f, delim)
 {
-    if (is_void(delim))
-        delim= " ";
-    l= text_lines(f);
-    n= (strpart(l(1),strword(l(1),delim,100))!=string(0))(sum);
-    return strpart(l,strword(l,delim,n));
+  if (is_void(delim))
+    delim= " ";
+  l= text_lines(f);
+  n= (strpart(l(1),strword(l(1),delim,100))!=string(0))(sum);
+  return strpart(l,strword(l,delim,n));
 }
 
 /*---------------------------------------------------------------------------*/
+
 func embedarr (args)
-/* DOCUMENT embedar (a,&b,off,wrap=)
-            embedar (a,f.x,off,wrap=)
-   embeds a in b at index offset "off" (defaults to 0 in each dim)
-   if in_place for b, use as a subroutine
-     when b is of the form f.x use as subroutine
-   if wrap==1 b indices are wrapped when outside of dimensions
-   use wrap==1 also allows the use of negative offsets
-   SEE ALSO: extractarr
- */
+    /* DOCUMENT embedar (a,&b,off,wrap=)
+       embedar (a,f.x,off,wrap=)
+       embeds a in b at index offset "off" (defaults to 0 in each dim)
+       if in_place for b, use as a subroutine
+       when b is of the form f.x use as subroutine
+       if wrap==1 b indices are wrapped when outside of dimensions
+       use wrap==1 also allows the use of negative offsets
+       SEE ALSO: extractarr
+    */
 {  //keyword processing
   wrap= [];            //default init key
   sk= args(-);         //key strings
@@ -721,9 +722,9 @@ func embedarr (args)
   if (nk>1)
     error,"only key allowed: wrap."
 
-  //positional arg processing
-  if (args(0)<2 || args(0)>3)
-    error,"embedarr (a,b,[off],[wrap=])";
+        //positional arg processing
+        if (args(0)<2 || args(0)>3)
+          error,"embedarr (a,b,[off],[wrap=])";
   a= args(1);
   off= args(0)>2? args(3): 0; // default val if missing
 
@@ -754,15 +755,15 @@ func embedarr (args)
     if (wrap==1)
       iia= iia%db(i) + db(i)*(iia<0);
     else {
-       mm= iia>=0 & iia<db(i);
-       if (anyof(mm)) {
-         w= where(mm);
-         mi= array(char(0),da(i));
-         mi(w)= 1;
-         for (j=1;j<i;j++)
-           mi= mi(-,..);
-         m*= mi;
-       }
+      mm= iia>=0 & iia<db(i);
+      if (anyof(mm)) {
+        w= where(mm);
+        mi= array(char(0),da(i));
+        mi(w)= 1;
+        for (j=1;j<i;j++)
+          mi= mi(-,..);
+        m*= mi;
+      }
     }
     ia= db(i)*ia(-,..) + iia;
   }
@@ -795,17 +796,17 @@ func embedarr (args)
 wrap_args, embedarr;
 
 func extractarr (args)
-/* DOCUMENT extractarr (a,b,off,wrap=)
-            extractarr (a,f.x,off,wrap=)
-   extract a from b at index offset "off" (defaults to 0)
-   if in_place (for a,) use as subroutine
-   if wrap==1, b indices are wrapped on dimensions
-   use wrap==1 also allows using negative offset
-   usage -------
-   b= array(0.,100,100); a=random(10,10)
-   pli,extractarr(array(double,10,10),embedarr(a,b,-3,wrap=1),-3,wrap=1)
-   SEE ALSO: embedarr
- */
+    /* DOCUMENT extractarr (a,b,off,wrap=)
+       extractarr (a,f.x,off,wrap=)
+       extract a from b at index offset "off" (defaults to 0)
+       if in_place (for a,) use as subroutine
+       if wrap==1, b indices are wrapped on dimensions
+       use wrap==1 also allows using negative offset
+       usage -------
+       b= array(0.,100,100); a=random(10,10)
+       pli,extractarr(array(double,10,10),embedarr(a,b,-3,wrap=1),-3,wrap=1)
+       SEE ALSO: embedarr
+    */
 {
   // keyword processing
   wrap= [];            // default init key
@@ -857,21 +858,21 @@ func extractarr (args)
     if (wrap==1)
       iia= iia%db(i) + db(i)*(iia<0);
     else {
-       mm= iia>=0 & iia<db(i);
-       if (anyof(mm)) {
-         w= where(mm);
-         mi= array(char(0),da(i));
-         mi(w)= 1;
-         for (j=1;j<i;j++)
-           mi= mi(-,..);
-         m*= mi;
-       }
+      mm= iia>=0 & iia<db(i);
+      if (anyof(mm)) {
+        w= where(mm);
+        mi= array(char(0),da(i));
+        mi(w)= 1;
+        for (j=1;j<i;j++)
+          mi= mi(-,..);
+        m*= mi;
+      }
     }
     ia= db(i)*ia(-,..) + iia;
   }
   ia += 1;
 
- // extract A from B, which is agrs(2)
+  // extract A from B, which is agrs(2)
   if (wrap==1) {
     if (ida) { // not a subrout
       a= args(2,:)(ia);
@@ -915,13 +916,13 @@ wrap_args, extractarr;
 /*---------------------------------------------------------------------------*/
 
 func moveop(op,f,n)
-/* DOCUMENT
-   minimum/max/median of the previous N samples
-   for samples after N (N-1 first samples are replicated.)
-   F has one dimension
-   OP is MIN, or MAX, or MEDIAN
-   SEE ALSO:
- */
+    /* DOCUMENT
+       minimum/max/median of the previous N samples
+       for samples after N (N-1 first samples are replicated.)
+       F has one dimension
+       OP is MIN, or MAX, or MEDIAN
+       SEE ALSO:
+    */
 {
   // dim f is N, dim f(i:-n+i) is N-(i-1)-n+i=N-n+1
   sop= info(op)(1);
@@ -972,9 +973,9 @@ func statarr(x,l,cmt=)
 /*---------------------------------------------------------------------------------------------------*/
 
 func cycleIndex (i,init,end)
-/* DOCUMENT cycleIndex (i,init,end)
-     returns nearest intefer (int)
- */
+    /* DOCUMENT cycleIndex (i,init,end)
+       returns nearest intefer (int)
+    */
 {
   if (!is_integer((j=i(1)*init(1)*end(1)))) {
     j= structof(j)(1);
@@ -989,20 +990,20 @@ func cycleIndex (i,init,end)
 /*---------------------------------------------------------------------------*/
 
 func cycle(x,xinit,xend) {
-/* DOCUMENT cycle(x,xinit,xend)
- */
+  /* DOCUMENT cycle(x,xinit,xend)
+   */
   return x-floor((x-xinit)/(xend-xinit))*(xend-xinit);}
 
 /*---------------------------------------------------------------------------*/
 
 func indexarr (d,n1,n0,strd)
-/* DOCUMENT i= indexarr(d,n1,n0,strd)
-   D: dimsof(array to partition)
-   N1: starting index
-   N0: end index
-   STRD: stride
-   SEE ALSO:
- */
+    /* DOCUMENT i= indexarr(d,n1,n0,strd)
+       D: dimsof(array to partition)
+       N1: starting index
+       N0: end index
+       STRD: stride
+       SEE ALSO:
+    */
 {
   nd= d(1);
   d= d(2:);
@@ -1029,13 +1030,13 @@ func indexarr (d,n1,n0,strd)
 /*---------------------------------------------------------------------------*/
 
 func indim(n, dim, ..,ndxdimlast=) {
-/* DOCUMENT indim(n, dim, ..,ndxdimlast=)
- returns each individual dimension index corresponding to (*) index n given
- dimlist "dim".
- comparing * indices: i-dimin(indim(i,dx),dx)
+  /* DOCUMENT indim(n, dim, ..,ndxdimlast=)
+     returns each individual dimension index corresponding to (*) index n given
+     dimlist "dim".
+     comparing * indices: i-dimin(indim(i,dx),dx)
 
- EX: mx=x(*)(mxx);mx==dimin(indim(mx,dimsof(x)),dimsof(x))
- */
+     EX: mx=x(*)(mxx);mx==dimin(indim(mx,dimsof(x)),dimsof(x))
+  */
   while (more_args()) build_dimlist, dim, next_arg();
   out= dim(2:0);
   if (numberof(n)>1) {
@@ -1062,16 +1063,16 @@ func indim(n, dim, ..,ndxdimlast=) {
 /*---------------------------------------------------------------------------*/
 
 func dimin(n, dim, ..,ndxdimlast=) {
-/* DOCUMENT dimin(n, dim, ..,ndxdimlast=)
- returns (*) index given each individual dimension and dimlist "dim".
-  memoTrick dimin "diminishes dimension"
-  EX: mx=x(*)(mxx);mx==dimin(indim(mx,dimsof(x)),dimsof(x))
- */
+  /* DOCUMENT dimin(n, dim, ..,ndxdimlast=)
+     returns (*) index given each individual dimension and dimlist "dim".
+     memoTrick dimin "diminishes dimension"
+     EX: mx=x(*)(mxx);mx==dimin(indim(mx,dimsof(x)),dimsof(x))
+  */
   while (more_args()) build_dimlist, dim, next_arg();
-//   if (numberof(n)!=dim(1)) {
-//     print,"dimin in trm.i: need dimnin(n,dim,..) where numberof(n)==dim(1)"
-//     return [];
-//   }
+  //   if (numberof(n)!=dim(1)) {
+  //     print,"dimin in trm.i: need dimnin(n,dim,..) where numberof(n)==dim(1)"
+  //     return [];
+  //   }
   out= 0;
   dimp= dim; dimp(1)= 1;
   n1= [n-1];
@@ -1087,10 +1088,10 @@ func dimin(n, dim, ..,ndxdimlast=) {
 /* ------------------------------------------------------------------------ */
 
 func digitize_nn(x, bins)
-/* DOCUMENT
+    /* DOCUMENT
 
-   SEE ALSO:
- */
+       SEE ALSO:
+    */
 {
   n= numberof(bins);
   i= max(2,min(digitize(x,bins),n));
@@ -1101,11 +1102,11 @@ func digitize_nn(x, bins)
 /* ------------------------------------------------------------------------ */
 
 func shrink1(x)
-/* DOCUMENT shrink1(x)
- *    returns array X reshaped according to its initial dimension list DIMLIST.
- *    except unary dimensions which are removed.
- * SEE ALSO: array, dimsof, reform
- */
+    /* DOCUMENT shrink1(x)
+     *    returns array X reshaped according to its initial dimension list DIMLIST.
+     *    except unary dimensions which are removed.
+     * SEE ALSO: array, dimsof, reform
+     */
 {
   if (is_scalar(x))return x;
   dims= dimsof(x);
@@ -1134,9 +1135,9 @@ func numbfromdims (dims)
 /*-----------------------------------------------------------------------*/
 
 func discrete2 (x,plot=,count=)
-/* DOCUMENT discrete(x)
-   return an array(typeof(x),[2,number_of_different_X,count_of_these_values]
-*/
+    /* DOCUMENT discrete(x)
+       return an array(typeof(x),[2,number_of_different_X,count_of_these_values]
+    */
 {
   s= sort(x);
   xsd= _(x(s)(dif),1);
@@ -1160,9 +1161,9 @@ func discrete2 (x,plot=,count=)
 /*-----------------------------------------------------------------------*/
 
 func discrete (x)
-/* DOCUMENT discrete(x)
-   return an array(typeof(x),[2,number_of_different_X,count_of_these_values]
-*/
+    /* DOCUMENT discrete(x)
+       return an array(typeof(x),[2,number_of_different_X,count_of_these_values]
+    */
 {
   s= sort(x);
   xs= x(s);
@@ -1182,14 +1183,14 @@ func discrete (x)
 /*-----------------------------------------------------------------------*/
 
 func intersect (x,y)
-/* DOCUMENT
-          Return the elements common to two given arrays.
-          z= intersect(x,y)
-             x, y= arrays (not necessarily same size).  in
-             z   = array of elements in common.         out
-          Note: if z is a scalar 0 then no elements were
-            in common.
- */
+    /* DOCUMENT
+       Return the elements common to two given arrays.
+       z= intersect(x,y)
+       x, y= arrays (not necessarily same size).  in
+       z   = array of elements in common.         out
+       Note: if z is a scalar 0 then no elements were
+       in common.
+    */
 {
   if (numberof(x)==1)
     if (anyof(y==x(1)))
@@ -1216,14 +1217,14 @@ func intersect (x,y)
 /*-----------------------------------------------------------------------*/
 
 func  setminus (x,y)
-/* DOCUMENT
-   Return the elements common to two given arrays.
-   z= setminus(x,y)
-      x, y= arrays (not necessarily same size).  in
-      z   = array of elements in x that are not in y.    out
-   Note: if z is a scalar 0 then no elements were
-     in common.
- */
+    /* DOCUMENT
+       Return the elements common to two given arrays.
+       z= setminus(x,y)
+       x, y= arrays (not necessarily same size).  in
+       z   = array of elements in x that are not in y.    out
+       Note: if z is a scalar 0 then no elements were
+       in common.
+    */
 {
   require, "msort.i";
   dx= discrete(x);
@@ -1243,13 +1244,13 @@ func  setminus (x,y)
 /*-----------------------------------------------------------------------*/
 
 func settest(picks,mainset,subset=)
-/* DOCUMENT settest(picks,mainset)
-   Checks that all elements in picks belong to
-   the mainset;
-   if (subset==1)no errors & subsets only the picks
-      which belong to mainset
-      [1,1]= settest([1,1,2],[1],subset=1)
- */
+    /* DOCUMENT settest(picks,mainset)
+       Checks that all elements in picks belong to
+       the mainset;
+       if (subset==1)no errors & subsets only the picks
+       which belong to mainset
+       [1,1]= settest([1,1,2],[1],subset=1)
+    */
 {
   if (is_void(picks))return;
   np= numberof(picks);
@@ -1270,11 +1271,11 @@ func settest(picks,mainset,subset=)
 /*---------------------------------------------------------------------------*/
 
 func polyf(x, a, &grad, deriv=, derivx =, derivxx=)
-/* DOCUMENT polyf(x, a, &grad, deriv=, derivx =)
-   res=lmfit(polyf,x,a,y,x^2)"
-   plg,polyf(x,a),x,type="dash"
-     polyf= x^(i-1)(..,i:1:np)(..,+)*a(+,..) ,  i=1,..,np=dimsof(a)(2)     sorta
- */
+    /* DOCUMENT polyf(x, a, &grad, deriv=, derivx =)
+       res=lmfit(polyf,x,a,y,x^2)"
+       plg,polyf(x,a),x,type="dash"
+       polyf= x^(i-1)(..,i:1:np)(..,+)*a(+,..) ,  i=1,..,np=dimsof(a)(2)     sorta
+    */
 {
   if (deriv==1 && (derivx==1 || derivxx==1))
     error,"single deriv at a time.";
@@ -1302,7 +1303,7 @@ func polyf(x, a, &grad, deriv=, derivx =, derivxx=)
 
   if (derivx && deriv) {
     error,"grad returns EITHER deriv_a (deriv=1) OR deriv_x (derivx=1)"
-  }
+        }
 
   if (deriv) {
     grad= y;
@@ -1322,62 +1323,62 @@ func polyf(x, a, &grad, deriv=, derivx =, derivxx=)
 
 struct pytfx{pointer x; long signx; long signa;}
 
-func pytf(x, a, &grad, deriv=, derivx =) {
-/* DOCUMENT pytf(x, a, &grad, deriv=, derivx =)
-   Where: x  ==  struct pytfx{pointer x; long signx; long signa;}
-   x.signa and z.signx default to +1
-   function pytf == a(1) + a(2)*(*x.x) + a(3)*SQRT(x.signa * a(4)^2 + x.signx * (*x.x)^2)
-   Example: x=span(-1.,1.,200);plg,pytf(pytfx(x=&x,signa=1,signx=1),10),x
-   to use with
-     lmfit(f,x,&a,y,w,fit=,correl=,stdev=,gain=,tol=,deriv=,itmax=,lambda=,
-                                             eps=,monte_carlo=)
- */
-  dx= dimsof(*x.x);
-  if (x.signa==0)x.signa=1;
-  if (x.signx==0)x.signx=1;
-  y= sqrt(x.signa * a(4)^2 + x.signx * (*x.x)^2);
-  if (is_void(deriv))deriv=0;
-  if (is_void(derivx))derivx=0;
-  if (!deriv&&!derivx) {         //donnot compute any derivatives
-    return a(1) + a(2)*(*x.x) +  a(3)*y;
-  } else if (deriv||derivx) {     //compute one of the derivatives
-    if (derivx&&!deriv) {
-      grad= a(2) + a(3)*x.signx*(*x.x)/y;
-    } else if (deriv&&!derivx) {
-      dgrad= grow(dx,4); dgrad(1) += 1;
-      grad= array(structof(*x.x), dgrad);
-      grad(..,3)= y
-      grad(..,4)= a(3)*x.signa*a(4)/y;
-      grad(..,2)= *x.x;
-      grad(..,1)= 1;
-    } else if (derivx&&deriv) {
-      error,"grad returns EITHER deriv_a (deriv=1) OR deriv_x (derivx=1)"
+  func pytf(x, a, &grad, deriv=, derivx =) {
+    /* DOCUMENT pytf(x, a, &grad, deriv=, derivx =)
+       Where: x  ==  struct pytfx{pointer x; long signx; long signa;}
+       x.signa and z.signx default to +1
+       function pytf == a(1) + a(2)*(*x.x) + a(3)*SQRT(x.signa * a(4)^2 + x.signx * (*x.x)^2)
+       Example: x=span(-1.,1.,200);plg,pytf(pytfx(x=&x,signa=1,signx=1),10),x
+       to use with
+       lmfit(f,x,&a,y,w,fit=,correl=,stdev=,gain=,tol=,deriv=,itmax=,lambda=,
+       eps=,monte_carlo=)
+    */
+    dx= dimsof(*x.x);
+    if (x.signa==0)x.signa=1;
+    if (x.signx==0)x.signx=1;
+    y= sqrt(x.signa * a(4)^2 + x.signx * (*x.x)^2);
+    if (is_void(deriv))deriv=0;
+    if (is_void(derivx))derivx=0;
+    if (!deriv&&!derivx) {         //donnot compute any derivatives
+      return a(1) + a(2)*(*x.x) +  a(3)*y;
+    } else if (deriv||derivx) {     //compute one of the derivatives
+      if (derivx&&!deriv) {
+        grad= a(2) + a(3)*x.signx*(*x.x)/y;
+      } else if (deriv&&!derivx) {
+        dgrad= grow(dx,4); dgrad(1) += 1;
+        grad= array(structof(*x.x), dgrad);
+        grad(..,3)= y
+            grad(..,4)= a(3)*x.signa*a(4)/y;
+        grad(..,2)= *x.x;
+        grad(..,1)= 1;
+      } else if (derivx&&deriv) {
+        error,"grad returns EITHER deriv_a (deriv=1) OR deriv_x (derivx=1)"
+            }
+      return a(1) + a(2)*(*x.x) +  a(3)*y;
     }
-    return a(1) + a(2)*(*x.x) +  a(3)*y;
   }
-}
 
 /*-------------------------------------------------------------------------------------*/
 
 func gauss2df (xy, a, &grad, deriv=)
-/* DOCUMENT gauss2df (xy, a, &grad, deriv=)
-      I0 * exp(-0.5*(X^2+Y^2))/(1+a(7)*X^2)/(1+a(8)*Y^2)
-     x= xy(..,1)
-     y= xy(..,2)
-     X= ((x-x0)*cos(alpha)+(y-y0)*sin(alpha))/dx
-     Y= ((y-y0)*cos(alpha)-(x-x0)*sin(alpha))/dy
-     I0= a(1)  // mag
-     x0= a(2)  // x center
-     y0= a(3)  // y center
-     dx= a(4)  // x sigma
-     dy=a(5)   // y sigma
-     alpha=a(6)  // rotation angle
+    /* DOCUMENT gauss2df (xy, a, &grad, deriv=)
+       I0 * exp(-0.5*(X^2+Y^2))/(1+a(7)*X^2)/(1+a(8)*Y^2)
+       x= xy(..,1)
+       y= xy(..,2)
+       X= ((x-x0)*cos(alpha)+(y-y0)*sin(alpha))/dx
+       Y= ((y-y0)*cos(alpha)-(x-x0)*sin(alpha))/dy
+       I0= a(1)  // mag
+       x0= a(2)  // x center
+       y0= a(3)  // y center
+       dx= a(4)  // x sigma
+       dy=a(5)   // y sigma
+       alpha=a(6)  // rotation angle
 
-    Works with lmfit, and can return derivates.
-    Notes: FHWM=sigma*2*sqrt(2*alog(2)); sum(gauss2d)=2*pi*I0*dx*dy
-           adapted from E. Thiebaut
-    SEE ALSO:
- */
+       Works with lmfit, and can return derivates.
+       Notes: FHWM=sigma*2*sqrt(2*alog(2)); sum(gauss2d)=2*pi*I0*dx*dy
+       adapted from E. Thiebaut
+       SEE ALSO:
+    */
 {
   npar= numberof(a);
   if (npar>8) error,"too many parameters.";
@@ -1438,79 +1439,79 @@ func gauss2df (xy, a, &grad, deriv=)
 /*-----------------------------------------------------------------*/
 
 func interp2reg (z, x1, x0, y1, y0, xp, yp, outside=,bad=)
-/* DOCUMENT zp= interp2reg(z(ix,iy),x1,x0,y1,y0,xp,yp,outside =)
-     interpolated regularly gridded z(nX, nY) & [xp,yp] where x/y=span(x/y1,x/y0,nx/y)
+    /* DOCUMENT zp= interp2reg(z(ix,iy),x1,x0,y1,y0,xp,yp,outside =)
+       interpolated regularly gridded z(nX, nY) & [xp,yp] where x/y=span(x/y1,x/y0,nx/y)
 
-     Points outside the mesh get the value 0.0, unless the outside
-     keyword is non-nil, in which case they get that value.
-   SEE ALSO: interp2 in digit2.i
- */
+       Points outside the mesh get the value 0.0, unless the outside
+       keyword is non-nil, in which case they get that value.
+       SEE ALSO: interp2 in digit2.i
+    */
 {
- d= dimsof(z);
- if (d(1)!=2)
-   error,"only two dimensions allowed";
- n= d([2,3]);
+  d= dimsof(z);
+  if (d(1)!=2)
+    error,"only two dimensions allowed";
+  n= d([2,3]);
 
- if (is_void(y1) && is_void(y0)) {
-   y1= 1.0;
-   y0= double(n(2));
- }
- if (is_void(x1) && is_void(x0)) {
-   x1= 1.0;
-   x0= double(n(1));
- }
+  if (is_void(y1) && is_void(y0)) {
+    y1= 1.0;
+    y0= double(n(2));
+  }
+  if (is_void(x1) && is_void(x0)) {
+    x1= 1.0;
+    x0= double(n(1));
+  }
 
- if (is_void(xp)) { // assume the sampling points are given as [2, 2([x,y]), #_of_xyp]
-   xp= yp(1,..);
-   yp= yp(2,..);
-   if (is_scalar(xp)) {
-     nx= 1;
-   } else {
-     nx= dimsof(yp)(2);
-   }
- } else {
-   nx= numberof(yp);
-   if (numberof(xp)!=nx)
-     error,"yp and xp (in order) must be two id. dim. arrays";
- }
+  if (is_void(xp)) { // assume the sampling points are given as [2, 2([x,y]), #_of_xyp]
+    xp= yp(1,..);
+    yp= yp(2,..);
+    if (is_scalar(xp)) {
+      nx= 1;
+    } else {
+      nx= dimsof(yp)(2);
+    }
+  } else {
+    nx= numberof(yp);
+    if (numberof(xp)!=nx)
+      error,"yp and xp (in order) must be two id. dim. arrays";
+  }
 
- dout= dimsof(xp+yp);
+  dout= dimsof(xp+yp);
 
- if (anyof(dout!=dimsof(xp)))
-   xp= xp + array(structof(xp(1)),dout);
- if (anyof(dout!=dimsof(yp)))
-   yp= yp + array(structof(yp(1)),dout);
+  if (anyof(dout!=dimsof(xp)))
+    xp= xp + array(structof(xp(1)),dout);
+  if (anyof(dout!=dimsof(yp)))
+    yp= yp + array(structof(yp(1)),dout);
 
- stridex= float(x0 - x1)/(n(1)-1);
- stridey= float(y0 - y1)/(n(2)-1);
+  stridex= float(x0 - x1)/(n(1)-1);
+  stridey= float(y0 - y1)/(n(2)-1);
 
- xi= (xp - x1)/stridex;
- yj= (yp - y1)/stridey;
+  xi= (xp - x1)/stridex;
+  yj= (yp - y1)/stridey;
 
- i= long(xi);
- j= long(yj);
+  i= long(xi);
+  j= long(yj);
 
- xi= xi - i;
- yj= yj - j;
+  xi= xi - i;
+  yj= yj - j;
 
- i +=1;
- j +=1;
+  i +=1;
+  j +=1;
 
- if (is_void(outside))
-   outside= 0.;
- out= array(structof(z)(outside), dimsof(yp));
+  if (is_void(outside))
+    outside= 0.;
+  out= array(structof(z)(outside), dimsof(yp));
 
- w= where(i >= 1 & i <= (n(1)-1) & j >= 1 & j <= (n(2)-1));
- if (numberof(w)>0) {
-   if (is_void(bad)) {
+  w= where(i >= 1 & i <= (n(1)-1) & j >= 1 & j <= (n(2)-1));
+  if (numberof(w)>0) {
+    if (is_void(bad)) {
       ij= transpose([i(w),j(w)]);
       xi= xi(w);
       yj= yj(w);
       out(w)=  (1-xi) * (1-yj) *  z(dimin(ij          ,d)) +
-                (1-xi) *    yj  *  z(dimin(ij+[0,1](,-),d)) +
-                   xi  *    yj  *  z(dimin(ij+[1,1](,-),d)) +
-                   xi  * (1-yj) *  z(dimin(ij+[1,0](,-),d));
-   } else {
+          (1-xi) *    yj  *  z(dimin(ij+[0,1](,-),d)) +
+          xi  *    yj  *  z(dimin(ij+[1,1](,-),d)) +
+          xi  * (1-yj) *  z(dimin(ij+[1,0](,-),d));
+    } else {
       ij= transpose([i(w),j(w)]);
       xi= xi(w);
       yj= yj(w);
@@ -1521,59 +1522,59 @@ func interp2reg (z, x1, x0, y1, y0, xp, yp, outside=,bad=)
       ww= where(z1==bad|z2==bad|z3==bad|z4==bad);
       out(w)=  (1-xi)*(1-yj)*z1 + (1-xi)*yj*z2 + xi*yj*z3 + xi*(1-yj)*z4;
       if (numberof(ww))out(w(ww))= outside;
-   }
- }
- return out;
+    }
+  }
+  return out;
 }
 
 /*-------------------------------------------------------------------------------------*/
 
 func poly2(x, c) {
-/* DOCUMENT poly2(x,c)
- returns the polynomial  c(1,..) + c(2,..)*x + ... + c(N,..)*X^N
- The data type and dimensions of the result, and conformability rules
- for the inputs are identical to those of the expression above.
- It doesn't get any UGLIER than this ...
- SEE ALSO: poly
- */
- if (is_scalar(c))c=[c];
- d= dimsof(c);
- d1= d(2);
- if (d1 == 1)return poly(x,c(1,..));
- if (d1 == 2)return poly(x,c(1,..),c(2,..));
- if (d1 == 3)return poly(x,c(1,..),c(2,..),c(3,..));
- if (d1 == 4)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..));
- if (d1 == 5)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..));
- if (d1 == 6)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..));
- if (d1 == 7)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..));
- if (d1 == 8)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..));
- if (d1 == 9)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..));
- if (d1 ==10)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
+  /* DOCUMENT poly2(x,c)
+     returns the polynomial  c(1,..) + c(2,..)*x + ... + c(N,..)*X^N
+     The data type and dimensions of the result, and conformability rules
+     for the inputs are identical to those of the expression above.
+     It doesn't get any UGLIER than this ...
+     SEE ALSO: poly
+  */
+  if (is_scalar(c))c=[c];
+  d= dimsof(c);
+  d1= d(2);
+  if (d1 == 1)return poly(x,c(1,..));
+  if (d1 == 2)return poly(x,c(1,..),c(2,..));
+  if (d1 == 3)return poly(x,c(1,..),c(2,..),c(3,..));
+  if (d1 == 4)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..));
+  if (d1 == 5)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..));
+  if (d1 == 6)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..));
+  if (d1 == 7)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..));
+  if (d1 == 8)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..));
+  if (d1 == 9)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..));
+  if (d1 ==10)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
                           c(10,..));
- if (d1 ==11)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
+  if (d1 ==11)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
                           c(10,..),c(11,..));
- if (d1 ==12)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
+  if (d1 ==12)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
                           c(10,..),c(11,..),c(12,..));
- if (d1 ==13)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
+  if (d1 ==13)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
                           c(10,..),c(11,..),c(12,..),c(13,..));
- if (d1 ==14)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
+  if (d1 ==14)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
                           c(10,..),c(11,..),c(12,..),c(13,..),c(14,..));
- if (d1 ==15)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
+  if (d1 ==15)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
                           c(10,..),c(11,..),c(12,..),c(13,..),c(14,..),c(15,..));
- if (d1 ==16)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
+  if (d1 ==16)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
                           c(10,..),c(11,..),c(12,..),c(13,..),c(14,..),c(15,..),c(16,..));
- if (d1 ==17)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
+  if (d1 ==17)return poly(x,c(1,..),c(2,..),c(3,..),c(4,..),c(5,..),c(6,..),c(7,..),c(8,..),c(9,..),
                           c(10,..),c(11,..),c(12,..),c(13,..),c(14,..),c(15,..),c(16,..),c(17,..));
- n= 17;
- if (d1 > n)return poly2(x,c(1:n)) + x^n*poly2(x,c(n+1:0));
+  n= 17;
+  if (d1 > n)return poly2(x,c(1:n)) + x^n*poly2(x,c(n+1:0));
 }
 
 /*-------------------------------------------------------------------------------------*/
 
 func sumintpow(n,a)
-/* DOCUMENT sumintpow(n,a)
- FUN!: returns double= SUM_{1:n} n^a, n & a are positive integers
- */
+    /* DOCUMENT sumintpow(n,a)
+       FUN!: returns double= SUM_{1:n} n^a, n & a are positive integers
+    */
 {
   n= long(n);
   a= long(a);
@@ -1590,15 +1591,15 @@ func sumintpow(n,a)
 /*-------------------------------------------------------------------------------------*/
 
 func tile (dd,dtlo,center=)
-/* DOCUMENT tile (dd,dtlo)
-  2D rectangular tiling of 2D rectangular domain.  Output is
-  base index (lower left in "x-y/dim1-2" pic.) of each tile.
-  dd=    data dimension as in dimsof(data)
-  dtlo=  dimension ONLY (no preceeding rank) of output tile.
-  The tile is just the chunk size wich, in tiling with overlap,
-  is also the non-overlapping tile dimension (output dimensions.)
+    /* DOCUMENT tile (dd,dtlo)
+       2D rectangular tiling of 2D rectangular domain.  Output is
+       base index (lower left in "x-y/dim1-2" pic.) of each tile.
+       dd=    data dimension as in dimsof(data)
+       dtlo=  dimension ONLY (no preceeding rank) of output tile.
+       The tile is just the chunk size wich, in tiling with overlap,
+       is also the non-overlapping tile dimension (output dimensions.)
 
- */
+    */
 {
   dtlo*= array(1,dd(1));
   if (center==1)
@@ -1615,37 +1616,37 @@ func tile (dd,dtlo,center=)
 /*-------------------------------------------------------------------------------------*/
 
 func tile_ndx (it,dd,dtlo,ovl,&din,&dout,&tin,&tout)
-/* DOCUMENT  tile_ndx (it,dd,dtlo,&din,&dout,&tin,&tout)
-  first inputs id as those of "tile";
-  dd=    data dimension as in dimsof(data)
-  dtlo=  dimension ONLY (no preceeding rank) of output tile.
-  ovl=   one-side overlap (0 if none)
-  USAGE
-  ====
-  test driver.....
-  func tile_test (dum)
-  {
-    dd= [2,100,400]
-    dtlo= [14,41];
-    ovl= [5,6];
-    local din, dout, tin, tout;
-    tile_ndx, (it=tile(dd,dtlo)), dd, dtlo, ovl, din, dout, tin, tout;
-    tl= array(0.0,_(dd(1),dtlo+2*ovl));
-    im= roll(span(0,1,dd(2))*span(0,1,dd(3))(-,));
-    im2= array(structof(im),dimsof(im));
-    for (i=1;i<=numberof(it(1,));i++) {
-      tl(*)= 0;
-      tl(tin(1,1,i):tin(2,1,i),tin(1,2,i):tin(2,2,i))=
-      im(din(1,1,i):din(2,1,i),din(1,2,i):din(2,2,i));
-      im2(dout(1,1,i):dout(2,1,i),dout(1,2,i):dout(2,2,i))=
-      tl(tout(1,1,i):tout(2,1,i),tout(1,2,i):tout(2,2,i));
-      pli,im2;
-    }
-    plmk,it(2,*)-1,it(1,*)-1,width=30,color="red",marker=1,msize=.3;
-    return im-im2;
-  }
+    /* DOCUMENT  tile_ndx (it,dd,dtlo,&din,&dout,&tin,&tout)
+       first inputs id as those of "tile";
+       dd=    data dimension as in dimsof(data)
+       dtlo=  dimension ONLY (no preceeding rank) of output tile.
+       ovl=   one-side overlap (0 if none)
+       USAGE
+       ====
+       test driver.....
+       func tile_test (dum)
+       {
+       dd= [2,100,400]
+       dtlo= [14,41];
+       ovl= [5,6];
+       local din, dout, tin, tout;
+       tile_ndx, (it=tile(dd,dtlo)), dd, dtlo, ovl, din, dout, tin, tout;
+       tl= array(0.0,_(dd(1),dtlo+2*ovl));
+       im= roll(span(0,1,dd(2))*span(0,1,dd(3))(-,));
+       im2= array(structof(im),dimsof(im));
+       for (i=1;i<=numberof(it(1,));i++) {
+       tl(*)= 0;
+       tl(tin(1,1,i):tin(2,1,i),tin(1,2,i):tin(2,2,i))=
+       im(din(1,1,i):din(2,1,i),din(1,2,i):din(2,2,i));
+       im2(dout(1,1,i):dout(2,1,i),dout(1,2,i):dout(2,2,i))=
+       tl(tout(1,1,i):tout(2,1,i),tout(1,2,i):tout(2,2,i));
+       pli,im2;
+       }
+       plmk,it(2,*)-1,it(1,*)-1,width=30,color="red",marker=1,msize=.3;
+       return im-im2;
+       }
 
-*/
+    */
 {
   n= dd(1);
   dtlo*= array(1,n);
@@ -1671,9 +1672,9 @@ func tile_ndx (it,dd,dtlo,ovl,&din,&dout,&tin,&tout)
 /*--------------------------------------------------------------------*/
 
 func normal (f,y,x,&area,center=)
-/* DOCUMENT normal(f,y,x,&area)
-   normal at zone center
-*/
+    /* DOCUMENT normal(f,y,x,&area)
+       normal at zone center
+    */
 {
   /* Start with the two median vectors across each zone.  */
 
@@ -1749,14 +1750,14 @@ func strplt(s,nospace=)
 /*---------------------------------------------------------------------------*/
 
 func strsplit( str, delim)
-/* DOCUMENT strsplit(str, delim)
- * Decompose string STR into an array of component strings separated by
- * character DELIM, and return an array of the component strings.
- * If DELIM is the null string, split string into its constituent one-character
- * strings.
- * (Reverses the action of STRCOMBINE)
- * SEE ALSO: strrepl, strcombine
- */
+    /* DOCUMENT strsplit(str, delim)
+     * Decompose string STR into an array of component strings separated by
+     * character DELIM, and return an array of the component strings.
+     * If DELIM is the null string, split string into its constituent one-character
+     * strings.
+     * (Reverses the action of STRCOMBINE)
+     * SEE ALSO: strrepl, strcombine
+     */
 {
   NULL= [];
 
@@ -1790,15 +1791,15 @@ func strsplit( str, delim)
 /* ------------------------------------------------------------------------ */
 
 func strcombine( str_array, delim)
-/* DOCUMENT strcombine(str_array,delim)
- * Concatenate an array of strings STR_ARRAY into a single string,
- * with each substring separated by character DELIM (which should not occur in
- * any of the strings.
- * If DELIM is the null string, simply all concatenate all the strings in
- * STR_ARRAY.
- * (Reverses the action of STRSPLIT)
- * SEE ALSO: strrepl, strsplit
- */
+    /* DOCUMENT strcombine(str_array,delim)
+     * Concatenate an array of strings STR_ARRAY into a single string,
+     * with each substring separated by character DELIM (which should not occur in
+     * any of the strings.
+     * If DELIM is the null string, simply all concatenate all the strings in
+     * STR_ARRAY.
+     * (Reverses the action of STRSPLIT)
+     * SEE ALSO: strrepl, strsplit
+     */
 {
   NULL= [];
 
@@ -1839,14 +1840,14 @@ func nameofstream(f)
 /* ------------------------------------------------------------------------ */
 
 func typeconv(typestr,var)
-/* DOCUMENT typeconv(typestr,var)
- * Convert variable VAR to type TYPESTR, and return the converted variable
- * TYPESTR may be one of the following:
- * "char", "int", "long", "float", "double", "complex", "fcomplex", "string"
- * NOTE: for "fcomplex" imaginary parts are ZERO, and are the "inner-most" index
- *       2 of 2.
- * SEE ALSO: typeof, array
- */
+    /* DOCUMENT typeconv(typestr,var)
+     * Convert variable VAR to type TYPESTR, and return the converted variable
+     * TYPESTR may be one of the following:
+     * "char", "int", "long", "float", "double", "complex", "fcomplex", "string"
+     * NOTE: for "fcomplex" imaginary parts are ZERO, and are the "inner-most" index
+     *       2 of 2.
+     * SEE ALSO: typeof, array
+     */
 {
 
   str = strcase(0,typestr);
@@ -1890,19 +1891,19 @@ func typeconv(typestr,var)
 /*-------------------------------------------------------------------*/
 
 func plot_hbar (levs0, colors, offset=, wrap=, off=)
-/* DOCUMENT plot_hbar, levs, colors
+    /* DOCUMENT plot_hbar, levs, colors
 
-   plot a horizontal color bar below the viewport
+       plot a horizontal color bar below the viewport
 
-   levs defines the levels seperating the region
-   colors define the index into the color bar to be used between each level
+       levs defines the levels seperating the region
+       colors define the index into the color bar to be used between each level
 
-   if (is_void(levs) || is_void(colors)) error," both levs and colors must be defined";
+       if (is_void(levs) || is_void(colors)) error," both levs and colors must be defined";
 
-*/
+    */
 {
 
-// coords of viewport
+  // coords of viewport
   port= viewport();
   xd= port(2)-port(1);
   yd= port(4)-port(3);
@@ -1926,26 +1927,26 @@ func plot_hbar (levs0, colors, offset=, wrap=, off=)
   //plot colors
   lastsys= plsys_get();
   plsys, 0
-  if (!is_void(colors)) {
-    if (dimsof(colors)(2)==3&&structof(colors)==char)
-      pli, [colors], xl, yb, xr, yt;
-    else
-    pli, char(transpose(colors(zcol))), xl, yb, xr, yt;
-  } else {
-    if (!is_void(wrap))
-      pliwrap, transpose(zcol), xl, yb, xr, yt, wrap=wrap, off=off;
-    else
-      pli, transpose(zcol), xl, yb, xr, yt;
-  }
+      if (!is_void(colors)) {
+        if (dimsof(colors)(2)==3&&structof(colors)==char)
+          pli, [colors], xl, yb, xr, yt;
+        else
+          pli, char(transpose(colors(zcol))), xl, yb, xr, yt;
+      } else {
+        if (!is_void(wrap))
+          pliwrap, transpose(zcol), xl, yb, xr, yt, wrap=wrap, off=off;
+        else
+          pli, transpose(zcol), xl, yb, xr, yt;
+      }
 
 
   //plot labels;
   if (nc > 10) {
-  // we want no more than 10 labels
+    // we want no more than 10 labels
     num_colors_per_label= nc/10.
-    nlabs= int(nc/(int(num_colors_per_label)+1));
+        nlabs= int(nc/(int(num_colors_per_label)+1));
     nskip= nlevs/nlabs; // number of levels to skip;
-  //read, prompt="debug",dummy;
+    //read, prompt="debug",dummy;
   } else {
     nlabs= nc;
     nskip= 1;
@@ -1970,13 +1971,13 @@ func plot_hbar (levs0, colors, offset=, wrap=, off=)
 /*---------------------------------------------------------------------------*/
 
 func plt_clic(strg, orient=, height=, justify=, font=, color=, hide=, opaque=,prompt=)
-/* DOCUMENT plt_clic(strg, orient=, height=, justify=, font=, color=, hide=, opaque=,prompt=)
-   plt, strg, q(5), q(6),font=font, justify=justify, height=height, orient=orient,\
+    /* DOCUMENT plt_clic(strg, orient=, height=, justify=, font=, color=, hide=, opaque=,prompt=)
+       plt, strg, q(5), q(6),font=font, justify=justify, height=height, orient=orient,\
        color=color,hide=hide,opaque=opaque
-   [x_pressed, y_pressed, x_released, y_released,
-    xndc_pressed, yndc_pressed, xndc_released, yndc_released,
-    system, button, modifiers]
- */
+       [x_pressed, y_pressed, x_released, y_released,
+       xndc_pressed, yndc_pressed, xndc_released, yndc_released,
+       system, button, modifiers]
+    */
 {
   if (prompt==1)write,"clic in plot window to position string\n"+strg;
   do {q= mouse(-1,0,"");} while(is_void(q));q;
@@ -1986,28 +1987,28 @@ func plt_clic(strg, orient=, height=, justify=, font=, color=, hide=, opaque=,pr
   if (is_void(font)) font=pltitle_font;
 
   plt, strg, q(5), q(6),font=font, justify=justify, height=height, orient=orient,\
-                             color=color,hide=hide,opaque=opaque;
+      color=color,hide=hide,opaque=opaque;
   return q;
 }
 
 /*---------------------------------------------------------------------------*/
 
 func pltit(title, xtitle, ytitle, adjust, height=, font=, under=,right=)
-/* DOCUMENT pltit, title, xtitle, ytitle, [deltay,deltax,deltay]
-     Plot TITLE centered above the coordinate system for any of the
-     standard Gist styles.
-     Plot XTITLE horizontally under the viewport and YTITLE vertically
-     to the left of the viewport.  If the tick numbers interfere with
-     the labels, you can specify the [DELTAX,DELTAY] in NDC units to
-     displace the labels.  (Especially for the y title, the adjustment
-     may depend on how many digits the numbers on your scale actually
-     have.)  Note that DELTAX moves YTITLE and DELTAY moves XTITLE.
-     borrows viewport from current plotting coordinate system
-     DEFAULTS: pltitle_height= 18;
-               pltitle_font= "helvetica";
+    /* DOCUMENT pltit, title, xtitle, ytitle, [deltay,deltax,deltay]
+       Plot TITLE centered above the coordinate system for any of the
+       standard Gist styles.
+       Plot XTITLE horizontally under the viewport and YTITLE vertically
+       to the left of the viewport.  If the tick numbers interfere with
+       the labels, you can specify the [DELTAX,DELTAY] in NDC units to
+       displace the labels.  (Especially for the y title, the adjustment
+       may depend on how many digits the numbers on your scale actually
+       have.)  Note that DELTAX moves YTITLE and DELTAY moves XTITLE.
+       borrows viewport from current plotting coordinate system
+       DEFAULTS: pltitle_height= 18;
+       pltitle_font= "helvetica";
 
-   SEE ALSO: plt, pltitle, xytitles
- */
+       SEE ALSO: plt, pltitle, xytitles
+    */
 {
   if (is_void(adjust)) adjust= [0.,0.,0.];
   if (is_void(height)) height= 12;
@@ -2024,18 +2025,18 @@ func pltit(title, xtitle, ytitle, adjust, height=, font=, under=,right=)
   }
 
   if (title && strlen(title))
-     plt, title, port(zcen:1:2)(1), port(4)+ 0.02+ adjust(1),
-       font=font, justify="CB", height=height;
+    plt, title, port(zcen:1:2)(1), port(4)+ 0.02+ adjust(1),
+        font=font, justify="CB", height=height;
   if (xtitle && strlen(xtitle))
     plt, xtitle, port(zcen:1:2)(1), port(3)-0.04+adjust(3),
-      font=font, justify="CT", height=height;
+        font=font, justify="CT", height=height;
   if (ytitle && strlen(ytitle))
     if (right) {
       plt, ytitle, port(2)+0.065-adjust(2), port(zcen:3:4)(1),
-        font=font, justify="CH", height=height, orient=1;
+          font=font, justify="CH", height=height, orient=1;
     } else {
       plt, ytitle, port(1)-0.065+adjust(2), port(zcen:3:4)(1),
-        font=font, justify="CH", height=height, orient=1;
+          font=font, justify="CH", height=height, orient=1;
     }
 
 }
@@ -2049,13 +2050,13 @@ func randrgb(a,b,c,d)
 /* ------------------------------------------------------------------------ */
 
 func colorbar(cmin, cmax,offset=, colors=, tit=)
-/* DOCUMENT colorbar
-            colorbar, cmin, cmax
-     draw a color bar to the right of the plot.  If CMIN and CMAX
-     are specified, label the top and bottom of the bar with those
-     numbers.
-     SEE ALSO: plot_hbar
- */
+    /* DOCUMENT colorbar
+       colorbar, cmin, cmax
+       draw a color bar to the right of the plot.  If CMIN and CMAX
+       are specified, label the top and bottom of the bar with those
+       numbers.
+       SEE ALSO: plot_hbar
+    */
 {
   thisys= plsys();
 
@@ -2069,7 +2070,7 @@ func colorbar(cmin, cmax,offset=, colors=, tit=)
   if (is_void(offset))offset= [0.,0.];
   if (numberof(offset)<2)offset= [0.,0.];
 
-    //  ^ off viewport                  ^   width
+  //  ^ off viewport                  ^   width
   x0= 0.03 + port(2) + offset(1); x1= 0.05*wx + x0;
   //wy*= 0.8;
   y0= port(3:4)(avg)-wy/2;  y1= wy  + y0;
@@ -2082,7 +2083,7 @@ func colorbar(cmin, cmax,offset=, colors=, tit=)
   pli, colors(-,), x0, y0, x1, y1, legend=""; //x0, y0, x1, y1
 
   plg, [y0,y1,y1,y0],[x1,x1,x0,x0], closed=1,
-    marks=0,color="fg",width=1,type=1,legend="";
+      marks=0,color="fg",width=1,type=1,legend="";
 
   plsys, thisys;
 
@@ -2097,36 +2098,36 @@ func colorbar(cmin, cmax,offset=, colors=, tit=)
 /*----------------------------------------------------------------------*/
 
 func pleb(y, x, dx=, dy=, mfill=, color=, width=, marker=, msize=, type=)
-/* DOCUMENT pleb, y, x, dx=dx, dy=dy
-     plots Y vs. X with error bars.
+    /* DOCUMENT pleb, y, x, dx=dx, dy=dy
+       plots Y vs. X with error bars.
 
-     Uncertainty on X and/or Y are specified with the dx= and dy= keywords.
-     X and Y must have same dimensions, dx= and dy= must be conformable
-     with X (or Y).  Either dx or dy may be nil for no error bar in that
-     direction.  Scalar dx or dy gives equal error bars at all points,
-     dimsof(dx)==dimsof(X), etc., gives different error bar at each point.
-     dx= and dy= may also have a trailing dimension of length 2 in order
-     to get asymmetric error bars; dx(..,1) is the lower error bar length,
-     and dx(..,2) is the upper error bar length in that case, etc.
+       Uncertainty on X and/or Y are specified with the dx= and dy= keywords.
+       X and Y must have same dimensions, dx= and dy= must be conformable
+       with X (or Y).  Either dx or dy may be nil for no error bar in that
+       direction.  Scalar dx or dy gives equal error bars at all points,
+       dimsof(dx)==dimsof(X), etc., gives different error bar at each point.
+       dx= and dy= may also have a trailing dimension of length 2 in order
+       to get asymmetric error bars; dx(..,1) is the lower error bar length,
+       and dx(..,2) is the upper error bar length in that case, etc.
 
-     If marker=, msize=, or width= is specified, markers are positioned
-     at X, Y using plmk.  Use the mfill=1 keyword to get filled markers
-     (width>=10. in plmk; width= refers to error bar width in pleb).
+       If marker=, msize=, or width= is specified, markers are positioned
+       at X, Y using plmk.  Use the mfill=1 keyword to get filled markers
+       (width>=10. in plmk; width= refers to error bar width in pleb).
 
-   EXAMPLE:
-      x= [0, 1, 2, 3];
-      y= [0, 2, 4, 7];
-      pleb, y, x, dx=0.2, dy=[0.3, 0.4, 0.5, 0.3], mfill=1;
-         Uncertainties on dx are the same for all X, and those
-         on Y are different for each value of Y.  Filled markers
-         will be displayed at (X, Y).
+       EXAMPLE:
+       x= [0, 1, 2, 3];
+       y= [0, 2, 4, 7];
+       pleb, y, x, dx=0.2, dy=[0.3, 0.4, 0.5, 0.3], mfill=1;
+       Uncertainties on dx are the same for all X, and those
+       on Y are different for each value of Y.  Filled markers
+       will be displayed at (X, Y).
 
-   KEYWORDS: color, width, marker, msize
-      dx     uncertainty on X
-      dy     uncertainty on Y
+       KEYWORDS: color, width, marker, msize
+       dx     uncertainty on X
+       dy     uncertainty on Y
 
-   SEE ALSO: plmk, pldj
- */
+       SEE ALSO: plmk, pldj
+    */
 {
   if (is_void(dx)) dx= 0.;
   if (is_void(dy)) dy= 0.;
@@ -2151,69 +2152,69 @@ func pleb(y, x, dx=, dy=, mfill=, color=, width=, marker=, msize=, type=)
   pldj, xmin, y, xmax, y, color=color, width=width, legend="",type=type;
   if (!is_void(marker) || !is_void(msize) || !is_void(mfill))
     plmk, y, x, color=color, msize=msize, marker=marker,
-      width=(mfill? 20.: width);
+        width=(mfill? 20.: width);
 }
 
 /*----------------------------------------------------------*/
 
 func plots(x,y,z,type=,marker=,xr=,yr=,zr=,cage=)
-/* DOCUMENT plots,x,y,z,type=,marker=,xr=,yr=,zr=
-  plot lines/points in 3-D
+    /* DOCUMENT plots,x,y,z,type=,marker=,xr=,yr=,zr=
+       plot lines/points in 3-D
 
- n=20000;
- t=acos(2*(random(n)-0.5));
- p=random(n)*2*pi;
- x=sin(t)*cos(p);
- y=sin(t)*sin(p);
- z= cos(t);
- clear3
- plots,x,y,z,type=0,marker='\1',xr=[-1,1],yr=[-1,1],zr=[-1,1];
- spin3, 400;
+       n=20000;
+       t=acos(2*(random(n)-0.5));
+       p=random(n)*2*pi;
+       x=sin(t)*cos(p);
+       y=sin(t)*sin(p);
+       z= cos(t);
+       clear3
+       plots,x,y,z,type=0,marker='\1',xr=[-1,1],yr=[-1,1],zr=[-1,1];
+       spin3, 400;
 
-*/
+    */
 {
- require, "plwf.i";
- if (_draw3) {
-        xyz= _nxt(x);
-        type= _nxt(x);
-        marker= _nxt(x);
-        get3_xy,xyz,x0,y0;
-        plg,y0,x0,type=type,marker=marker;}
- else {
-   if (is_void(xr)) xr=[min(x),max(x)];
-   if (is_void(yr)) yr=[min(y),max(y)];
-   if (is_void(zr)) zr=[min(z),max(z)];
-   if (is_void(type)) type=1;
-   if (is_void(marker)) marker=0;
-   window3;
-   orient3;
-   light3;
-   cage3,(is_void(cage)? 0: cage);
-   // limit3,min(x),max(x),min(y),max(y),min(z),max(z)
-   limit3,xr(1),xr(2),yr(1),yr(2),zr(1),zr(2);
-   xyz=transpose([x,y,z],2);
-   get3_xy,xyz,x0,y0;
-   plg,y0,x0,type=type,marker=marker;
-   set3_object,plots,_lst(xyz,type,marker);}
+  require, "plwf.i";
+  if (_draw3) {
+    xyz= _nxt(x);
+    type= _nxt(x);
+    marker= _nxt(x);
+    get3_xy,xyz,x0,y0;
+    plg,y0,x0,type=type,marker=marker;}
+  else {
+    if (is_void(xr)) xr=[min(x),max(x)];
+    if (is_void(yr)) yr=[min(y),max(y)];
+    if (is_void(zr)) zr=[min(z),max(z)];
+    if (is_void(type)) type=1;
+    if (is_void(marker)) marker=0;
+    window3;
+    orient3;
+    light3;
+    cage3,(is_void(cage)? 0: cage);
+    // limit3,min(x),max(x),min(y),max(y),min(z),max(z)
+    limit3,xr(1),xr(2),yr(1),yr(2),zr(1),zr(2);
+    xyz=transpose([x,y,z],2);
+    get3_xy,xyz,x0,y0;
+    plg,y0,x0,type=type,marker=marker;
+    set3_object,plots,_lst(xyz,type,marker);}
 }
 
 
 /* ------------------------------------------------------------------------ */
 
 func sread_n(s, &n0, &n1, &n2, &n3, &n4, &n5, &n6, &n7, &n8, &n9)
-/* DOCUMENT sread_n, f, n0, n1, n2, ...
-     grabs the next numbers N0, N1, N2, ... from string s, skipping over
-     any whitespace, comma, semicolon, or colon delimited tokens which
-     are not numbers.  (Actually, only the first and last characters of
-     the token have to look like a number -- 4xxx3 would be read as 4.)
-     ***WARNING*** at most ten Ns are allowed
-     The Ns can be arrays, provided all have the same dimensions.
-     EXAMPLE:
-      a=b=c=[1,2]
-      sread_n,"1;2;3;4;5;6",a,b,c;a;b;c;
+    /* DOCUMENT sread_n, f, n0, n1, n2, ...
+       grabs the next numbers N0, N1, N2, ... from string s, skipping over
+       any whitespace, comma, semicolon, or colon delimited tokens which
+       are not numbers.  (Actually, only the first and last characters of
+       the token have to look like a number -- 4xxx3 would be read as 4.)
+       ***WARNING*** at most ten Ns are allowed
+       The Ns can be arrays, provided all have the same dimensions.
+       EXAMPLE:
+       a=b=c=[1,2]
+       sread_n,"1;2;3;4;5;6",a,b,c;a;b;c;
 
-   SEE ALSO: sread, read_n, rdline
- */
+       SEE ALSO: sread, read_n, rdline
+    */
 {
   n= numberof(n0);
   for (i=1 ; i<=n ; i++) {
@@ -2240,7 +2241,7 @@ func sread_n_worker(&s, &var, i)
     s= tok(2);
     len= strlen(tok(1));
     if (len && strmatch("0123456789.",strpart(tok(1), len:len)) &&
-       (indirect? sread(tok(1), value) : sread(tok(1), var))) {
+        (indirect? sread(tok(1), value) : sread(tok(1), var))) {
       if (indirect) var(i)= value;
       return;
     }
@@ -2251,13 +2252,13 @@ func sread_n_worker(&s, &var, i)
 /* ------------------------------------------------------------------------ */
 
 func hcsuff(fnm,dpi=)
-/* DOCUMENT hcsuff(fnm,dpi=)
-   uses suffix *.abc to pick output format
-   from "eps" "pdf" "png" "jpeg" "epsi"
-   out of that set or no suffix then "ps".
-   dpi is reset from default 72 to 120
-   for *.jpeg *.png
- */
+    /* DOCUMENT hcsuff(fnm,dpi=)
+       uses suffix *.abc to pick output format
+       from "eps" "pdf" "png" "jpeg" "epsi"
+       out of that set or no suffix then "ps".
+       dpi is reset from default 72 to 120
+       for *.jpeg *.png
+    */
 {
   dir0= get_cwd();
   dir= dirname(fnm);
@@ -2269,7 +2270,7 @@ func hcsuff(fnm,dpi=)
 
   s= fnm;
   do {ss=strtok(s,".");} while((s=ss(2)))
-  rtnm= strpart(fnm,1:-strlen(ss(1)));
+    rtnm= strpart(fnm,1:-strlen(ss(1)));
 
   if (is_void(dpi)) dpi= 120;
 
@@ -2307,23 +2308,23 @@ func pliwrap (x, x0, y0, x1, y1, deg=, wrap=, off=)
   ca= (cmin+cmax)/2;
   b= bytscl(x,cmin=cmin,cmax=ca);
   pli, merge2(b,max(b)-bytscl(x,cmin=ca,cmax=cmax),x<ca),\
-       x0, y0, x1, y1;
+      x0, y0, x1, y1;
 }
 
 func plot_vbar (levs0, colors, offset=, wrap=, off=)
-/* DOCUMENT plot_vbar, levs, colors
+    /* DOCUMENT plot_vbar, levs, colors
 
-plot a horizontal color bar below the viewport
+       plot a horizontal color bar below the viewport
 
-levs defines the levels seperating the region
-colors define the index into the color bar to be used between each level
+       levs defines the levels seperating the region
+       colors define the index into the color bar to be used between each level
 
-if (is_void(levs) || is_void(colors)) error," both levs and colors must be defined";
+       if (is_void(levs) || is_void(colors)) error," both levs and colors must be defined";
 
-*/
+    */
 {
 
-// coords of viewport
+  // coords of viewport
   port= viewport();
   xd= port(2)-port(1);
   yd= port(4)-port(3);
@@ -2348,23 +2349,23 @@ if (is_void(levs) || is_void(colors)) error," both levs and colors must be defin
   //plot colors
   lastsys= plsys_get();
   plsys, 0
-  if (!is_void(colors)) {
-    pli, char(colors(zcol)), xl, yb, xr, yt;
-  } else {
-    if (!is_void(wrap))
-      pliwrap, zcol, xl, yb, xr, yt, wrap=wrap, off=off;
-    else
-      pli, zcol, xl, yb, xr, yt;
-  }
+      if (!is_void(colors)) {
+        pli, char(colors(zcol)), xl, yb, xr, yt;
+      } else {
+        if (!is_void(wrap))
+          pliwrap, zcol, xl, yb, xr, yt, wrap=wrap, off=off;
+        else
+          pli, zcol, xl, yb, xr, yt;
+      }
 
 
   //plot labels;
   if (nc > 10) {
-  // we want no more than 10 labels
+    // we want no more than 10 labels
     num_colors_per_label= nc/10.
-    nlabs= int(nc/(int(num_colors_per_label)+1));
+        nlabs= int(nc/(int(num_colors_per_label)+1));
     nskip= nlevs/nlabs; // number of levels to skip;
-  //read, prompt="debug",dummy;
+    //read, prompt="debug",dummy;
   } else {
     nlabs= nc;
     nskip= 1;
@@ -2389,49 +2390,49 @@ extern plsys_coord;
 plsys_coord= 1;
 
 func plsys_set (n)
-/* DOCUMENT plfsys_set(n)
+    /* DOCUMENT plfsys_set(n)
 
-        store the coordinate system away for later access with plsys_get
-        then call plsys. This allows one to retrieve the current coordinate
-        system so you can reset it after working in a particular system.
+       store the coordinate system away for later access with plsys_get
+       then call plsys. This allows one to retrieve the current coordinate
+       system so you can reset it after working in a particular system.
 
-        SEE ALSO: plsys, plsys_get
-*/
+       SEE ALSO: plsys, plsys_get
+    */
 {
-extern plsys_coord;
-plsys_coord= n;
-plsys,n;
+  extern plsys_coord;
+  plsys_coord= n;
+  plsys,n;
 }
 
 func plsys_get(n)
-/* DOCUMENT plsys_get
+    /* DOCUMENT plsys_get
 
-        return the coordinate system last set with plsys_set
-        This allows one to retrieve the current coordinate
-        system so you can reset it after working in a particular
-        coordinate system.
+       return the coordinate system last set with plsys_set
+       This allows one to retrieve the current coordinate
+       system so you can reset it after working in a particular
+       coordinate system.
 
-        SEE ALSO: plsys, plsys_set
-*/
+       SEE ALSO: plsys, plsys_set
+    */
 {
-extern plsys_coord;
-return plsys_coord;
+  extern plsys_coord;
+  return plsys_coord;
 }
 /*---------------------------------------------------------------------*/
 
 func limitseq (n1,n2,q,panel=)
-/* DOCUMENT limitseq(n1,n2,q)
-    window,n1;
-  if (is_void(q)) {
-    q=limits();
-  } else {
-    limits,q;
-  }
-  window,n2;
-  limits,q;
-  window,n1;
-  return q
- */
+    /* DOCUMENT limitseq(n1,n2,q)
+       window,n1;
+       if (is_void(q)) {
+       q=limits();
+       } else {
+       limits,q;
+       }
+       window,n2;
+       limits,q;
+       window,n1;
+       return q
+    */
 {
   n0= window();
   if (panel==1) {fnext,n1;} else {window,n1;}
@@ -2448,8 +2449,8 @@ func limitseq (n1,n2,q,panel=)
 /*---------------------------------------------------------------------*/
 
 func limitsexp (frac,panel=)
-/* DOCUMENT
- */
+    /* DOCUMENT
+     */
 {
   if (is_void(frac)) frac= 0.06;
   if (!is_void(panel)) {fnext,n1;}
@@ -2466,17 +2467,17 @@ func limitsexp (frac,panel=)
 }
 
 func vparray(nx,ny,xm,xM,ym,yM,xgap=,ygap=)
-/* DOCUMENT
-   nx= 2;
-   ny= 5;
-   xm= 70; xM= 880; ym= 70; yM= 680;
-   xwindow,0,height=600,width=920,units=2,viewport=vparray(nx,ny,xm,xM,ym,yM,xgap=35,ygap=25),size=8;
-   for (i=1;i<=nx*ny;i++) {
-     plsys,i;
-     plg,[0,1];
-   }
-   SEE ALSO:
-*/
+    /* DOCUMENT
+       nx= 2;
+       ny= 5;
+       xm= 70; xM= 880; ym= 70; yM= 680;
+       xwindow,0,height=600,width=920,units=2,viewport=vparray(nx,ny,xm,xM,ym,yM,xgap=35,ygap=25),size=8;
+       for (i=1;i<=nx*ny;i++) {
+       plsys,i;
+       plg,[0,1];
+       }
+       SEE ALSO:
+    */
 {
   xg= is_void(xgap)? 0: xgap/2;
   yg= is_void(ygap)? 0: ygap/2;
@@ -2499,12 +2500,12 @@ func vparray(nx,ny,xm,xM,ym,yM,xgap=,ygap=)
 /************************************************************************/
 
 func lssys (directory, &dirs, dir=)
-  /* DOCUMENT lsltr(directory, &dirs)
+    /* DOCUMENT lsltr(directory, &dirs)
 
-  returns a list of files sorted in order of date
+       returns a list of files sorted in order of date
 
-  SEE ALSO: strmatch, strpart, where
-  */
+       SEE ALSO: strmatch, strpart, where
+    */
 {
   if (is_void(directory)) directory= ".";
   system, "ls -Lapc1 "+directory+"> /tmp/.dirContent";
@@ -2522,12 +2523,12 @@ func lssys (directory, &dirs, dir=)
 
 
 func save_rec(args)
-/* DOCUMENT save_rec, f, a, b, ...,  _suf=, _prf=;
-   simple klunky-kludgy PDB save with variable name obfuscation.
-   no introspection...
-   underscored keywords to lower chance of variable name clashes...
-   SEE ALSO: restore_rec
- */
+    /* DOCUMENT save_rec, f, a, b, ...,  _suf=, _prf=;
+       simple klunky-kludgy PDB save with variable name obfuscation.
+       no introspection...
+       underscored keywords to lower chance of variable name clashes...
+       SEE ALSO: restore_rec
+    */
 {
   sk= args(-); //key strings
   nk= numberof(sk);
@@ -2567,12 +2568,12 @@ func save_rec(args)
 wrap_args, save_rec;
 
 func restore_rec(args)
-/* DOCUMENT restore_rec, f, a, b, ..., _suf=, _prf=;
-   simple klunky-kludgy PDB variable name obfuscation.
-   no introspection...
-   unerscored keywords to avoid variable name clashes...
-   SEE ALSO: save_rec
- */
+    /* DOCUMENT restore_rec, f, a, b, ..., _suf=, _prf=;
+       simple klunky-kludgy PDB variable name obfuscation.
+       no introspection...
+       unerscored keywords to avoid variable name clashes...
+       SEE ALSO: save_rec
+    */
 {
   sk= args(-); //key strings
   nk= numberof(sk);
@@ -2607,9 +2608,9 @@ func restore_rec(args)
 wrap_args, restore_rec;
 
 func oxcopy (o)
-/* DOCUMENT oxcopy (o)
-   recursive oxy object copy
- */
+    /* DOCUMENT oxcopy (o)
+       recursive oxy object copy
+    */
 {
   oo= o(:);
   for (i=1; i<=o(*); i++) {
@@ -2621,9 +2622,9 @@ func oxcopy (o)
 }
 
 func oxtypeq (o1,o2,nodim=)
-/* DOCUMENT oxtypeq (o1,o2)
-   recursive oxy object type/dimesion checks
- */
+    /* DOCUMENT oxtypeq (o1,o2)
+       recursive oxy object type/dimesion checks
+    */
 {
   s1= o1(*,);
   s2= o2(*,);
@@ -2631,8 +2632,8 @@ func oxtypeq (o1,o2,nodim=)
   if (numberof(s2)) s2= s2(sort(s2));
   if (anyof(s1!=s2))
     return 0
-  else
-    tf= 1;
+    else
+      tf= 1;
 
   for (i=1; i<=o1(*); i++) {
     o1i= s1(i)? o1(s1(i)): o1(noop(i));
@@ -2641,15 +2642,15 @@ func oxtypeq (o1,o2,nodim=)
       tf*= oxtypeq(o1i,o2i);
     else
       tf*= structof(o1i)==structof(o2i) &&\
-           (nodim==1 || allof(dimsof(o1i)==dimsof(o2i)));
+          (nodim==1 || allof(dimsof(o1i)==dimsof(o2i)));
   }
   return tf;
 }
 
 func oxyeq (o1,o2,nodim=)
-/* DOCUMENT oxyeq (o1,o2)
-   recursive oxy object identity
- */
+    /* DOCUMENT oxyeq (o1,o2)
+       recursive oxy object identity
+    */
 {
   s1= o1(*,);
   s2= o2(*,);
@@ -2683,8 +2684,8 @@ func oxyeq (o1,o2,nodim=)
         }
       }
       tf*= structof(o1i)==structof(o2i) &&               \
-        (nodim==1 || allof(dimsof(o1i)==dimsof(o2i))) && \
-        tt;
+          (nodim==1 || allof(dimsof(o1i)==dimsof(o2i))) && \
+          tt;
     }
   }
   return tf;
@@ -2693,32 +2694,32 @@ func oxyeq (o1,o2,nodim=)
 GRPOXSV= "_grp_";
 
 func oxsave (args)
-/* DOCUMENT oxsave, f, ob;
-   saves oxy groups as PDB's if each member is writable.
-   No type checks! only groups, arrays, pointers(?)...
-   "group" objects (nil membname) not allowed
-   NOTE**
-   **** Cannot mix groups and regular objects on id. node ****
-   NOT save(string(0),a,"b",b,string(0),c) NOT
-   usage:
-   ------
-   o= save(pi);
-   o1= save(o,p1=1);
-   o2= save(o1,p2=2);
-   o22= o2(:);
-   o3= save(o2,o22,p3=3);
+    /* DOCUMENT oxsave, f, ob;
+       saves oxy groups as PDB's if each member is writable.
+       No type checks! only groups, arrays, pointers(?)...
+       "group" objects (nil membname) not allowed
+       NOTE**
+       **** Cannot mix groups and regular objects on id. node ****
+       NOT save(string(0),a,"b",b,string(0),c) NOT
+       usage:
+       ------
+       o= save(pi);
+       o1= save(o,p1=1);
+       o2= save(o1,p2=2);
+       o22= o2(:);
+       o3= save(o2,o22,p3=3);
 
-   o32= o3(:);
-   oxsave,createb("q.opdb"),o3;
-   o3= [];
-   oxrestore,openb("q.opdb"),o3;
-   oxtypeq(o3,o32);
+       o32= o3(:);
+       oxsave,createb("q.opdb"),o3;
+       o3= [];
+       oxrestore,openb("q.opdb"),o3;
+       oxtypeq(o3,o32);
 
-   oxwrite,open("q.i","w"),o3,"ob";
-   include, "q.i", 1;
-   oxtypeq(o3,ob);
-   SEE ALSO: oxread,oxcopy,oxtypeq,oxwrite;
- */
+       oxwrite,open("q.i","w"),o3,"ob";
+       include, "q.i", 1;
+       oxtypeq(o3,ob);
+       SEE ALSO: oxread,oxcopy,oxtypeq,oxwrite;
+    */
 {
   sk= args(-); //key strings, one reserved key
   nk= numberof(sk);
@@ -2776,7 +2777,7 @@ func oxsave (args)
         //   error,"group name cannot contain \".\" or be string(0): "+vnm;
         if (vnm==string(0))
           vnm= swrite(ino++,format=GRPOXSV+"%03i")
-        save, onm, string(0), vnm;
+              save, onm, string(0), vnm;
         f= oxsave(f,vnm,oi,onm,_wrk_=1);
       } else {
         vnm= o(*,i);
@@ -2784,7 +2785,7 @@ func oxsave (args)
         //   error,"variable name cannot contain \".\" or be string(0): "+vnm;
         if (vnm==string(0))
           vnm= swrite(in++,format=GRPOXSV+"%03i")
-        save_rec,f,vnm,oi,_prf=nm;
+              save_rec,f,vnm,oi,_prf=nm;
       }
     }
     if (onm(*)>1)
@@ -2798,10 +2799,10 @@ func oxsave (args)
 wrap_args, oxsave;
 
 func oxrestore (args)
-/* DOCUMENT ob=  oxrerstore (f);
-   reads oxy groups from PDB.
-   SEE ALSO: oxsave,oxcopy,oxtypeq,oxwrite;
- */
+    /* DOCUMENT ob=  oxrerstore (f);
+       reads oxy groups from PDB.
+       SEE ALSO: oxsave,oxcopy,oxtypeq,oxwrite;
+    */
 {
   sk= args(-);              // key strings
   if ((nk=numberof(sk))>1)
@@ -2889,12 +2890,12 @@ func oxrestore (args)
 wrap_args,oxrestore;
 
 func oxwrite (f,o,&onm,lvl)
-/* DOCUMENT oxwrite, ob, ["object name", if void  "cfg"], doc=;
-   #include "qq.i";
-   oxwrite,open("q.i","w"),o3,"ob";
-   TODO: fix for groups
-   SEE ALSO: oxsave,oxread,oxcopy,oxtypeq;
- */
+    /* DOCUMENT oxwrite, ob, ["object name", if void  "cfg"], doc=;
+       #include "qq.i";
+       oxwrite,open("q.i","w"),o3,"ob";
+       TODO: fix for groups
+       SEE ALSO: oxsave,oxread,oxcopy,oxtypeq;
+    */
 {
   if (is_string(f))
     f= open(f,"w");
@@ -2904,22 +2905,22 @@ func oxwrite (f,o,&onm,lvl)
 
   // object indentation level
   nidnt= 2
-  lvl= is_void(lvl)? 1: lvl+1;
+      lvl= is_void(lvl)? 1: lvl+1;
   idnt1= lvl==1? "": strchar(char(array(32,nidnt*(lvl-1))));
   idnt2= strchar(char(array(32,nidnt*lvl)))
 
-  // only on call
-  if (is_string(onm)) {
-    onm= save(string(0),onm);
-    // stash scratch
-    s= info(o);
-    ws= where(strmatch(s,"= object with"));
-    if (numberof(ws)) {
-      s= discrete(strtrim(strtok(s(ws),"=")(1,)));
-      write,f,swrite(s,format=",%s")(sum),\
-        format="scratch= save(scratch%s);\n\n";
-    }
-  }
+      // only on call
+      if (is_string(onm)) {
+        onm= save(string(0),onm);
+        // stash scratch
+        s= info(o);
+        ws= where(strmatch(s,"= object with"));
+        if (numberof(ws)) {
+          s= discrete(strtrim(strtok(s(ws),"=")(1,)));
+          write,f,swrite(s,format=",%s")(sum),\
+              format="scratch= save(scratch%s);\n\n";
+        }
+      }
   s= swrite(onm(0),format="\n"+idnt1+"%s= save(); {");
   write,f,s,format="%s\n";
 
@@ -2931,7 +2932,7 @@ func oxwrite (f,o,&onm,lvl)
       f= oxwrite(f,oi,onm,lvl);
     } else {
       s= swrite(onm(0),o(*,i),pr1(oi)(*)(sum),\
-             format=idnt2+"%s, %s"+(o(*,i)? "=": "string(0),")+" %s;");
+                format=idnt2+"%s, %s"+(o(*,i)? "=": "string(0),")+" %s;");
       write,f,s,format="%s\n";
     }
   }
@@ -2957,22 +2958,22 @@ func oxisfunc (o)
 }
 
 func oxedit (args)
-/* DOCUMENT oxedit(ox,m1,m2,m3,...,val,tcheck=,dcheck=,showval=);
+    /* DOCUMENT oxedit(ox,m1,m2,m3,...,val,tcheck=,dcheck=,showval=);
        simple editing of nested member values with optional type/dim checks
-   return 0 if sucess 1 if error (...hum, not yet)
-   parse args backwards, the last VAR or  {MEMBSPEC[=], VAL} is edited
-   no checks on value unless TCHECK=1 (struct) or DCHECK=1 (dims)
-   SHOWVAL=1 prints old/new values
-   ! TCHECK DCHECK SHOWVAL cannot be ox member names
-   USE:
-   a= save(b=save(c=save(d=save(e=pi))));
-   e= 5;
-   oxedit,a,b,c,d,e; a(b,c,d,e);
-   oxedit,a,b,c,d,"e",1; a(b,c,d,e);
-   oxedit,a,b,c,d,e=2; a(b,c,d,e);
+       return 0 if sucess 1 if error (...hum, not yet)
+       parse args backwards, the last VAR or  {MEMBSPEC[=], VAL} is edited
+       no checks on value unless TCHECK=1 (struct) or DCHECK=1 (dims)
+       SHOWVAL=1 prints old/new values
+       ! TCHECK DCHECK SHOWVAL cannot be ox member names
+       USE:
+       a= save(b=save(c=save(d=save(e=pi))));
+       e= 5;
+       oxedit,a,b,c,d,e; a(b,c,d,e);
+       oxedit,a,b,c,d,"e",1; a(b,c,d,e);
+       oxedit,a,b,c,d,e=2; a(b,c,d,e);
 
-   SEE ALSO: restore_rec
- */
+       SEE ALSO: restore_rec
+    */
 {
   sk= args(-); //key strings
   nk= numberof(sk);
@@ -2998,9 +2999,9 @@ func oxedit (args)
   while (i<args(0)+(ki>0)-is_string(args(args(0)-1))) {
     ai= args(i++);
     if (is_string(ai))
-       o= o(noop(ai));
+      o= o(noop(ai));
     else
-       o= o(args(-,i-1));
+      o= o(args(-,i-1));
   }
   if (is_string(args(args(0)-1))) {
     nm= args(args(0)-1);
@@ -3027,10 +3028,10 @@ func oxedit (args)
 wrap_args, oxedit;
 
 func oxlua(args)
-/* DOCUMENT s= oxlua(o); // s: array(string)
-            o= oxlua(s); .. *not yet* ..
-   FMT: format integer or decimal, SEE totxt.
-  */
+    /* DOCUMENT s= oxlua(o); // s: array(string)
+       o= oxlua(s); .. *not yet* ..
+       FMT: format integer or decimal, SEE totxt.
+    */
 {
   if (args(0)==0 || args(0)>2 || numberof(args(-))!=0)
     error,"string or ox, optional fmt (see totxt).";
@@ -3076,7 +3077,7 @@ func oxlua_pr (a,fmt)
   if (da(1)>0) {
     n= numberof(a);
     s= da(:-1)
-      ra= da(1);
+        ra= da(1);
     for(i=1;i<=ra;i++)
       s(i)=(i==1? 1: s(i)*s(i-1));
     da= da(2:);
@@ -3104,10 +3105,10 @@ func oxlua_pr (a,fmt)
     return sa;
 }
 func oxnml(args)
-/* DOCUMENT s= oxnml(o[,fmt]); // s: array(string)
-            o= oxnml(s); .. *not yet* ..
-   FMT: format integer or decimal, SEE totxt.
- */
+    /* DOCUMENT s= oxnml(o[,fmt]); // s: array(string)
+       o= oxnml(s); .. *not yet* ..
+       FMT: format integer or decimal, SEE totxt.
+    */
 {
   if (args(0)==0 || args(0)>2 || numberof(args(-))>1)
     error,"oxnml, string or ox,[optional fmt (see totxt)][, f90=1].";
@@ -3117,8 +3118,8 @@ func oxnml(args)
   if (numberof(args(-)))
     if (args(-)(1)=="f90")
       if (args("f90")==1) f90=1;
-    else
-      error,"unknown keyword.";
+      else
+        error,"unknown keyword.";
   if (is_obj(args(1))) {
     if (args(0,1)==0)
       onm= strcase(0,args(-,1));
@@ -3162,14 +3163,14 @@ func oxnml(args)
 wrap_args,oxnml;
 
 func oxmap (f,oo,..)
-/* DOCUMENT ob=  oxmap (f,oi1,oi2,oi3,..);
-     map func F on one/multiple group objects
+    /* DOCUMENT ob=  oxmap (f,oi1,oi2,oi3,..);
+       map func F on one/multiple group objects
 
-     oo(i)= f(oi1(i)); // for 1 input
-     oo(i)= f(oi1(i),oi2(i),oi3(i),oi4(i)); // for 4 inputs
+       oo(i)= f(oi1(i)); // for 1 input
+       oo(i)= f(oi1(i),oi2(i),oi3(i),oi4(i)); // for 4 inputs
 
-   SEE ALSO:
- */
+       SEE ALSO:
+    */
 {
   if (!is_void(oo))
     oi= save(string(0),oo);
@@ -3191,52 +3192,52 @@ func oxmap (f,oo,..)
       save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)));
     else if (n==5)
       save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)), \
-                           oi(5,noop(i)));
+                            oi(5,noop(i)));
     else if (n==6)
       save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)), \
-                        oi(5,noop(i)),oi(6,noop(i)));
+                            oi(5,noop(i)),oi(6,noop(i)));
     else if (n==7)
       save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)), \
-                        oi(5,noop(i)),oi(6,noop(i)),oi(7,noop(i)));
+                            oi(5,noop(i)),oi(6,noop(i)),oi(7,noop(i)));
     else if (n==8)
       save, o, string(0), f(oi(1,noop(i)),oi(2,noop(i)),oi(3,noop(i)),oi(4,noop(i)), \
-                        oi(5,noop(i)),oi(6,noop(i)),oi(7,noop(i)),oi(8,noop(i)));
+                            oi(5,noop(i)),oi(6,noop(i)),oi(7,noop(i)),oi(8,noop(i)));
   return o;
 }
 
 scratch= save(scratch,tmp);
 tmp= save(add,pop);
 func oxlist (base,..,flat=)
-/* DOCUMENT l= oxlist();
-            l= oxlist(a1, a2, ..);
-            l, add, a1, a2;
-            l, add, a1, oxlist(b1, b2, ..);
-            l, pop, 2;
-            l, pop, 1:3; // return L(1:3)
-   *!* all pointers *!*
+    /* DOCUMENT l= oxlist();
+       l= oxlist(a1, a2, ..);
+       l, add, a1, a2;
+       l, add, a1, oxlist(b1, b2, ..);
+       l, pop, 2;
+       l, pop, 1:3; // return L(1:3)
+       *!* all pointers *!*
        o= save();
        l= oxlist(o);
        save,o,pi;
        l(l,1,pi)==pi;
-   PURPOSE: general list object, with self-referencing/pointers if sublist/tree,
-            unless FLAT==1 in which case sub(ox)lists are unrolled/inserted inline.
-   add: append any number of arguments. If one arg is
-        an OXLIST object and FLAT==1, only insert "inline" its list/group.
-   pop: if void arg then arg==1, if argument is an integer N smaller
-        than list length, remove N last list members, if arg N is a range,
-        extract list(N)
-        IF subroutine call, the list is cropped to REMAINING objects,
-        IF function call, the returned OXLIST containing SELECTED objects,
-        original object unchanged.
-   !CAUTION! calling oxlist() is identical to oxlist([])
+       PURPOSE: general list object, with self-referencing/pointers if sublist/tree,
+       unless FLAT==1 in which case sub(ox)lists are unrolled/inserted inline.
+       add: append any number of arguments. If one arg is
+       an OXLIST object and FLAT==1, only insert "inline" its list/group.
+       pop: if void arg then arg==1, if argument is an integer N smaller
+       than list length, remove N last list members, if arg N is a range,
+       extract list(N)
+       IF subroutine call, the list is cropped to REMAINING objects,
+       IF function call, the returned OXLIST containing SELECTED objects,
+       original object unchanged.
+       !CAUTION! calling oxlist() is identical to oxlist([])
 
-   EXAMPLE:
-   l= oxlist(pi,save(ji="ho",string(0),[]),sin);
-   l,add,indgen(3);
-   l,add,oxlist(create("q"));
-   l,pop,2;
-   SEE ALSO:
- */
+       EXAMPLE:
+       l= oxlist(pi,save(ji="ho",string(0),[]),sin);
+       l,add,indgen(3);
+       l,add,oxlist(create("q"));
+       l,pop,2;
+       SEE ALSO:
+    */
 {
   ob= base(:);
   l= save();
@@ -3286,32 +3287,32 @@ func add (o,..,flat=)
       save,l,string(0),o;
     o= next_arg();
   } while (more_args()>0)
-}
+    }
 oxlist= closure(oxlist,restore(tmp));
 restore, scratch;
 
 func oxdir (dn)
-/* DOCUMENT oxdir (dn)
-   scan dir tree and output a void-valued oxy objext with keys==file/dir-names;
-   use:
-   ----
-   func rdrdf (o, dn)
-   {
-     oo= save();
-     dn= strpart(dn,0:0)=="/"? dn: dn+"/";
-     for (i=1;i<=o(*);i++) {
+    /* DOCUMENT oxdir (dn)
+       scan dir tree and output a void-valued oxy objext with keys==file/dir-names;
+       use:
+       ----
+       func rdrdf (o, dn)
+       {
+       oo= save();
+       dn= strpart(dn,0:0)=="/"? dn: dn+"/";
+       for (i=1;i<=o(*);i++) {
        if (is_void(o(noop(i))))
-         p= rdf(dn+o(*,i));
+       p= rdf(dn+o(*,i));
        else if (is_obj(o(noop(i)))>0)
-         rdrdf,o(noop(i)),dn+o(*,i);
+       rdrdf,o(noop(i)),dn+o(*,i);
        else
-         error,"unknown type";
-     }
-   }
-   rdrdf,oxdir(dn),dn;
+       error,"unknown type";
+       }
+       }
+       rdrdf,oxdir(dn),dn;
 
-   SEE ALSO:
- */
+       SEE ALSO:
+    */
 {
   dn= strpart(dn,0:0)=="/"? dn: dn+"/";
   local d;
@@ -3333,12 +3334,12 @@ func oxdir (dn)
 }
 
 func oxarr (args)
-/* DOCUMENT  oxarr (o,mbnm,bad=,ireg=)
-   extract array from a (oxy) group of oxy objects with member name MBNM
-   for (o=save(),i=1;i<=3;i++)
-     save,o,string(0),save(a=random(5));
-   b= oxarr(o,"a");
- */
+    /* DOCUMENT  oxarr (o,mbnm,bad=,ireg=)
+       extract array from a (oxy) group of oxy objects with member name MBNM
+       for (o=save(),i=1;i<=3;i++)
+       save,o,string(0),save(a=random(5));
+       b= oxarr(o,"a");
+    */
 {
   sk= args(-); //key strings
   nk= numberof(sk);
@@ -3358,7 +3359,7 @@ func oxarr (args)
   n= o(*);
   mbnm= (args(0,2)==0)? args(-,2): ((args(0,2)==1)? args(2): []);
   if (is_void(mbnm))
-      error,"need MEMBNM string or reference name";
+    error,"need MEMBNM string or reference name";
 
   for (i=1;i<=n;i++)
     if (is_obj(o(noop(i)),noop(mbnm),1)<0)
@@ -3387,44 +3388,51 @@ func oxarr (args)
 wrap_args, oxarr;
 
 func duplicateb(fstrmi,fstrmo,vars,nvars)
-/* DOCUMENT duplicateb(fstrmi,fstrmo,vars,nvars)
+    /* DOCUMENT duplicateb(fstrmi,fstrmo,vars,nvars)
 
-   Save all the variables in FSTRMI listed in VARS but not in NVARS to
-   the file FSTRMO (thus duplicateb). If VARS is void, it is initialized
-   with the variable names present in FSTRMI.
+       Save all the variables in FSTRMI listed in VARS but not in NVARS to
+       the file FSTRMO (thus duplicateb). If VARS is void, it is initialized
+       with the variable names present in FSTRMI.
 
-   SEE ALSO:
- */
+       SEE ALSO:
+    */
 {
   name_list= (is_void(vars)? (*get_vars(fstrmi)(1)): vars);
   if (!is_void(nvars)) {
-      idx= where((name_list(,-)!=nvars(-,))(,sum));
-      if (is_array(idx))
-        name_list= name_list(idx);
-      else
-        return;
-    }
+    idx= where((name_list(,-)!=nvars(-,))(,sum));
+    if (is_array(idx))
+      name_list= name_list(idx);
+    else
+      return;
+  }
   for(i=1;i<=numberof(name_list);i++)
     ssave, fstrmo,name_list(i),get_member(fstrmi,name_list(i));
 }
 
 func use_kdef (args)
-/* DOCUMENT use_kdef,use(),kw1,kw2,...
-   sets default value of listed keywords from context object,
-   if found as members.
-   usage ....
-   graph= save(plg_);
-   func plg_ (y, x, color=, type=) {
-     use_kdef, use(), color, type;
-     plg, y, x, color=color, type=type;
-   }
-   graph= restore(graph);
-   save, graph, color="blue",type=3;
-   fma;
-   graph, plg_, random(10), random(10);
-   graph, plg_, random(10), random(10),color="red";
-   graph, plg_, random(10), random(10),type=0;
- */
+    /* DOCUMENT use_kdef,use(),kw1,kw2,...
+       sets default value of listed keywords from context object,
+       if found as members.
+       --- usage ---
+       scratch= save(scratch,tmp);
+       tmp= save(plg_);
+       func graph (base,void) {
+       return base(:);
+       }
+       func plg_ (y, x, color=, type=) {
+       use_kdef, use(), color, type;
+       plg, y, x, color=color, type=type;
+       }
+       graph= closure(graph,restore(tmp));
+       restore, scratch;
+
+       g= graph();
+       g, color="blue",type=3;
+       fma;
+       g, plg_, random(10), random(10);
+       g, plg_, random(10), random(10),color="red";
+       g, plg_, random(10), random(10),type=0;
+    */
 {
   obj= args(1);
   if (is_void(obj))

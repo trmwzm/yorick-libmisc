@@ -2,19 +2,21 @@ require, "imbinavrg.i";
 require, "poly_fit.i";
 
 scratch= save(scratch, tmp);
-tmp= save(eval, _eval1, stats, scale, elacs, digfun_type);
-func digfun (base, y, x, type=, degree=)
-/* DOCUMENT f= digfun (y, x, type=, degree=)
+tmp= save(eval, _eval1, stats, scale, elacs);
+func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=)
+/* DOCUMENT f= digfun (y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=)
    F is a closure evaluating Y(XP) by interpolation of the
    data provided at construction. The interplation method used
    set through an instance TYPE.
    for polynomial interpolation POLY, DEGREE is that of the polynomial
-   for SPLINELSQ, DEGREE is the numberof knots.
+   for spline interpolation     SPLINE, DYDX0/1=:start/end slopes  TENSION=: tension
+   for spline interpolation     SPLINET, DYDX0/1=:start/end slopes NXFIT=: number of cubic knots
  */
 {
   clsn= "digfun";
   op= save(digfun_lin, digfun_splinelsq, digfun_spline, \
            digfun_poly);    //  ,digfun_cheby
+
   typs= strpart(op(*,),strlen(clsn)+2:);
   if (is_void(y))
     return typs;
@@ -28,21 +30,38 @@ func digfun (base, y, x, type=, degree=)
   dy= dimsof(y);
   if (dy(0)!=dimsof(x)(0))
     error,"x & y not conformable";
-  n= dy(0);
 
   y= y(*,);             // *internal*
   ny= dimsof(y)(2);
+  nxy= dimsof(y)(0);
 
-  ob, dy=dy, n=n, ny=ny;
+  ob, dy=dy, nxy=nxy, ny=ny, type=type;
 
   ob, stats, y, x;
-  ob, scale, y, x;
+  ob, scale, y, x, dydx0, dydx1;
 
-  return ob(digfun_type,clsn+"_"+type,ob,y,x,degree=degree);
+  ob, splin= save();
+  if (strgrepm("spline",type)) {
+    save, ob(splin), nxfit=nxfit;
+    save, ob(splin), tension=tension;
+    save, ob(splin), dydx0=dydx0;
+    save, ob(splin), dydx1=dydx1;
+    if (!is_void(degree))
+      write,"WARNING: provided DEGREE*= key[s] ignored, sets polynomial degree.";
+  }
+
+  ob, pol=save();
+  if (type=="poly") {
+    save, ob(pol), degree;
+    if (!is_void(nxfit) || !is_void(tension) || !is_void(dydx0) || !is_void(dydx1))
+      write,"WARNING: provided NXFIT/TENSION/DYDX*= key[s] ignored, see spline.";
+  }
+
+  return op(clsn+"_"+type,ob,y,x);
 }
 func eval (x, deriv=, deriv2=, integ=, outside=)
 {
-  use, dy, n, ny, xmin, xmax;
+  use, dy, ny, xmin, xmax;
 
   use_method, scale, 1, x;
 
@@ -77,12 +96,17 @@ func stats (&y, &x)
   ymax= y(,max);
   save, use, xmin, xmax, ymin, ymax;
 }
-func scale (&y, &x)
+func scale (&y, &x, &dydx0, &dydx1)
 {
   use, xmin, xmax, ymin, ymax;
   x= (x-xmin)/(xmax-xmin)-0.5;
   m= ymax==ymin;
   y= (y-ymin)/(ymax-ymin+m)-0.5;
+  if (!is_void(dydx0))
+    dydx0*= (xmax-xmin)/(ymax-ymin+m);
+  if (!is_void(dydx1))
+    dydx1*= (xmax-xmin)/(ymax-ymin+m);
+
 }
 func elacs (&y, &x,deriv=,deriv2=,integ=)
 {
@@ -98,38 +122,29 @@ func elacs (&y, &x,deriv=,deriv2=,integ=)
   else
     y= ymin+(y+0.5)*(ymax-ymin);
 }
-func digfun_type (type, o, y, x, degree=)
-{
-  use, op;
-  return op(noop(type),o,y,x,degree=degree);
-}
 digfun= closure(digfun,restore(tmp)); restore, scratch;
 
 /*-------------------------- SPLINELSQ ------------------------*/
 scratch= save(scratch, tmp); tmp= save(_eval1);
-func digfun_splinelsq (base, ob, y, x, degree=)
+func digfun_splinelsq (base, ob, y, x)
 /* DOCUMENT m= digfun(y,x,type="splinelsq")
    discontinuous second derivatives
  */
 {
   save, ob, [], base(:); //  clobber eval, scale, elacs
 
-  if (is_void(degree))
-    error,"Provide DEGREE= value, which is the number of knots.";
+  if (is_void(ob(splin,nxfit)))
+    error,"must provide NXFIT.";
 
-  xf= span(-0.5,0.5,degree);
-  a= array(0.0,[3,ob(ny),9,degree]);
+  xf= span(-0.5,0.5,ob(splin,nxfit));  // better ... implement XY equispaced
+  a= array(0.0,[3,ob(ny),3,ob(splin,nxfit)]);
   xx= x(zcen);
   xd= x(dif);
-  for (i=1; i<=ob(ny); i++) {
-    a(i,1:3,..)= splinelsq(y(i,..),x,xf);    // 1: dydx
-    yy= y(i,dif)/xd;
-    a(i,4:6,..)= splinelsq(yy,xx,xf);  // 2: d2y/dx2
-    a(i,7:9,..)= splinelsq(yy(dif),xx(zcen),xf);  // 3: d3y/dx3
-  }
+  for (i=1; i<=ob(ny); i++)
+    a(i,1:3,..)= splinelsq(y(i,..),x,xf,dydx0=(is_void(ob(splin,dydx0))? []: ob(splin,dydx0,i)), \
+                      dydx1=(is_void(ob(splin,dydx1))? []: ob(splin,dydx1,i)));
 
-  save, ob, a, degree;
-  save, ob, type="digfun_spline";
+  save, ob, a;
 
   return closure(ob, eval);
 }
@@ -137,29 +152,30 @@ func _eval1 (i,x,deriv=,deriv2=,integ=)
 {
   use, a;
   if (deriv==1)
-    return splinef(a(i,4:6,..),x);
+    return splined(a(i,..),x);
   else if (deriv2==1){  // continuous approximation kludge
-    return splinef(a(i,7:9,..),x);
+    return splinei(a(i,..),x);
   } else if (integ==1)
     error,"not implemented";
   else
-    return splinef(a(i,1:3,..),x);
+    return splinef(a(i,..),x);
 }
 digfun_splinelsq= closure(digfun_splinelsq,restore(tmp));restore, scratch;
 
 /*-------------------------- SPLINE ------------------------*/
 scratch= save(scratch, tmp); tmp= save(_eval1);
-func digfun_spline (base, ob, y, x, degree=)
+func digfun_spline (base, ob, y, x)
 /* DOCUMENT */
 {
   save, ob, [], base(:);
 
-  if (!is_void(degree))
-    write,"Warning: provided DEGREE= key not used.";
+  if (!is_void(ob(splin,nxfit)))
+    write,"Warning: provided NXFIT= key not used, see splinelsq.";
 
-  a= array(0.0,[3,ob(ny),5,ob(n)]);
+  a= array(0.0,[3,ob(ny),5,ob(nxy)]);
   for (i=1; i<=ob(ny); i++) {
-    a(i,1,..)= spline(y(i,..),x);    // 1: dydx
+    a(i,1,..)= spline(y(i,..),x,dydx0=(is_void(ob(splin,dydx0))? []: ob(splin,dydx0,i)), \
+                      dydx1=(is_void(ob(splin,dydx1))? []: ob(splin,dydx1,i)));
     a(i,2,..)= spline(a(i,1,..),x);  // 2: d2y/dx2
     a(i,3,..)= spline(a(i,2,..),x);  // 3: d3y/dx3
     a(i,4,..)= y(i,..);
@@ -167,37 +183,45 @@ func digfun_spline (base, ob, y, x, degree=)
   }
 
   save, ob, a;
-  save, ob, type="digfun_spline";
 
   return closure(ob, eval);
 }
 func _eval1 (i,x,deriv=,deriv2=,integ=)
 {
-  use, a;
-  if (deriv==1)
-    return spline(a(i,2,..),a(i,1,..),a(i,5,..),x);
-  else if (deriv2==1){  // continuous approximation kludge
-    return spline(a(i,3,..),a(i,2,..),a(i,5,..),x);
-  } else if (integ==1)
-    error,"not implemented";
-  else
-    return spline(a(i,1,..),a(i,4,..),a(i,5,..),x);
+  use, a, splin;
+
+  if (is_void(splin(tension))) {
+    if (deriv==1)
+      return sprime(a(i,1,..),a(i,4,..),a(i,5,..),x);
+    else if (deriv2==1){  // continuous approximation kludge
+      return spline(a(i,3,..),a(i,2,..),a(i,5,..),x);
+    } else if (integ==1)
+      error,"not implemented";
+    else
+      return spline(a(i,1,..),a(i,4,..),a(i,5,..),x);
+  } else {
+    if (deriv==1)
+      return tspline(splin(tension),a(i,2,..),a(i,1,..),a(i,5,..),x);
+    else if (deriv2==1){  // continuous approximation kludge
+      return tspline(splin(tension),a(i,3,..),a(i,2,..),a(i,5,..),x);
+    } else if (integ==1)
+      error,"not implemented";
+    else
+      return tspline(splin(tension),a(i,1,..),a(i,4,..),a(i,5,..),x);
+  }
 }
 digfun_spline= closure(digfun_spline,restore(tmp));restore, scratch;
 
 /*-------------------------- LIN ------------------------*/
 scratch= save(scratch, tmp); tmp= save(_eval1);
-func digfun_lin (base, ob, y, x, degree=)
+func digfun_lin (base, ob, y, x)
 /* DOCUMENT m= digfun(y, x, type="lin")
    discontinuous second derivatives
  */
 {
   save, ob, [], base(:); //  clobber _eval1
 
-  if (!is_void(degree))
-    write,"Warning: provided DEGREE= key not used.";
-
-  a= array(0.0,[3,ob(ny),4,ob(n)]);
+  a= array(0.0,[3,ob(ny),4,ob(nxy)]);
   for (i=1; i<=ob(ny); i++) {
     a(i,1,..)= x;
     a(i,2,..)= y(i,..);
@@ -206,7 +230,6 @@ func digfun_lin (base, ob, y, x, degree=)
   }
 
   save, ob, a;
-  save, ob, type="digfun_lin";
 
   return closure(ob, eval);
 }
@@ -228,19 +251,19 @@ digfun_lin= closure(digfun_lin,restore(tmp));restore, scratch;
 
 /*-------------------------- POLY ------------------------*/
 scratch= save (scratch, tmp); tmp= save(_eval1);
-func digfun_poly (base, ob, y, x, degree=)
+func digfun_poly (base, ob, y, x)
 /* DOCUMENT m= digfun(y, x, type="poly")
  */
 {
   save, ob, [], base(:); //  clobber _eval1
 
-  degree= is_void(degree)? 5: degree;
-
-  a= array(0.,[2,ob(ny),degree+1]);
+  a= array(0.,[2,ob(ny),ob(pol,degree)+1]);
   for (i=1; i<=ob(ny); i++)
-    a(i,..)= poly1_fit(y(i,..),x,degree);
-  save, ob, a, degree;
-  save, ob, type="digfun_poly";
+    a(i,..)= poly1_fit(y(i,..),x,ob(pol,degree));
+
+  save, ob, degree=ob(pol,degree);
+
+  save, ob, a;
 
   return closure(ob, eval);
 }
@@ -261,8 +284,8 @@ func _eval1 (i,x,deriv=,deriv2=,integ=)
 digfun_poly= closure(digfun_poly,restore(tmp));restore, scratch;
 
 /*-------------------------- TEST ------------------------*/
-#if 0
-func test (n=,type=,degree=, figs=)
+#if 1
+func test (n=, figs=, type=, degree=, tension=, nxfit=)
 {
   if (is_void(n))
     n= 80;
@@ -278,7 +301,7 @@ func test (n=,type=,degree=, figs=)
   x= span(xmin,xmax,n);
   y= yoff+yamp*transpose([sin(2*pi*x),cos(2*pi*x)]);
 
-  f= digfun(y,x,type=type,degree=degree);
+  f= digfun(y,x,type=type,degree=degree,tension=tension,nxfit=nxfit);
 
   lx= xmax-xmin;
   xx= span(xmin,xmax-lx/10,n/decim)+random(n/decim)*lx/10;
@@ -317,9 +340,22 @@ func test (n=,type=,degree=, figs=)
     limits;
   }
 }
-t= digfun();
-for (i=1;i<=numberof(t);i++)
-{
-  test,n=50,type=t(i),degree=10,figs=1;q= rdline(prompt=" q quits");
-}
+
+test,n=50,type="lin",figs=1;
+q= rdline(prompt=" q quits");
+
+test,n=50,type="poly",figs=1,degree=17;
+q= rdline(prompt=" q quits");
+
+test,n=50,type="spline",figs=1;
+q= rdline(prompt=" q quits");
+
+test,n=50,type="spline",figs=1, tension=4.0;
+q= rdline(prompt=" q quits");
+
+test,n=50,type="splinelsq",figs=1, nxfit=10;
+q= rdline(prompt=" q quits");
+
+
+
 #endif

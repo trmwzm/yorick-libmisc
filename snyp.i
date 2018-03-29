@@ -279,6 +279,27 @@ func eval(x)
 }
 oxo_a= closure(oxo_a,restore(tmp)); restore, scratch;
 
+
+scratch= save(scratch,tmp);
+tmp= save(plg);
+func graph (base,void)
+{
+  return base(:);
+}
+func plg (y, x, color=, type=) {
+  use_kdef, use(), color, type;
+  plg, y, x, color=color, type=type;
+}
+graph= closure(graph,restore(tmp));
+restore, scratch;
+
+g= graph();
+g, color="blue",type=3;
+fma;
+g, plg, random(10), random(10);
+g, plg, random(10), random(10),color="red";
+g, plg, random(10), random(10),type=0;
+
 /* -------------------------- hu? -------------------------- */
 #if 0
 func test (nx)
