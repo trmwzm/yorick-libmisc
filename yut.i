@@ -1613,6 +1613,22 @@ func tile (dd,dtlo,center=)
   return out;
 }
 
+func equidx (y, x, n)
+/* DOCUMENT xx= equidx(y,x,n); // dimsof(x)==[1,n]
+   Y is either comformable with X, or has an additional *leading* dimension
+   X coordinate to sample:
+   SEE ALSO:
+ */
+{
+  if (dimsof(x)(1)!=1)
+    error,"Expecting 1-dim array.";
+  if (dimsof(y)(1)==1)
+    y= y(-,);
+  dydx= (y(,dif)(,pcen))/(x(dif)(pcen)(-,));
+  f= 1./sqrt(1+(dydx^2)(sum,));
+  return x(1)+interp(f(cum)(:-1)/f(:-1)(sum),x,span(x(1),x(0),n))*(x(0)-x(1));
+}
+
 /*-------------------------------------------------------------------------------------*/
 
 func tile_ndx (it,dd,dtlo,ovl,&din,&dout,&tin,&tout)
