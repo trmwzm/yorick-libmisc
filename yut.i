@@ -1617,16 +1617,28 @@ func equidx (y, x, n)
 /* DOCUMENT xx= equidx(y,x,n); // dimsof(x)==[1,n]
    Y is either comformable with X, or has an additional *leading* dimension
    X coordinate to sample:
+   m= 20;
+   n= 200;
+   x= span(0,1,n);
+   y= gaussm(random_n(n),40)*10;
+   xx= equidx(y,x,m); yy= interp(y,x,xx);
+   xxx= span(0,1,m); yyy= interp(y,x,xxx);
+   dd= y-interp(yy,xx,x); ddd= y-interp(yyy,xxx,x);
+   statarr,dd;
+   statarr,ddd;
+   fma;
+   plg,y,x;
+   plg,yy,xx,color="red";
+   plg,yyy,xxx,color="blue";
    SEE ALSO:
  */
 {
   if (dimsof(x)(1)!=1)
     error,"Expecting 1-dim array.";
   if (dimsof(y)(1)==1)
-    y= y(-,);
-  dydx= (y(,dif)(,pcen))/(x(dif)(pcen)(-,));
-  f= 1./sqrt(1+(dydx^2)(sum,));
-  return x(1)+interp(f(cum)(:-1)/f(:-1)(sum),x,span(x(1),x(0),n))*(x(0)-x(1));
+    y= y(-,..);
+  d= sqrt((y(,dif)(,pcen)^2)(sum,)+x(dif)(pcen)^2)(cum);
+  return interp(x,d(:-1),span(0,d(-1),n));
 }
 
 /*-------------------------------------------------------------------------------------*/
