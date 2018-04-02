@@ -3,8 +3,8 @@ require, "poly_fit.i";
 
 scratch= save(scratch, tmp);
 tmp= save(eval, _eval1, stats, scale, elacs);
-func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=)
-/* DOCUMENT f= digfun (y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=)
+func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid=, quiet=)
+/* DOCUMENT f= digfun (y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid=, quiet=)
    F is a closure evaluating Y(XP) by interpolation of the
    data provided at construction. The interplation method used
    set through an instance TYPE.
@@ -46,14 +46,17 @@ func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=)
     save, ob(splin), tension=tension;
     save, ob(splin), dydx0=dydx0;
     save, ob(splin), dydx1=dydx1;
-    if (!is_void(degree))
+    save, ob(splin), equid=equid;
+    if (!quiet && type=="spline" && (!is_void(nxfit) || !is_void(equid)))
+      write,"Warning: provided NXFIT=, or EQUID=, keys not used, see splinelsq.";
+    if (!quiet && !is_void(degree))
       write,"WARNING: provided DEGREE*= key[s] ignored, sets polynomial degree.";
   }
 
   ob, pol=save();
   if (type=="poly") {
     save, ob(pol), degree;
-    if (!is_void(nxfit) || !is_void(tension) || !is_void(dydx0) || !is_void(dydx1))
+    if (!quiet && (!is_void(nxfit) || !is_void(tension) || !is_void(dydx0) || !is_void(dydx1)))
       write,"WARNING: provided NXFIT/TENSION/DYDX*= key[s] ignored, see spline.";
   }
 
@@ -136,10 +139,13 @@ func digfun_splinelsq (base, ob, y, x)
   if (is_void(ob(splin,nxfit)))
     error,"must provide NXFIT.";
 
-  xf= span(-0.5,0.5,ob(splin,nxfit));  // better ... implement XY equispaced
+  if (is_void(ob(splin,equid))) {
+    xf= span(-0.5,0.5,ob(splin,nxfit));  // better ... implement XY equispaced
+  } else {
+    xf= equidx(y,x,ob(splin,nxfit));
+  }
+
   a= array(0.0,[3,ob(ny),3,ob(splin,nxfit)]);
-  xx= x(zcen);
-  xd= x(dif);
   for (i=1; i<=ob(ny); i++)
     a(i,1:3,..)= splinelsq(y(i,..),x,xf,dydx0=(is_void(ob(splin,dydx0))? []: ob(splin,dydx0,i)), \
                       dydx1=(is_void(ob(splin,dydx1))? []: ob(splin,dydx1,i)));
@@ -168,9 +174,6 @@ func digfun_spline (base, ob, y, x)
 /* DOCUMENT */
 {
   save, ob, [], base(:);
-
-  if (!is_void(ob(splin,nxfit)))
-    write,"Warning: provided NXFIT= key not used, see splinelsq.";
 
   a= array(0.0,[3,ob(ny),5,ob(nxy)]);
   for (i=1; i<=ob(ny); i++) {
@@ -284,7 +287,7 @@ func _eval1 (i,x,deriv=,deriv2=,integ=)
 digfun_poly= closure(digfun_poly,restore(tmp));restore, scratch;
 
 /*-------------------------- TEST ------------------------*/
-#if 1
+#if 0
 func test (n=, figs=, type=, degree=, tension=, nxfit=)
 {
   if (is_void(n))
@@ -356,6 +359,36 @@ q= rdline(prompt=" q quits");
 test,n=50,type="splinelsq",figs=1, nxfit=10;
 q= rdline(prompt=" q quits");
 
+#endif
 
+#if 0
+
+func foo (x, &df) {
+  y= sqrt(1-x^2);
+  if (is_scalar(x))
+    df= y==0? -1e30: -x/y;
+  else
+    df= merge2(-1e30,-x/(y+(y==0)),y==0);
+  return y;
+}
+n= 40;
+x= span(0,1,n);
+dy= [];
+y= foo(x,dy);
+
+m= 2000;
+xx= span(0,1,m);
+yy= foo(xx);
+
+f= digfun(y,x,type="spline");
+y_splin= f(xx);
+
+f= digfun(yy,xx,type="splinelsq",nxfit=n);
+y_splinlsq= f(xx);
+
+f= digfun(yy,xx,type="splinelsq",nxfit=2*n,equid=1,dydx0=dy(1),dydx1=dy(0));
+y_splinlsq10= f(xx);
+
+fma;plg,yy-y_splin,xx;plg,yy-y_splinlsq,xx,color="red";plg,yy-y_splinlsq10,xx,color="blue";
 
 #endif
