@@ -15,7 +15,7 @@ func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid
 {
   clsn= "digfun";
   op= save(digfun_lin, digfun_splinelsq, digfun_spline, \
-           digfun_poly);    //  ,digfun_cheby
+           digfun_poly, digfun_legendre);    //  ,digfun_cheby
 
   typs= strpart(op(*,),strlen(clsn)+2:);
   if (is_void(y))
@@ -55,7 +55,15 @@ func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid
 
   ob, pol=save();
   if (type=="poly") {
-    save, ob(pol), degree;
+    save, ob(pol), degree=degree;
+    if (!quiet && (!is_void(nxfit) || !is_void(tension) || !is_void(dydx0) || !is_void(dydx1)))
+      write,"WARNING: provided NXFIT/TENSION/DYDX*= key[s] ignored, see spline.";
+  }
+
+  ob, leg=save();
+  if (type=="legendre") {
+    save, ob(leg), degree=degree;
+    save, ob(leg), equid=equid;
     if (!quiet && (!is_void(nxfit) || !is_void(tension) || !is_void(dydx0) || !is_void(dydx1)))
       write,"WARNING: provided NXFIT/TENSION/DYDX*= key[s] ignored, see spline.";
   }
@@ -264,7 +272,40 @@ func digfun_poly (base, ob, y, x)
   for (i=1; i<=ob(ny); i++)
     a(i,..)= poly1_fit(y(i,..),x,ob(pol,degree));
 
-  save, ob, degree=ob(pol,degree);
+  save, ob, a;
+
+  return closure(ob, eval);
+}
+func _eval1 (i,x,deriv=,deriv2=,integ=)
+{
+  use, a, pol;
+
+  if (deriv==1)
+    y= poly1_deriv(x, a(i,..));
+  else if (deriv2==1)
+    y= poly1_deriv(x, a(i,2:)*indgen(pol(degree)));
+  else if (integ==1)
+    y= poly1(x, _(0,a(i,..)/indgen(pol(degree)+1)));
+  else
+    y= poly1(x, a(i,..));
+  return y;
+}
+digfun_poly= closure(digfun_poly,restore(tmp));restore, scratch;
+
+/*----------------------- LEGENDRE ------------------------*/
+scratch= save (scratch, tmp); tmp= save(_eval1);
+func digfun_legendre (base, ob, y, x)
+/* DOCUMENT m= digfun(y, x, type="legendre")
+ */
+{
+  save, ob, [], base(:); //  clobber _eval1
+
+  if (is_void(ob(leg,degree)))
+    save, ob(leg),degree=5;
+
+  a= array(0.,[2,ob(ny),ob(leg,degree)+1]);
+  for (i=1; i<=ob(ny); i++)
+    a(i,..)= legfit(y(i,..),2*x,ob(leg,degree));
 
   save, ob, a;
 
@@ -272,19 +313,23 @@ func digfun_poly (base, ob, y, x)
 }
 func _eval1 (i,x,deriv=,deriv2=,integ=)
 {
-  use, a, degree;
+  use, a;
 
-  if (deriv==1)
-    y= poly1_deriv(x, a(i,..));
-  else if (deriv2==1)
-    y= poly1_deriv(x, a(i,2:)*indgen(degree));
-  else if (integ==1)
-    y= poly1(x, _(0,a(i,..)/indgen(degree+1)));
-  else
-    y= poly1(x, a(i,..));
+  if (deriv2==1)
+    error,"not implemented.";
+  if (integ==1)
+    error,"not implemented.";
+
+  eps= 1e-6;
+  if (deriv==1) {
+    m= abs(x)<1;
+    y= (legeval(a(i,..),2*x+m*eps)-legeval(a(i,..),2*x-m*eps))/eps;
+  } else
+      y= legeval(a(i,..),2*x);
+
   return y;
 }
-digfun_poly= closure(digfun_poly,restore(tmp));restore, scratch;
+digfun_legendre= closure(digfun_legendre,restore(tmp));restore, scratch;
 
 /*-------------------------- TEST ------------------------*/
 #if 0
@@ -359,6 +404,9 @@ q= rdline(prompt=" q quits");
 test,n=50,type="splinelsq",figs=1, nxfit=10;
 q= rdline(prompt=" q quits");
 
+test,n=50,type="legendre",figs=1, degree=10;
+q= rdline(prompt=" q quits");
+
 #endif
 
 #if 0
@@ -378,7 +426,8 @@ y= foo(x,dy);
 
 m= 2000;
 xx= span(0,1,m);
-yy= foo(xx);
+dyy= [];
+yy= foo(xx,dyy);
 
 f= digfun(y,x,type="spline");
 y_splin= f(xx);
@@ -386,7 +435,7 @@ y_splin= f(xx);
 f= digfun(yy,xx,type="splinelsq",nxfit=n);
 y_splinlsq= f(xx);
 
-f= digfun(yy,xx,type="splinelsq",nxfit=2*n,equid=1,dydx0=dy(1),dydx1=dy(0));
+f= digfun(yy,xx,type="splinelsq",nxfit=100,equid=1,dydx0=dy(1),dydx1=dy(0));
 y_splinlsq10= f(xx);
 
 fma;plg,yy-y_splin,xx;plg,yy-y_splinlsq,xx,color="red";plg,yy-y_splinlsq10,xx,color="blue";
