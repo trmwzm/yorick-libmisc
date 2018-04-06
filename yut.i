@@ -1302,8 +1302,8 @@ func polyf(x, a, &grad, deriv=, derivx =, derivxx=)
   if (is_void(derivx)) derivx=0;
 
   if (derivx && deriv) {
-    error,"grad returns EITHER deriv_a (deriv=1) OR deriv_x (derivx=1)"
-        }
+    error,"grad returns EITHER deriv_a (deriv=1) OR deriv_x (derivx=1)";
+  }
 
   if (deriv) {
     grad= y;
