@@ -2635,6 +2635,65 @@ func restore_rec(args)
 }
 wrap_args, restore_rec;
 
+func is_group (o)
+/* DOCUMENT l= is_group(o);
+     check if all members are anonymous
+   SEE ALSO:
+ */
+{
+  return is_obj(o)>0 && allof(o(*,)==string(0));
+}
+
+func is_oxgrar (o)
+/* DOCUMENT is_oxgrar (o)
+     checks if all members are anonymous, members are
+     all of the same type, transferable to array:
+     numerical, string, or pointer
+   SEE ALSO:
+ */
+{
+  if (is_obj(o)==0)
+    return 0;
+  if (o(*)==0)
+    return 1;
+  i= l= 1;
+  s= structof(o(1));
+  l= is_numerical(o(1)) || is_string(o(1));
+  while (i++<o(*) && (l&= s==structof(o(1*i))));
+  return l;
+}
+
+func arr_oxgr (o)
+/* DOCUMENT arr_oxgr (o)
+     copy oxy group to array
+   SEE ALSO:
+ */
+{
+  if (!is_oxgrar (o))
+    error,"oxy object not a group transferable to array.";
+  if (o(*)==0)
+    return [];
+  out= array(structof(o(1)),o(*));
+  for (i=1;i<=o(*);i++)
+    out(i)= o(noop(i));
+  return out;
+}
+
+func oxgr_arr (o)
+/* DOCUMENT oxgr_arr (o)
+     oxgr_arr (o)
+   SEE ALSO:
+ */
+{
+  if (is_void(o))
+    return save();
+  if (is_obj(o)>0 || (!is_numerical(o(1)) && !is_string(o(1)) && !is_pointer(o(1))))
+    error,"not an array. expecting array of: number[s], string[s], pointer[s].";
+  for (out=save(),i=1;i<=numberof(o);i++)
+    save, out, string(0), o(i);
+  return out;
+}
+
 func oxcopy (o)
     /* DOCUMENT oxcopy (o)
        recursive oxy object copy
