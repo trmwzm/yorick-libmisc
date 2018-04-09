@@ -564,10 +564,11 @@ levi_civita= array(double,3,3,3);
 levi_civita(1,2,3)=levi_civita(3,1,2)=levi_civita(2,3,1)=1;
 levi_civita(3,2,1)=levi_civita(2,1,3)=levi_civita(1,3,2)=-1;
 
-func crossvec (a,b,seq=) {
+func crossvec (a,b,seq=)
   /* DOCUMENT crossvec(a,b,seq=)
      for one to one sequence of cross products, specify seq == 1
   */
+{
   da= dimsof(a);
   db= dimsof(b);
 
@@ -1614,24 +1615,24 @@ func tile (dd,dtlo,center=)
 }
 
 func equidx (y, x, n)
-/* DOCUMENT xx= equidx(y,x,n); // dimsof(x)==[1,n]
-   Y is either comformable with X, or has an additional *leading* dimension
-   X coordinate to sample:
-   m= 20;
-   n= 200;
-   x= span(0,1,n);
-   y= gaussm(random_n(n),40)*10;
-   xx= equidx(y,x,m); yy= interp(y,x,xx);
-   xxx= span(0,1,m); yyy= interp(y,x,xxx);
-   dd= y-interp(yy,xx,x); ddd= y-interp(yyy,xxx,x);
-   statarr,dd;
-   statarr,ddd;
-   fma;
-   plg,y,x;
-   plg,yy,xx,color="red";
-   plg,yyy,xxx,color="blue";
-   SEE ALSO:
- */
+    /* DOCUMENT xx= equidx(y,x,n); // dimsof(x)==[1,n]
+       Y is either comformable with X, or has an additional *leading* dimension
+       X coordinate to sample:
+       m= 20;
+       n= 200;
+       x= span(0,1,n);
+       y= gaussm(random_n(n),40)*10;
+       xx= equidx(y,x,m); yy= interp(y,x,xx);
+       xxx= span(0,1,m); yyy= interp(y,x,xxx);
+       dd= y-interp(yy,xx,x); ddd= y-interp(yyy,xxx,x);
+       statarr,dd;
+       statarr,ddd;
+       fma;
+       plg,y,x;
+       plg,yy,xx,color="red";
+       plg,yyy,xxx,color="blue";
+       SEE ALSO:
+    */
 {
   if (dimsof(x)(1)!=1)
     error,"Expecting 1-dim array.";
@@ -2636,21 +2637,21 @@ func restore_rec(args)
 wrap_args, restore_rec;
 
 func is_group (o)
-/* DOCUMENT l= is_group(o);
-     check if all members are anonymous
-   SEE ALSO:
- */
+    /* DOCUMENT l= is_group(o);
+       check if all members are anonymous
+       SEE ALSO:
+    */
 {
   return is_obj(o)>0 && allof(o(*,)==string(0));
 }
 
 func is_oxgrar (o)
-/* DOCUMENT is_oxgrar (o)
-     checks if all members are anonymous, members are
-     all of the same type, transferable to array:
-     numerical, string, or pointer
-   SEE ALSO:
- */
+    /* DOCUMENT is_oxgrar (o)
+       checks if all members are anonymous, members are
+       all of the same type, transferable to array:
+       numerical, string, or pointer
+       SEE ALSO:
+    */
 {
   if (is_obj(o)==0)
     return 0;
@@ -2664,10 +2665,10 @@ func is_oxgrar (o)
 }
 
 func arr_oxgr (o)
-/* DOCUMENT arr_oxgr (o)
-     copy oxy group to array
-   SEE ALSO:
- */
+    /* DOCUMENT arr_oxgr (o)
+       copy oxy group to array
+       SEE ALSO:
+    */
 {
   if (!is_oxgrar (o))
     error,"oxy object not a group transferable to array.";
@@ -2680,10 +2681,10 @@ func arr_oxgr (o)
 }
 
 func oxgr_arr (o)
-/* DOCUMENT oxgr_arr (o)
-     oxgr_arr (o)
-   SEE ALSO:
- */
+    /* DOCUMENT oxgr_arr (o)
+       oxgr_arr (o)
+       SEE ALSO:
+    */
 {
   if (is_void(o))
     return save();
@@ -2976,7 +2977,7 @@ func oxrestore (args)
 }
 wrap_args,oxrestore;
 
-func oxwrite (f,o,&onm,lvl)
+func oxwrite (f, o, &onm, lvl)
     /* DOCUMENT oxwrite, ob, ["object name", if void  "cfg"], doc=;
        #include "qq.i";
        oxwrite,open("q.i","w"),o3,"ob";
@@ -2991,23 +2992,23 @@ func oxwrite (f,o,&onm,lvl)
     onm= "cfg";
 
   // object indentation level
-  nidnt= 2
-      lvl= is_void(lvl)? 1: lvl+1;
+  nidnt= 2;
+  lvl= is_void(lvl)? 1: lvl+1;
   idnt1= lvl==1? "": strchar(char(array(32,nidnt*(lvl-1))));
-  idnt2= strchar(char(array(32,nidnt*lvl)))
+  idnt2= strchar(char(array(32,nidnt*lvl)));
 
-      // only on call
-      if (is_string(onm)) {
-        onm= save(string(0),onm);
-        // stash scratch
-        s= info(o);
-        ws= where(strmatch(s,"= object with"));
-        if (numberof(ws)) {
-          s= discrete(strtrim(strtok(s(ws),"=")(1,)));
-          write,f,swrite(s,format=",%s")(sum),\
-              format="scratch= save(scratch%s);\n\n";
-        }
-      }
+  // only on call
+  if (is_string(onm)) {
+    onm= save(string(0),onm);
+    // stash scratch
+    s= info(o);
+    ws= where(strmatch(s,"= object with"));
+    if (numberof(ws)) {
+      s= discrete(strtrim(strtok(s(ws),"=")(1,)));
+      write,f,swrite(s,format=",%s")(sum),\
+          format="scratch= save(scratch%s);\n\n";
+    }
+  }
   s= swrite(onm(0),format="\n"+idnt1+"%s= save(); {");
   write,f,s,format="%s\n";
 
@@ -3019,7 +3020,7 @@ func oxwrite (f,o,&onm,lvl)
       f= oxwrite(f,oi,onm,lvl);
     } else {
       s= swrite(onm(0),o(*,i),pr1(oi)(*)(sum),\
-                format=idnt2+"%s, %s"+(o(*,i)? "=": "string(0),")+" %s;");
+                format=idnt2+"save, %s, %s"+(o(*,i)? "=": "[],")+" %s;");
       write,f,s,format="%s\n";
     }
   }
