@@ -2666,33 +2666,29 @@ func is_oxgrar (o)
 
 func arr_oxgr (o)
     /* DOCUMENT arr_oxgr (o)
-       copy oxy group to array
+       copy oxy group to array, or reverse cast,
+       depending on input type - oxy obj, or array
        SEE ALSO:
     */
 {
-  if (!is_oxgrar (o))
-    error,"oxy object not a group transferable to array.";
-  if (o(*)==0)
-    return [];
-  out= array(structof(o(1)),o(*));
-  for (i=1;i<=o(*);i++)
-    out(i)= o(noop(i));
-  return out;
-}
-
-func oxgr_arr (o)
-    /* DOCUMENT oxgr_arr (o)
-       oxgr_arr (o)
-       SEE ALSO:
-    */
-{
-  if (is_void(o))
-    return save();
-  if (is_obj(o)>0 || (!is_numerical(o(1)) && !is_string(o(1)) && !is_pointer(o(1))))
-    error,"not an array. expecting array of: number[s], string[s], pointer[s].";
-  for (out=save(),i=1;i<=numberof(o);i++)
-    save, out, string(0), o(i);
-  return out;
+  if (is_obj(o)) {
+    if (!is_oxgrar (o))
+      error,"oxy object not a group transferable to array.";
+    if (o(*)==0)
+      return [];
+    out= array(structof(o(1)),o(*));
+    for (i=1;i<=o(*);i++)
+      out(i)= o(noop(i));
+    return out;
+  } else {
+    if (is_void(o))
+      return save();
+    if (is_obj(o)>0 || (!is_numerical(o(1)) && !is_string(o(1)) && !is_pointer(o(1))))
+      error,"not an array. expecting array of: number[s], string[s], pointer[s].";
+    for (out=save(),i=1;i<=numberof(o);i++)
+      save, out, string(0), o(i);
+    return out;
+  }
 }
 
 func oxcopy (o)

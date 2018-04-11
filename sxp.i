@@ -1,3 +1,5 @@
+require, "yut.i";
+
 func oxsxp(args)
     /* DOCUMENT s= oxsxp(o); // s: array(string)
        o= oxsxp(s); .. *not yet* ..
@@ -7,16 +9,16 @@ func oxsxp(args)
   if (args(0)==0 || args(0)>2 || numberof(args(-))!=0)
     error,"string or ox, optional fmt (see totxt).";
   local fmt;
-  if (args(0)>1) fmt= args(2);
+  if (args(0)>1)
+    fmt= args(2);
   tablen= 4;
   if (is_obj(args(1))) {
     if (args(0,1)==0)
       onm= args(-,1);
     else
       onm= "cfg";
-    o= args(1);
     s= "";
-    oxsxp_wrkr,s,onm,o,fmt;
+    oxsxp_wrkr,s,onm,args(1),fmt;
     return s;
   }
 }
@@ -31,18 +33,22 @@ func oxsxp_wrkr (&s,onm,o,nt,fmt)
   on= o(*);
   for (i=1;i<=on;i++) {
     oi= o(noop(i));
+    oni= o(*,i);
+    if (is_oxgrar(oi))
+      oi= arr_oxgr(oi);
     if (is_obj(oi))
-      oxsxp_wrkr,s,o(*,i),oi,nt+1;
+      oxsxp_wrkr,s,oni,oi,nt+1;
     else
-      s+= t2+(!o(*,i)? "": o(*,i)+" ")+oxsxp_pr(oi,fmt);
-    s+= (i==on? "": "")+"\n";
+      s+= t2+"("+oni+" "+oxsxp_pr(oi,fmt)+")\n";
   }
-  s+= t+")";
+  s+= t+")\n";
 }
 func oxsxp_pr (a,fmt)
 {
-  if (is_void(fmt)) fmt=-0.12;
-  if (is_integer(a)) fmt= abs(fmt); //  no hex
+  if (is_void(fmt))
+    fmt=-0.12;
+  if (is_integer(a))
+    fmt= abs(fmt); //  no hex
   da= dimsof(a);
   sa= is_string(a)? a: totxt(a,fmt);
 
@@ -77,7 +83,7 @@ func oxsxp_pr (a,fmt)
     return sa;
 }
 
-#if 1
+#if 0
 osxp= save();
 osxp, s1= ["(","  ;; input grid specification","  (grid","    (","       (x0 -25.0)", \
            "       (x1  25.0)","       (nx 100)","    ))","  ;; output file", \
@@ -122,7 +128,8 @@ cfg= save(); {
   } save, cfg, d;
 }
 restore, scratch;
-write,oxsxp(cfg);
+write,oxsxp(cfg),format="%s\n";
+write,"",format="= done =\n";
 
 scratch= save(scratch,q);
 cfg= save(); {
@@ -136,5 +143,6 @@ cfg= save(); {
   cfg, polynomial= [1.0, 1.1, 1.2, 1.3, 1.4];
 }
 restore, scratch;
-write,oxsxp(cfg);
+write,oxsxp(cfg),format="%s\n";
+write,"",format="= done =\n";
 #endif
