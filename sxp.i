@@ -31,18 +31,24 @@ func oxsxp_wrkr (&s,onm,o,nt,fmt)
   on= o(*);
   for (i=1;i<=on;i++) {
     oi= o(noop(i));
-    if (is_obj(oi))
+    if (is_obj(oi)) {
       oxsxp_wrkr,s,o(*,i),oi,nt+1;
-    else
-      s+= t2+(!o(*,i)? "": o(*,i)+" ")+oxsxp_pr(oi,fmt);
-    s+= (i==on? "": "")+"\n";
+    } else {
+      ss= oxsxp_pr(oi,fmt);
+      p=  strpart(ss,0:0)==")";
+      s+= (i==1? t2: " ")+(!o(*,i)? "": "("+o(*,i)+"\n")+t2+ss;
+      s+= p? "\n": "";o(*,i);
+    }
+    s+= (i==on || is_obj(oi) || p )? "\n": "";
   }
   s+= t+")";
 }
 func oxsxp_pr (a,fmt)
 {
-  if (is_void(fmt)) fmt=-0.12;
-  if (is_integer(a)) fmt= abs(fmt); //  no hex
+  if (is_void(fmt))
+    fmt=-0.12;
+  if (is_integer(a))
+    fmt= abs(fmt); //  no hex
   da= dimsof(a);
   sa= is_string(a)? a: totxt(a,fmt);
 
@@ -122,7 +128,8 @@ cfg= save(); {
   } save, cfg, d;
 }
 restore, scratch;
-write,oxsxp(cfg);
+write,oxsxp(cfg),format="%s\n";
+write,"",format="= done =\n";
 
 scratch= save(scratch,q);
 cfg= save(); {
@@ -136,5 +143,6 @@ cfg= save(); {
   cfg, polynomial= [1.0, 1.1, 1.2, 1.3, 1.4];
 }
 restore, scratch;
-write,oxsxp(cfg);
+write,oxsxp(cfg),format="%s\n";
+write,"",format="= done =\n";
 #endif
