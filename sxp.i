@@ -1,3 +1,5 @@
+require, "yut.i";
+
 func oxsxp(args)
     /* DOCUMENT s= oxsxp(o); // s: array(string)
        o= oxsxp(s); .. *not yet* ..
@@ -7,18 +9,24 @@ func oxsxp(args)
   if (args(0)==0 || args(0)>2 || numberof(args(-))!=0)
     error,"string or ox, optional fmt (see totxt).";
   local fmt;
-  if (args(0)>1) fmt= args(2);
+  if (args(0)>1)
+    fmt= args(2);
   tablen= 4;
   if (is_obj(args(1))) {
     if (args(0,1)==0)
       onm= args(-,1);
     else
       onm= "cfg";
-    o= args(1);
     s= "";
-    oxsxp_wrkr,s,onm,o,fmt;
+    oxsxp_wrkr,s,onm,args(1),fmt;
     return s;
-  }
+  } else if (is_string(args(1))) {
+    s= args(1)(sum);
+    s= streplace(s,strgrep("[\t\n\\l\r]",s, \
+                           n=max(1,strlen(s)/5)),"");
+    m= strchar(s)==strchar("(")(1);
+    m-= strchar(s)==strchar(")")(1);
+
 }
 wrap_args,oxsxp;
 func oxsxp_wrkr (&s,onm,o,nt,fmt)
@@ -31,17 +39,35 @@ func oxsxp_wrkr (&s,onm,o,nt,fmt)
   on= o(*);
   for (i=1;i<=on;i++) {
     oi= o(noop(i));
-    if (is_obj(oi)) {
-      oxsxp_wrkr,s,o(*,i),oi,nt+1;
-    } else {
-      ss= oxsxp_pr(oi,fmt);
-      p=  strpart(ss,0:0)==")";
-      s+= (i==1? t2: " ")+(!o(*,i)? "": "("+o(*,i)+"\n")+t2+ss;
-      s+= p? "\n": "";o(*,i);
-    }
-    s+= (i==on || is_obj(oi) || p )? "\n": "";
+    oni= o(*,i);
+    if (is_oxgrar(oi))
+      oi= arr_oxgr(oi);
+    if (is_obj(oi))
+      oxsxp_wrkr,s,oni,oi,nt+1;
+    else
+      s+= t2+"("+oni+" "+oxsxp_pr(oi,fmt)+")\n";
   }
-  s+= t+")";
+  s+= t+")\n";
+}
+func sxpox_wrkr (&s,&m,onm,o,nt,fmt)
+{
+  if (is_void(nt))
+    nt= 0;
+  t= (nt? strchar(array('\x20',nt*tablen)): "");
+  t2= strchar(array('\x20',(nt+1)*tablen));
+  s+= t+"("+(!onm? "": onm+" ")+"\n";
+  on= o(*);
+  for (i=1;i<=on;i++) {
+    oi= o(noop(i));
+    oni= o(*,i);
+    if (is_oxgrar(oi))
+      oi= arr_oxgr(oi);
+    if (is_obj(oi))
+      oxsxp_wrkr,s,oni,oi,nt+1;
+    else
+      s+= t2+"("+oni+" "+oxsxp_pr(oi,fmt)+")\n";
+  }
+  s+= t+")\n";
 }
 func oxsxp_pr (a,fmt)
 {
@@ -83,7 +109,7 @@ func oxsxp_pr (a,fmt)
     return sa;
 }
 
-#if 1
+#if 0
 osxp= save();
 osxp, s1= ["(","  ;; input grid specification","  (grid","    (","       (x0 -25.0)", \
            "       (x1  25.0)","       (nx 100)","    ))","  ;; output file", \
@@ -145,4 +171,17 @@ cfg= save(); {
 restore, scratch;
 write,oxsxp(cfg),format="%s\n";
 write,"",format="= done =\n";
+
+q= "\
+ (\
+  (grid\
+    (\
+       (x0 -25.0)\
+       (x1  25.0)\
+       (nx 100)\
+    ))\
+  (output foo.sexp)\
+  (polynomial (1.0 1.1 1.2 1.3 1.4))\
+)";
+
 #endif
