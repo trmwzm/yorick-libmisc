@@ -21,14 +21,38 @@ func oxsxp(args)
     oxsxp_wrkr,s,onm,args(1),fmt;
     return s;
   } else if (is_string(args(1))) {
-    s= args(1)(sum);
-    s= streplace(s,strgrep("[\t\n\\l\r]",s, \
+    s= args(1);
+    if (dimsof(s)(1)>0) {
+      g= strgrep(".*;;", s);
+      w= where(g(2,dif)>0);
+      s(w)= strpart(s(w),g(,w)-[0,2]);
+      s= s(sum);
+    }
+    s= streplace(s,strgrep("[\t\n\r]",s, \
                            n=max(1,strlen(s)/5)),"");
     m= strchar(s)==strchar("(")(1);
     m-= strchar(s)==strchar(")")(1);
-
+    m= m(cum);
+    p= strgrep("^[^(]*\\(",s);  // dump what's before first (
+    o= sxpox_wrkr(p(2),s,m);
+    return o;
+  }
 }
 wrap_args,oxsxp;
+func sxpox_wrkr (i,s,m,o,onm)
+{
+  if (is_void(o))
+    o= save();
+  if (is_void(onm))
+    onm= string(0);
+  do {
+    j= oxsxp_scan(s,m,i);
+    ss= (j<=i+1)? string(0): strpart(s,i+1:j-1);
+    mm= m(i+1:j+1);
+    save, o, noop(onm), sxpox_wrkr(i,ss,mm,o,onm);
+    i= j;
+  } while (i<strlen(s))
+}
 func oxsxp_wrkr (&s,onm,o,nt,fmt)
 {
   if (is_void(nt))
@@ -49,25 +73,25 @@ func oxsxp_wrkr (&s,onm,o,nt,fmt)
   }
   s+= t+")\n";
 }
-func sxpox_wrkr (&s,&m,onm,o,nt,fmt)
+func oxsxp_scan (s, m, i)
+// I marks open ( returns index of balancing )
 {
-  if (is_void(nt))
-    nt= 0;
-  t= (nt? strchar(array('\x20',nt*tablen)): "");
-  t2= strchar(array('\x20',(nt+1)*tablen));
-  s+= t+"("+(!onm? "": onm+" ")+"\n";
-  on= o(*);
-  for (i=1;i<=on;i++) {
-    oi= o(noop(i));
-    oni= o(*,i);
-    if (is_oxgrar(oi))
-      oi= arr_oxgr(oi);
-    if (is_obj(oi))
-      oxsxp_wrkr,s,oni,oi,nt+1;
-    else
-      s+= t2+"("+oni+" "+oxsxp_pr(oi,fmt)+")\n";
+  p= numberof(m);
+  if (i<1 || i>p-1)
+    error,"invalid search start index: "+pr1(i);
+  if (strpart(s,i:i)!="(")
+    error,"Expecting (";
+  j= 0;
+  m0= m(i);
+  while(j==0 || (j>0 && i<p && m(i)!=m0)) {
+    if (j==0 && m(i)!=m0)
+      j= 1;
+    i++
   }
-  s+= t+")\n";
+  i= i-1;
+  if (strpart(s,i:i)!=")")
+    error,"Expecting )";
+  return i;
 }
 func oxsxp_pr (a,fmt)
 {
