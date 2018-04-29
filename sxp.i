@@ -33,25 +33,51 @@ func oxsxp(args)
     m= strchar(s)==strchar("(")(1);
     m-= strchar(s)==strchar(")")(1);
     m= m(cum);
-    p= strgrep("^[^(]*\\(",s);  // dump what's before first (
-    o= sxpox_wrkr(p(2),s,m);
+    mm= [];
+    i= strgrep("^[^(]*\\(",s)(2);  // dump what's before first (
+    ss= oxsxp_scan(s,m,i,mm);
+    o= save();
+    sxpox_wrkr,o,ss,mm;
     return o;
   }
 }
 wrap_args,oxsxp;
-func sxpox_wrkr (i,s,m,o,onm)
+func sxpox_wrkr (o,s,m)
 {
   if (is_void(o))
     o= save();
-  if (is_void(onm))
-    onm= string(0);
-  do {
-    j= oxsxp_scan(s,m,i);
-    ss= (j<=i+1)? string(0): strpart(s,i+1:j-1);
-    mm= m(i+1:j+1);
-    save, o, noop(onm), sxpox_wrkr(i,ss,mm,o,onm);
-    i= j;
-  } while (i<strlen(s))
+  if (strlen(s)==0)
+    return o;
+  mm= [];
+  im= strgrep("^[^(]*\\(",s)(2);
+  nm= (im<2? string(0): strtrim(strpart(s,:im-1)));
+  op= where(m(2:)>m(1:-1)&m(2:)==m(im+1));
+  if (numberof(op)) {
+    oo= save();
+    for (ip=1;ip<=numberof(op);ip++) {
+      i= op(ip);
+      ss= oxsxp_scan(s,m,i,mm);
+      if (ss==string(0))
+        save, oo, string(0), [];
+      else
+        sxpox_wrkr,oo,noop(ss),mm;
+    }
+    if (oo(*)==1 && oo(*,1)==string(0) && is_array(oo(1)))
+      save,o,noop(nm),oo(1);
+    else
+      save,o,noop(nm),oo;
+  } else {
+    p= strtrim(strtok(s," "));
+    pp= tonum(p);
+    if (pp(1)>-1e+99) {
+      q= strpart(s,strword(s," ",100));
+      m= q!=string(0);
+      if (anyof(m))
+        save, o, string(0), tonum(q(where(m)))
+    } else
+      save, o, p(1), (pp(2)>-1e+99? pp(2): p(2));
+  }
+  return o;
 }
 func oxsxp_wrkr (&s,onm,o,nt,fmt)
 {
@@ -73,7 +99,7 @@ func oxsxp_wrkr (&s,onm,o,nt,fmt)
   }
   s+= t+")\n";
 }
-func oxsxp_scan (s, m, i)
+func oxsxp_scan (s, m, i, &mm)
 // I marks open ( returns index of balancing )
 {
   p= numberof(m);
@@ -81,6 +107,7 @@ func oxsxp_scan (s, m, i)
     error,"invalid search start index: "+pr1(i);
   if (strpart(s,i:i)!="(")
     error,"Expecting (";
+  i0= i;
   j= 0;
   m0= m(i);
   while(j==0 || (j>0 && i<p && m(i)!=m0)) {
@@ -91,7 +118,13 @@ func oxsxp_scan (s, m, i)
   i= i-1;
   if (strpart(s,i:i)!=")")
     error,"Expecting )";
-  return i;
+  if (i<=i0+1)
+    ss= string(0);
+  else {
+    ss= strpart(s,i0+1:i-1);
+    mm= m(i0+1:i+1);
+  }
+  return ss;
 }
 func oxsxp_pr (a,fmt)
 {
@@ -187,14 +220,18 @@ cfg= save(); {
     q, x0= -25.0;
     q, x1= 25.0;
     q, nx= 100;
-  } cfg, grid=q;
+  } cfg, grid=save(string(0),q);
 
   cfg, output= "foo.sxp";
   cfg, polynomial= [1.0, 1.1, 1.2, 1.3, 1.4];
 }
 restore, scratch;
-write,oxsxp(cfg),format="%s\n";
+
+q= oxsxp(cfg);
+write,q,format="%s\n";
 write,"",format="= done =\n";
+o= oxsxp(q);
+info,o;
 
 q= "\
  (\
@@ -207,5 +244,8 @@ q= "\
   (output foo.sexp)\
   (polynomial (1.0 1.1 1.2 1.3 1.4))\
 )";
+
+o= oxsxp(q);
+info,o;
 
 #endif
