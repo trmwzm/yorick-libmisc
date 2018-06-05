@@ -271,7 +271,6 @@ func oxo_a (base, ob)
 
   return ob;
 }
-
 func eval(x)
 {
   use, data;
@@ -279,7 +278,7 @@ func eval(x)
 }
 oxo_a= closure(oxo_a,restore(tmp)); restore, scratch;
 
-
+/* --------------------  use_kdef  --------------------- */
 scratch= save(scratch,tmp);
 tmp= save(plg);
 func graph (base,void)

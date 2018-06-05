@@ -2078,9 +2078,9 @@ func randrgb(a,b,c,d)
 /*---------------------------------------------------------------------------*/
 /* ------------------------------------------------------------------------ */
 
-func colorbar(cmin, cmax,offset=, colors=, tit=)
+func colorbar(cmin, cmax, offset=, colors=, tit=, height=)
     /* DOCUMENT colorbar
-       colorbar, cmin, cmax
+       colorbar, cmin, cmax, offset=, colors=, tit=, height=
        draw a color bar to the right of the plot.  If CMIN and CMAX
        are specified, label the top and bottom of the bar with those
        numbers.
@@ -2116,12 +2116,14 @@ func colorbar(cmin, cmax,offset=, colors=, tit=)
 
   plsys, thisys;
 
+  height= !is_void(height)? height: 14;
   if (!is_void(cmin)) {
-    plt, swrite(cmin,format="%-#06.3lg"), xmid, y0-0.004, justify="CT";
-    plt, swrite(cmax,format="%-#06.3lg"), xmid, y1 , justify="CB";
+    plt, swrite(cmin,format="%-#06.3lg"), xmid, y0-0.004, justify="CT", height=height;
+    plt, swrite(cmax,format="%-#06.3lg"), xmid, y1 , justify="CB", height=height;
   }
 
-  if (tit) plt, tit, xmid, y1+0.02 , justify="CB",height=14;
+  if (tit)
+    plt, tit, xmid, y1+0.02 , justify="CB", height=height;
 }
 
 /*----------------------------------------------------------------------*/
