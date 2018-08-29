@@ -2126,6 +2126,24 @@ func colorbar(cmin, cmax, offset=, colors=, tit=, height=)
     plt, tit, xmid, y1+0.02 , justify="CB", height=height;
 }
 
+func pltitre (title, opaque=)
+/* DOCUMENT pltitre, title, opaque=;
+     Plot TITLE centered above the coordinate system for any of the
+     standard Gist styles.  You may want to customize this for other
+     plot styles.
+     The external variables pltitle_height, pltitle_font, pltitle_xadj,
+     and pltitle_yadj determine the font and position of the title,
+     if you want to change those.
+   SEE ALSO: plt, xytitles
+ */
+{
+  port = viewport();
+  x = port(zcen:1:2)(1) + pltitle_xadj;
+  y = port(4) + pltitle_yadj;
+  plt, title, x, y, font=pltitle_font, justify="CB", \
+    height=pltitle_height,opaque=opaque;
+}
+
 /*----------------------------------------------------------------------*/
 
 func pleb(y, x, dx=, dy=, mfill=, color=, width=, marker=, msize=, type=)
@@ -2649,13 +2667,15 @@ func is_group (o)
 
 func is_oxgrar (o)
     /* DOCUMENT is_oxgrar (o)
-       checks if all members are anonymous, members are
-       all of the same type, transferable to array:
+       checks that all members are anonymous, and that members are
+       all of the same type, therefore transferable to a yorick array:
        numerical, string, or pointer
        SEE ALSO:
     */
 {
   if (is_obj(o)==0)
+    return 0;
+  if (!is_group(o))
     return 0;
   if (o(*)==0)
     return 1;
@@ -2666,7 +2686,7 @@ func is_oxgrar (o)
   return l;
 }
 
-func arr_oxgr (o)
+func arr_oxgr (o,ier)
     /* DOCUMENT arr_oxgr (o)
        copy oxy group to array, or reverse cast,
        depending on input type - oxy obj, or array
@@ -2675,7 +2695,10 @@ func arr_oxgr (o)
 {
   if (is_obj(o)) {
     if (!is_oxgrar (o))
-      error,"oxy object not a group transferable to array.";
+      if (ier==1)
+        return [];
+      else
+        error,"oxy object not a group transferable to array.";
     if (o(*)==0)
       return [];
     out= array(structof(o(1)),o(*));
@@ -2686,7 +2709,10 @@ func arr_oxgr (o)
     if (is_void(o))
       return save();
     if (is_obj(o)>0 || (!is_numerical(o(1)) && !is_string(o(1)) && !is_pointer(o(1))))
-      error,"not an array. expecting array of: number[s], string[s], pointer[s].";
+      if (ier==1)
+        return [];
+      else
+        error,"not an array. expecting array of: number[s], string[s], pointer[s].";
     for (out=save(),i=1;i<=numberof(o);i++)
       save, out, string(0), o(i);
     return out;

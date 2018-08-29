@@ -1839,26 +1839,27 @@ func analyt (x, wrkspc=)
   dx= dimsof(x);
 
   di= dx(0)? array(0,dx(1)) : 1;
-  if (dx(0))di(1)= 1;
+  if (dx(0))
+    di(1)= 1;
 
   nx= dimsof(x)(2);
   n2= (nx-1)/2;
 
-  if (typex == complex){
+  if (typex == complex)
     error,"expecting a int/float/double sequence";
-  }else{
+  else
     x= complex(x);
-  }
 
   zi= array(1.0/nx, nx);
-  zi(2:n2+1) *= 2.0;          // x+1i*h(x): (1+1i*1i*sign(freq))
+  zi(2:n2+1)*= 2.0;          // x+1i*h(x): (1+1i*1i*sign(freq))
   zi(-n2+1:0)= 0.0;
 
-  if (is_void(wrkspc))wrkspc=fft_setup(dx, nx*di);
+  if (is_void(wrkspc))
+    wrkspc= fft_setup(dx, nx*di);
 
   fft_inplace, x, di, setup=wrkspc;
 
-  x *= zi;
+  x*= zi;
 
   fft_inplace, x, -di, setup=wrkspc;
 
