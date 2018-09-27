@@ -2662,7 +2662,7 @@ func is_group (o)
        SEE ALSO:
     */
 {
-  return is_obj(o)>0 && allof(o(*,)==string(0));
+  return is_obj(o)>0 && !is_stream(o) && allof(o(*,)==string(0));
 }
 
 func is_oxgrar (o)
@@ -2743,8 +2743,8 @@ func oxtypeq (o1,o2,nodim=)
   if (numberof(s1)) s1= s1(sort(s2));
   if (numberof(s2)) s2= s2(sort(s2));
   if (anyof(s1!=s2))
-    return 0
-    else
+    return 0;
+  else
       tf= 1;
 
   for (i=1; i<=o1(*); i++) {
