@@ -2733,6 +2733,51 @@ func oxcopy (o)
   return oo;
 }
 
+func oxprune (o, nofunc=, nostream=, notextstream=)
+    /* DOCUMENT oxprune (o, nofunc=, nostream=, notextstream=)
+       recursive oxy object copy
+    */
+{
+  oo= save();
+  for (i=1; i<=o(*); i++) {
+    oi= o(noop(i));
+    if (is_obj(oi))
+      save,oo,o(*,i),oxprune(oi,nofunc=nofunc,nostream=nostream, \
+                            notextstream=notextstream);
+    else if ( !(nofunc && is_func(oi)) && \
+              !(nostream && is_stream(oi)) &&           \
+              !(notextstream && typeof(oi)=="text_stream"))
+      save, oo, o(*,i), oi;
+  }
+  return oo;
+}
+
+func oxmerge (o, oo)
+/* DOCUMENT o3= oxtypeq(o1,o2);
+   merge O2's members into O1'
+   o= dbase("a","b","c");
+    for (i=1;i<10;i++)
+      o,add,save(a=random(10),b=random(10),c=random(10),d=random_n());
+    oo= oxmerge(dbase(),oxprune(o,nofunc=1));
+    oxtypeq(o,oo);
+   SEE ALSO:
+ */
+{
+  if (!is_void(oo)) {
+    ou= save([],o,[],oo);  // clobber o's members with oo's
+    // if O was clobbered restore O's members which aren't in OO
+    for (i=1; i<=o(*); i++) {
+      oi= o(noop(i));
+      if (is_obj(oi) && is_obj(oo,o(*,i),1)>=0) {
+        ooi= oo(o(*,i));
+        save,ou,o(*,i),oxmerge(oi, ooi);
+      }
+    }
+  } else
+    ou= o;
+  return ou;
+}
+
 func oxtypeq (o1,o2,nodim=)
     /* DOCUMENT oxtypeq (o1,o2)
        recursive oxy object type/dimesion checks
