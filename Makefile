@@ -1,9 +1,9 @@
 # these values filled in by    yorick -batch make.i
-Y_MAKEDIR=/u/mah-r9b/trm/spack/opt/spack/linux-centos6-x86_64/gcc-7.2.0/yorick-f90-plugin-m25c4cai5rv5xxu2dr4ohvroaaro6hdd
-Y_EXE=/u/mah-r9b/trm/spack/opt/spack/linux-centos6-x86_64/gcc-7.2.0/yorick-f90-plugin-m25c4cai5rv5xxu2dr4ohvroaaro6hdd/bin/yorick
+Y_MAKEDIR=/u/pmr0/test/trm/spack-gcc-8.2.0/opt/spack/linux-centos6-x86_64/gcc-8.2.0/yorick-f90-plugin-opr6ciodh2yfiw6occgmlroh2qkknti4
+Y_EXE=/u/pmr0/test/trm/spack-gcc-8.2.0/opt/spack/linux-centos6-x86_64/gcc-8.2.0/yorick-f90-plugin-opr6ciodh2yfiw6occgmlroh2qkknti4/bin/yorick
 Y_EXE_PKGS=
-Y_EXE_HOME=/u/mah-r9b/trm/spack/opt/spack/linux-centos6-x86_64/gcc-7.2.0/yorick-f90-plugin-m25c4cai5rv5xxu2dr4ohvroaaro6hdd
-Y_EXE_SITE=/u/mah-r9b/trm/spack/opt/spack/linux-centos6-x86_64/gcc-7.2.0/yorick-f90-plugin-m25c4cai5rv5xxu2dr4ohvroaaro6hdd
+Y_EXE_HOME=/u/pmr0/test/trm/spack-gcc-8.2.0/opt/spack/linux-centos6-x86_64/gcc-8.2.0/yorick-f90-plugin-opr6ciodh2yfiw6occgmlroh2qkknti4
+Y_EXE_SITE=/u/pmr0/test/trm/spack-gcc-8.2.0/opt/spack/linux-centos6-x86_64/gcc-8.2.0/yorick-f90-plugin-opr6ciodh2yfiw6occgmlroh2qkknti4
 Y_HOME_PKG=
 
 #
@@ -23,7 +23,7 @@ PKG_I= ascii.i convcorrel.i dbase.i dsp.i fcomplex.i fmin.i fzero.i img.i \
        fpanels.i imbinavrg.i inpolygon.i lmfit.i \
        plot.i poly_fit.i rdf-refac.i rwflat.i time.i xplot.i gaupro.i \
        nninterp2.i histop.i moveop.i utils.i \
-       prstruct.i rdcols.i plcm.i plim.i levmar_tools.i scm.i
+       prstruct.i rdcols.i plcm.i plim.i levmar_tools.i scm.i json.i
 # autoload file for this package, if any
 PKG_I_START = libmisc-start.i
 

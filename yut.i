@@ -2546,6 +2546,29 @@ func vparray(nx,ny,xm,xM,ym,yM,xgap=,ygap=)
   return transpose([xy(1,ij1)+xg,xy(1,ij2)-xg,xy(2,ij1)+yg,xy(2,ij3)-yg]);
 }
 
+func assign (args)
+/* DOCUMENT assign, ary, v1, v2, v3, ...
+  Assigns the values in an array to the specified variables. For example:
+
+    > assign, [2, 4, 6], a, b, c
+    > a
+    2
+    > b
+    4
+    > c
+    6
+
+  Any number of variables may be given. If there are more variables than there
+  are values in ARY, then the remaining variables are set to [].
+*/
+{
+  ary= args(1);
+  size= is_obj(ary)? ary(*): numberof(ary);
+  for(i=1; i<args(0); i++)
+    args, i+1, (i <= size ? ary(noop(i)) : []);
+}
+wrap_args, assign;
+
 /************************************************************************/
 
 func lssys (directory, &dirs, dir=)
@@ -2655,6 +2678,23 @@ func restore_rec(args)
   }
 }
 wrap_args, restore_rec;
+
+func oxeq (o1, o2)
+{
+  // id. # of members ?
+  l= is_obj(o1)? o1(*)==o2(*): allof(o1)==allof(o2);
+  if (l && is_obj(o1)) {
+    for (i=1; i<=o1(*); i++) {
+      // id. member names ?
+      if (o1(*,i)==o2(*,i)) {
+        o1i= o1(noop(i));
+        l= oxeq(o1(noop(i)),o2(noop(i)));
+      } else
+        return 0;
+    }
+  }
+  return l;
+}
 
 func is_group (o)
     /* DOCUMENT l= is_group(o);

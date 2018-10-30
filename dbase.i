@@ -1,7 +1,8 @@
 require, "yut.i";
+require, "json.i";
 
 scratch = save(scratch, tmp);
-tmp = save(add, key, get, record, write, read);
+tmp = save(add, key, get, record, write, read, todox, fromdox, load, dump);
 
 func dbase(base, .., read=)
 /* DOCUMENT > db= dbase(keyname1, keyname2, ...);
@@ -172,6 +173,36 @@ func read (fnm)
     oxrestore,f, klist;
     oxrestore,f, records;
 }
+func todox (void)
+{
+  return oxprune(use(),nofunc=1);
+}
+func fromdox (dox)
+{
+  return oxmerge(use(),dox);
+}
+func dump (fnmout, json=, szmx=)
+{
+  write,format="Write dbase: %s\n",fnmout;
 
+  o= use_method(todox,);
+  
+  if (json==1) {
+    s= oxjsn(oxjsb(o,rootdir=dirname(fnmout),szmx=szmx));
+    write,open(fnmout,"w"),s,format="%s";
+  } else 
+    oxsave, (f=createb(fnmout)), o;
+  return f;
+}
+func load (fnmin, json=)
+{
+  write,format="Reading dbase: %s\n",fnmin;
+  if (json==1)
+    oo= jsbox(jsnox(text_lines(fnmin)));
+  else 
+    oo= oxrestore((f=openb(fnmin)));
+  save, use(), [], use_method(fromdox, oo);  // got that wrong, at first ...
+  return f;
+}
 dbase = closure(dbase, restore(tmp));
 restore, scratch;
