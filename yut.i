@@ -2705,7 +2705,7 @@ func is_group (o)
   return is_obj(o)>0 && !is_stream(o) && allof(o(*,)==string(0));
 }
 
-func is_oxgrar (o)
+func is_oxgrar (o, &s, &d)
     /* DOCUMENT is_oxgrar (o)
        checks that all members are anonymous, and that members are
        all of the same type, therefore transferable to a yorick array:
@@ -2719,44 +2719,117 @@ func is_oxgrar (o)
     return 0;
   if (o(*)==0)
     return 1;
-  i= l= 1;
-  s= structof(o(1));
-  l= is_numerical(o(1)) || is_string(o(1));
-  while (i++<o(*) && (l&= s==structof(o(1*i))));
+  
+  o1= o(1);
+  if (is_obj(o1)) {
+    local s1, d1;
+    l= is_oxgrar(o1,s1,d1);
+    i= 1;
+    if (l)
+      while (i++<o(*)) {
+        if (!is_oxgrar(o(1*i),s,d) || s!=s1 || nallof(d==d1)) {
+          l= 0;
+          break;
+        }
+      }
+    return l;
+  }
+
+  s= structof(o1);
+  d= dimsof(o1);
+  l= is_numerical(o1) || is_string(o1) || is_pointer(o1);
+  i= 1;
+  if (l) 
+    while (i++<o(*)) {
+      oi= o(1*i);
+      if (s!=structof(oi) || nallof(d==dimsof(oi))) {
+        l= 0;
+        break;
+      }
+    }
   return l;
 }
 
-func arr_oxgr (o,ier)
+func oxgrar_dims_wrkr(o, &s, &d)
+{
+  o1= o(1);
+  l= is_numerical(o1) || is_string(o1) || is_pointer(o1);
+  if (l) {
+    s= structof(o1);
+    d= _(o(*),numberof(o1));
+  } else if (is_obj(o1)) {
+    local s1, d1;
+    oxgrar_dims_wrkr, o1, s1, d1;
+    d= _(o(*),d1);
+    s= s1;
+  } else
+    error,"unrecognized type: expected obj or (numerical-string-pointer).";
+  return;
+}
+
+func arr_oxgr (o, &ier, row=)
     /* DOCUMENT arr_oxgr (o)
        copy oxy group to array, or reverse cast,
        depending on input type - oxy obj, or array
+
+       test:
+       x= random(5,4,3,2);
+       statarr,x-arr_oxgr(arr_oxgr(x));
+       statarr,x-arr_oxgr(arr_oxgr(x,row=1),row=1);
        SEE ALSO:
     */
 {
   if (is_obj(o)) {
-    if (!is_oxgrar (o))
-      if (ier==1)
-        return [];
-      else
-        error,"oxy object not a group transferable to array.";
+    if (!is_oxgrar(o))
+      {ier= 1; return o;}
+
     if (o(*)==0)
       return [];
-    out= array(structof(o(1)),o(*));
-    for (i=1;i<=o(*);i++)
-      out(i)= o(noop(i));
-    return out;
+
+    local s,d;
+    oxgrar_dims_wrkr, o, s, d;
+    if (!row)
+      d= d(::-1);
+    
+    d= _(numberof(d),d);
+    out= array(s(0),d);
+    if (d(1)>2 && is_obj(o(1)))
+      for (i=1;i<=(!row? d(0): d(2)) && ier!=1;i++)
+        if (!row)
+          out(..,i)= arr_oxgr(o(1*i),ier,row=row);
+        else
+          out(i,..)= arr_oxgr(o(1*i),ier,row=row);
+    else
+      for (i=1;i<=(!row? d(0): d(2));i++)
+        if (!row)
+          out(..,i)= o(1*i);
+        else
+          out(i,..)= o(1*i);
   } else {
     if (is_void(o))
       return save();
-    if (is_obj(o)>0 || (!is_numerical(o(1)) && !is_string(o(1)) && !is_pointer(o(1))))
+    if (!is_numerical(o(1)) && !is_string(o(1)) && !is_pointer(o(1)))
       if (ier==1)
         return [];
       else
         error,"not an array. expecting array of: number[s], string[s], pointer[s].";
-    for (out=save(),i=1;i<=numberof(o);i++)
-      save, out, string(0), o(i);
-    return out;
+    d= dimsof(o);
+    out= save();
+    if (d(1)>2)
+      for (i=1;i<=(!row? d(0): d(2)) && ier!=1;i++)
+        if (!row)
+          save, out, string(0), arr_oxgr(o(..,i),ier,row=row);
+        else
+          save, out, string(0), arr_oxgr(o(i,..),ier,row=row);
+    else
+      for (i=1;i<=(!row? d(0): d(2));i++) 
+        if (!row)
+          save, out, string(0), o(..,i);
+        else
+          save, out, string(0), o(i,..);
   }
+
+  return ier==1? o: out;
 }
 
 func oxcopy (o)

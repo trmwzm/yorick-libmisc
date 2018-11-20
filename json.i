@@ -142,8 +142,9 @@ func oxjsn_wrkr (&s, ob, onm, &nt)       // JSON -> OX
   t= (nt? strchar(array('\x20',nt*tablen)): "");
   tq= strchar(array('\x20',tablen));
   if (is_oxgrar(ob)) {
-    oo= arr_oxgr(ob,1);
-    if (!is_void(oo))
+    local ier;
+    oo= arr_oxgr(ob,ier);
+    if (!is_void(oo) && ier!=1)
       ob= oo;
   }
   // only for user input not an object
@@ -366,6 +367,10 @@ func jsnox_split (os, &isar)
 
 func jsnox_parse (os)
 // takes a bracket and returns its content in object o
+// ISAR== 0: object, or val                   : object with named members
+//        1: arrays of strings or numbers     : arrays of string or numbers
+//        2/3: arrays of obects/arrays        : object of UNnames members
+//        4:                                  : string or number
 {
   use,ojd;
   if (!is_obj(os))
@@ -378,11 +383,9 @@ func jsnox_parse (os)
   // deal with peeling outer {}
   i= min(use_method(jsnox_scan,os,1,"mbc"),use_method(jsnox_scan,os,1,"mbs"));
   ss= strpart(os(s),1:i);
-  issq= 0;
   if (anyof(strtrim(ss)==["{","["])) {
-    issq= strpart(os(s),i:i)=="[";
     j= use_method(jsnox_match,os,i);
-    if (j>i+1)
+    if (j==strlen(os(s)))
       os= use_method(jsnox_cut,os,i+1,j-1);
   }
   ss= i= [];
@@ -542,7 +545,7 @@ func oxjsb_out (fnm, x, append=, update=, fcomplex=)
            tsz= sizeof(structof(x)), \
            rk= dx(1), \
            shp= dx(2:), \
-           byteorder= merge2("little","big",native_fix(2,1)==-1)+"_endian");
+           bige= merge2(0,1,native_fix(2,1)==-1));
 
   for (i=1,p=1;i<oj(rk);i++)
     p*= oj(shp,i);
@@ -593,7 +596,7 @@ func jsbox_in (o, memapsz=)
 // tsz = array(long)
 // rk = array(long)
 // shp = array(long,1)
-// byteorder = array(string)
+// bige = array(string)
 {
   // open file
   f= open(o(fnm),"rb");
@@ -710,31 +713,31 @@ for (i=1;i<=numberof(l);i++) {
 
 #if 0
 ssep= "- - - - - - - - - - - - - - - - - - - - - - - - - - -";
-write,ox2jsn(noop(pi)),format="%s3.141592653590e+00 \n";
-write,ox2jsn(pi),format="%s{\"pi\": 3.141592653590e+00}\n";
+write,oxjsn(noop(pi)),format="%s vs. 3.141592653590e+00 \n";
+write,oxjsn(pi),format="%s vs. {\"pi\": 3.141592653590e+00}\n";
 write,ssep,format="%s\n";
 hi= "hi";
-write,ox2jsn(noop(hi)),format="%s\"hi\"\n";
-write,ox2jsn(hi),format="%s{\"hi\": \"hi\"}\n";
+write,oxjsn(noop(hi)),format="%s vs. \"hi\"\n";
+write,oxjsn(hi),format="%s vs. {\"hi\": \"hi\"}\n";
 write,ssep,format="%s\n";
 pp=[pi,pi];
-write,ox2jsn(noop(pp)),format="%s[3.141592653590e+00,3.141592653590e+00] \n";
-write,ox2jsn(pp),format="%s{\"pp\": [3.141592653590e+00,3.141592653590e+00]}\n";
+write,oxjsn(noop(pp)),format="%s vs. [3.141592653590e+00,3.141592653590e+00] \n";
+write,oxjsn(pp),format="%s vs. {\"pp\": [3.141592653590e+00,3.141592653590e+00]}\n";
 write,ssep,format="%s\n";
 
 pp=[hi,hi];
-write,ox2jsn(noop(pp)),format="%s[\"hi\",\"hi\"] \n";
-write,ox2jsn(pp),format="%s{\"pp\": [\"hi\",\"hi\"]}\n";
+write,oxjsn(noop(pp)),format="%s[\"hi\",\"hi\"] \n";
+write,oxjsn(pp),format="%s{\"pp\": [\"hi\",\"hi\"]}\n";
 write,ssep,format="%s\n";
 
 pp= save(s="hi");
-write,ox2jsn(noop(pp)),format="%s{\"s\": \"hi\"} \n";
-write,ox2jsn(pp),format="%s{\"pp\": {\"s\": \"hi\"}}\n";
+write,oxjsn(noop(pp)),format="%s{\"s\": \"hi\"} \n";
+write,oxjsn(pp),format="%s{\"pp\": {\"s\": \"hi\"}}\n";
 write,ssep,format="%s\n";
 
 pp= save(string(0),save(s="hi"));
-write,ox2jsn(noop(pp)),format="%s[{\"s\": \"hi\"}] \n";
-write,ox2jsn(pp),format="%s{\"pp\": [{\"s\": \"hi\"}]}\n";
+write,oxjsn(noop(pp)),format="%s[{\"s\": \"hi\"}] \n";
+write,oxjsn(pp),format="%s{\"pp\": [{\"s\": \"hi\"}]}\n";
 write,ssep,format="%s\n";
 
 scratch= save(scratch,d,q,days,months);
@@ -769,7 +772,7 @@ cfg= save(); {
   } cfg, grid=save(string(0),q);
 }
 restore, scratch;
-write,ox2jsn(cfg),format="%s\n";
+write,oxjsn(cfg),format="%s\n";
 write,ssep,format="%s\n";
 
 scratch= save(scratch,tmp,tmp2,tmp3);
@@ -800,7 +803,7 @@ tmp, mmi_from_pgm= tmp2;
 tmp, distance= 104.211;
 cfg, properties= tmp;
 restore, scratch;
-write,ox2jsn(cfg),format="%s\n";
+write,oxjsn(cfg),format="%s\n";
 write,ssep,format="%s\n";
 
 #endif
@@ -835,5 +838,5 @@ tmp, distance= 104.211;
 cfg, properties= tmp;
 cfg, morestuff= "after";
 restore, scratch;
-s= ox2jsn(cfg);
+s= oxjsn(cfg);
 #endif
