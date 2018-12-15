@@ -2846,7 +2846,7 @@ func oxcopy (o)
   return oo;
 }
 
-func oxprune (o, nofunc=, nostream=, notextstream=)
+func oxprune (o, nofunc=, nostream=, notextstream=, novoid=)
     /* DOCUMENT oxprune (o, nofunc=, nostream=, notextstream=)
        recursive oxy object copy
     */
@@ -2856,8 +2856,9 @@ func oxprune (o, nofunc=, nostream=, notextstream=)
     oi= o(noop(i));
     if (is_obj(oi))
       save,oo,o(*,i),oxprune(oi,nofunc=nofunc,nostream=nostream, \
-                            notextstream=notextstream);
+                             notextstream=notextstream,novoid=novoid);
     else if ( !(nofunc && is_func(oi)) && \
+              !(novoid && is_void(oi)) && \
               !(nostream && is_stream(oi)) &&           \
               !(notextstream && typeof(oi)=="text_stream"))
       save, oo, o(*,i), oi;
