@@ -386,7 +386,10 @@ func jsnox_parse (os)
   if (anyof(strtrim(ss)==["{","["])) {
     j= use_method(jsnox_match,os,i);
     if (j==strlen(os(s)))
-      os= use_method(jsnox_cut,os,i+1,j-1);
+      if (j<=(i+1))
+        return use_method(jsnox_parse,os(s));
+      else
+        os= use_method(jsnox_cut,os,i+1,j-1);
   }
   ss= i= [];
 
@@ -574,6 +577,8 @@ func jsbox_read (o, rootdir=, onm=, memapsz=)
     if (o(*)==1 && is_obj(o,json_raw_obj,1)>=0)
       return use_method(jsbox_in, rootdir+onm+"/"+oinm, oi, memapsz=memapsz);
     if (is_obj(oi)) {
+      if (oi(*)==0)
+        return oi;
       if (allof(strgrepm("grp_[0-9][0-9][0-9][0-9]",oi(*,)))) {
         for (oi2=save(),i=1;i<=oi(*);i++)
           save, oi2, string(0), oi(noop(i));

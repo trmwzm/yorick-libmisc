@@ -2852,14 +2852,20 @@ func oxprune (o, nofunc=, nostream=, notextstream=, novoid=)
     */
 {
   oo= save();
+  if (typeof(o)=="closure" && (is_obj(o.function) || is_obj(o.data)))
+    o= (is_obj(o.function)? o.function: o.data);
   for (i=1; i<=o(*); i++) {
     oi= o(noop(i));
     if (is_obj(oi))
       save,oo,o(*,i),oxprune(oi,nofunc=nofunc,nostream=nostream, \
                              notextstream=notextstream,novoid=novoid);
+    else if (typeof(oi)=="closure" && (is_obj(oi.function) || is_obj(oi.data)))
+      save,oo,o(*,i),oxprune((is_obj(oi.function)? oi.function: oi.data), \
+                             nofunc=nofunc,nostream=nostream,           \
+                             notextstream=notextstream,novoid=novoid);
     else if ( !(nofunc && is_func(oi)) && \
               !(novoid && is_void(oi)) && \
-              !(nostream && is_stream(oi)) &&           \
+              !(nostream && is_stream(oi)) && \
               !(notextstream && typeof(oi)=="text_stream"))
       save, oo, o(*,i), oi;
   }
@@ -2992,7 +2998,7 @@ func oxsave (args)
        SEE ALSO: oxread,oxcopy,oxtypeq,oxwrite;
     */
 {
-  sk= args(-); //key strings, one reserved key
+  sk= args(-);         // key strings, one reserved key
   nk= numberof(sk);
   k1= "_wrk_";
   if (nk!=0) {
@@ -3004,59 +3010,95 @@ func oxsave (args)
   if (_wrk_!=1) {
     for (i=1;i<=nk;i++) {
       nm= sk(i);
+      o= args(nm);
       if (nm!=k1)
-        if (is_obj(args(nm)))
-          oxsave,args(1),noop(nm),args(nm),_wrk_=1;
-        else
-          save,args(1),noop(nm),args(nm);
+        if (is_obj(o))
+          oxsave,args(1),noop(nm),o,_wrk_=1;
+        else if (typeof(o)=="closure") {
+          if (!is_func(o.function))
+            o= o.function;
+          else if (!is_func(o.data))
+            o= o.data;
+          if (is_obj(o))
+            oxsave,args(1),noop(nm),o,_wrk_=1;
+        } else
+          save,args(1),noop(nm),o;
     }
     i= 2;
     while (i<=args(0))  {
       ar= args(i);
       if (args(0,i)==1 && is_string(ar) && is_scalar(ar)) {
         i+= 1;
-        oi= args(i);
-        if (is_void(oi)) error,"cannot save void";
-        if (is_obj(oi))
-          oxsave,args(1),noop(ar),oi,_wrk_=1;
-        else
-          save,args(1),noop(ar),oi;
-      } else
+        o= args(i);
+        if (is_void(o))
+          error,"cannot save void";
+        if (is_obj(o))
+          oxsave,args(1),noop(ar),o,_wrk_=1;
+        else if (typeof(o)=="closure") {
+          if (!is_func(o.function))
+            o= o.function;
+          else if (!is_func(o.data))
+            o= o.data;
+          if (is_obj(o))
+            oxsave,args(1),noop(ar),o,_wrk_=1;
+        } else
+          save,args(1),noop(ar),o;
+      } else {
         if (is_obj(ar))
           oxsave,args(1),args(-,i),ar,_wrk_=1;
-        else
+        else if (typeof(ar)=="closure") {
+          if (!is_func(ar.function))
+            ar= ar.function;
+          else if (!is_func(ar.data))
+            ar= ar.data;
+          if (is_obj(ar))
+            oxsave,args(1),args(-,i),ar,_wrk_=1;
+        } else
           save,args(1),args(-,i),ar;
+      }
       i+= 1;
     }
   } else if (_wrk_==1) {
-    if (args(0,4)==2)
-      onm= save(string(0),args(2));
-    else
-      onm= args(4);
-    nm= "";
-    for (i=1; i<=onm(*); i++) nm+= onm(noop(i))+".";
     if (is_string(args(1)))
       f= createb(args(1));
     else
       f= args(1);
+    if (args(0,4)==2)
+      onm= save(string(0),args(2));
+    else
+      onm= args(4);
     o= args(3);
-    for (i=1,in=1,ino=1; i<=o(*); i++) {
-      oi= o(noop(i));
-      if (is_obj(oi)) {
-        vnm= o(*,i);
-        // if (strmatch(vnm,".") || vnm==string(0))
-        //   error,"group name cannot contain \".\" or be string(0): "+vnm;
-        if (vnm==string(0))
-          vnm= swrite(ino++,format=GRPOXSV+"%03i")
-              save, onm, string(0), vnm;
-        f= oxsave(f,vnm,oi,onm,_wrk_=1);
-      } else {
-        vnm= o(*,i);
-        // if (strmatch(vnm,".") || vnm==string(0))
-        //   error,"variable name cannot contain \".\" or be string(0): "+vnm;
-        if (vnm==string(0))
-          vnm= swrite(in++,format=GRPOXSV+"%03i")
-              save_rec,f,vnm,oi,_prf=nm;
+    for (i=1,nm=""; i<=onm(*); i++)
+      nm+= onm(noop(i))+".";
+    if (typeof(o)=="closure") {
+      if (!is_func(o.function))
+        o= o.function;
+      else if (!is_func(o.data))
+        o= o.data;
+      //save, onm, string(0), vnm;
+      f= oxsave(f,args(2),o,onm,_wrk_=1);
+    } else {
+      for (i=1,in=1,ino=1; i<=o(*); i++) {
+        oi= o(noop(i));
+        if (typeof(oi)=="closure") {
+          if (!is_func(oi.function))
+            oi= oi.function;
+          else if (!is_func(oi.data))
+            oi= oi.data;
+          save, onm, string(0), o(*,i);
+          f= oxsave(f,o(*,i),oi,onm,_wrk_=1);
+        } else if (is_obj(oi)) {
+          vnm= o(*,i);
+          if (vnm==string(0))
+            vnm= swrite(ino++,format=GRPOXSV+"%03i");
+          save, onm, string(0), vnm;
+          f= oxsave(f,vnm,oi,onm,_wrk_=1);
+        } else {
+          vnm= o(*,i);
+          if (vnm==string(0))
+            vnm= swrite(in++,format=GRPOXSV+"%03i");
+          save_rec,f,vnm,oi,_prf=nm;
+        }
       }
     }
     if (onm(*)>1)
