@@ -2,8 +2,10 @@ require, "imbinavrg.i";
 require, "poly_fit.i";
 
 scratch= save(scratch, tmp);
-tmp= save(eval, _eval1, stats, scale, elacs);
-func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid=, quiet=)
+tmp= save(eval, _eval1, stats, scale, elacs, fromdox, todox,  \
+          todox, fromdox, load, dump);
+func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid=, \
+             quiet=, help=, load=, json=, pdb=)
 /* DOCUMENT f= digfun (y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid=, quiet=)
    F is a closure evaluating Y(XP) by interpolation of the
    data provided at construction. The interplation method used
@@ -17,15 +19,22 @@ func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid
   op= save(digfun_lin, digfun_splinelsq, digfun_spline, \
            digfun_poly, digfun_legendre);    //  ,digfun_cheby
 
-  typs= strpart(op(*,),strlen(clsn)+2:);
-  if (is_void(y))
-    return typs;
-  if (is_void(type) || noneof(type==typs))
-    error,"Must supply digfun TYPE, which is one of: "+(typs+" ")(sum);
-
   ob= base(:);
 
   ob, op=op;
+
+  if (!is_void(load))
+    return ob(load,load,pdb=pdb,json=json);
+ 
+  typs= strpart(op(*,),strlen(clsn)+2:);
+  if (is_void(y) && is_void(x))
+    if (help==1)
+      return typs;
+    else if (is_void(load))
+      return ob;
+
+  if (is_void(type) || noneof(type==typs))
+    error,"Must supply digfun TYPE, which is one of: "+(typs+" ")(sum);
 
   dy= dimsof(y);
   if (dy(0)!=dimsof(x)(0))
@@ -35,10 +44,12 @@ func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid
   ny= dimsof(y)(2);
   nxy= dimsof(y)(0);
 
-  ob, dy=dy, nxy=nxy, ny=ny, type=type;
+  ob, clsn=clsn, dy=dy, nxy=nxy, ny=ny, type=type;
 
   ob, stats, y, x;
   ob, scale, y, x, dydx0, dydx1;
+
+  ob, y=y, x=x;
 
   ob, splin= save();
   if (strgrepm("spline",type)) {
@@ -70,9 +81,15 @@ func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid
 
   return op(clsn+"_"+type,ob,y,x);
 }
-func eval (x, deriv=, deriv2=, integ=, outside=)
+func eval (x, deriv=, deriv2=, integ=, outside=, dump=, load=, json=, pdb=)
 {
   use, dy, ny, xmin, xmax;
+
+  if (is_void(x))
+    if (!is_void(dump))
+      return use_method(dump, dump, json=json, pdb=pdb);
+    else if (!is_void(load))
+      return use_method(load, load, json=json, pdb=pdb);
 
   use_method, scale, 1, x;
 
@@ -81,7 +98,7 @@ func eval (x, deriv=, deriv2=, integ=, outside=)
   for (i=1; i<=ny; i++)
     y(i,..)= use_method(_eval1,i,x,deriv=deriv,deriv2=deriv2,integ=integ);
 
-  use_method, elacs, y, 1, deriv=deriv,deriv2=deriv2,integ=integ;
+  //use_method, elacs, y, 1, deriv=deriv,deriv2=deriv2,integ=integ;
 
   if (!is_void(outside)) {
     m= x<xmin | x>xmax;
@@ -132,6 +149,86 @@ func elacs (&y, &x,deriv=,deriv2=,integ=)
     y= y*(ymax-ymin)*(xmax-xmin);
   else
     y= ymin+(y+0.5)*(ymax-ymin);
+}
+func todox (void)
+{
+  return oxprune(use(),nofunc=1);
+}
+func fromdox (dox)
+{
+  return oxmerge(use(),dox);
+}
+func dump (fnmout, json=, szmx=, pdb=)
+{
+  if (fnmout=="")
+    fnmout= "./";
+
+  if (strpart(fnmout,0:0)!="/")
+    fnmout= fnmout+"/";
+
+  if (json==1 && pdb==1)
+    error,"pick *one* of pdb/json.";
+  if (is_void(json) && is_void(pdb))
+    error,"specify flavor: pdb or json";
+
+  mkdirp, fnmout;
+
+  write,format="Write posfun data and proc config in DIR: %s\n",fnmout;
+
+  o= use_method(todox,);
+
+  if (json==1) {
+    s= oxjsn(oxjsb(o,rootdir=fnmout,szmx=szmx));
+    write,(f=open(fnmout+"jsb.json","w")),s,format="%s";
+  }
+  if (pdb==1)
+    oxsave, (f=createb(fnmout+"bin.opdb")), o;
+
+  return f;
+}
+func load (fnmin, json=, pdb=)
+{
+  if (is_string(fnmin)) {
+    if (fnmin=="")
+      fnmin= "./";
+
+    if (strpart(fnmin,0:0)!="/")
+      fnmin= fnmin+"/";
+
+    write,format="Reading posfun data and proc config: %s\n",fnmin;
+    if (json==1 && pdb==1)
+      error,"pick *one* of pdb/json.";
+    if (is_void(json) && is_void(pdb))
+      error,"specify flavor: pdb or json";
+    if (json==1)
+      oo= jsbox(jsnox(text_lines(fnmin+"jsb.json")));
+    if (pdb==1)
+      oo= oxrestore((f=openb(fnmin+"bin.opdb")));
+  } else if (is_obj(fnmin))
+    eq_nocopy, oo, fnmin;
+
+  save, use(), [], use_method(fromdox, oo);  // got that wrong, at first ...
+
+  if (strgrepm("spline",oo(type)) && is_obj(use(),spline,1)<0) {
+    save, use(), splin= save();
+    save, use(splin), nxfit=[];
+    save, use(splin), tension=[];
+    save, use(splin), dydx0=[];
+    save, use(splin), dydx1=[];
+    save, use(splin), equid=[];
+  }
+
+  if (strgrepm("poly",oo(type)) && is_obj(use(),pol,1)<0) {
+    save, use(), pol= save();
+    save, use(pol), degree= [];
+  }
+
+  if (strgrepm("legendre",oo(type)) && is_obj(use(),leg,1)<0) {
+    save, ob(leg), degree=[];
+    save, ob(leg), equid=[];
+  }
+
+  return use(op,oo(clsn)+"_"+oo(type),use(),oo(y),oo(x));
 }
 digfun= closure(digfun,restore(tmp)); restore, scratch;
 
@@ -430,6 +527,14 @@ dyy= [];
 yy= foo(xx,dyy);
 
 f= digfun(y,x,type="spline");
+
+// f, dump="jk", pdb=1;
+// ff= digfun(load="jk", pdb=1);
+// y_splin= f(xx);
+// y_splin2= ff(xx);
+// f2= f.function;
+// ff2= ff.function;
+
 y_splin= f(xx);
 
 f= digfun(yy,xx,type="splinelsq",nxfit=n);
