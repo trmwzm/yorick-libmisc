@@ -1,3 +1,6 @@
+require, "yut.i";
+require, "json.i";
+
 /* functor (?) function with stashed data*/
 scratch= save(scratch, tmp);
 tmp= save(eval_);
@@ -277,6 +280,84 @@ func eval(x)
   return x(data);
 }
 oxo_a= closure(oxo_a,restore(tmp)); restore, scratch;
+
+/*--------------------------  grab any sequence of args --------------------------------*/
+
+scratch = save(scratch, tmp, jkobj_const, write, read, todox, fromdox, load, dump);
+
+func jkobj_const (args)
+{
+  read= [];            //default init key
+  sk= args(-);         //key strings
+  nk= numberof(sk);
+  if (nk && anyof(strmatch(sk,"read")))
+    read= args("read");
+  if (nk>1)
+    error,"only key allowed: read=.";
+  if (nk==0 && args(*)==0)
+    error,"args, or read= key requires.";
+
+  data= save();
+  for (i=1;i<=args(*);i++)
+    save, data, args(*,i), args(i);
+
+  save, use(), data;
+  if (!is_void(read))
+      use_method, read, read;
+  return use();
+}
+wrap_args,jkobj_const;
+func write (fnm)
+{
+    use, data;
+    oxsave, createb(fnm), data;
+}
+func read (fnm)
+{
+    use, data;
+    oxrestore, openb(fnm), data;
+}
+func todox (void)
+{
+  return oxprune(use(),nofunc=1);
+}
+func fromdox (dox)
+{
+  return oxmerge(use(),dox);
+}
+func dump (fnmout, json=, szmx=)
+{
+  write,format="Writing jkobj: %s\n",fnmout;
+  o= use_method(todox,);
+  
+  if (json==1) {
+    s= oxjsn(oxjsb(o,rootdir=dirname(fnmout),szmx=szmx));
+    write,open(fnmout,"w"),s,format="%s";
+  } else 
+    oxsave, (f=createb(fnmout)), o;
+  return f;
+}
+func load (fnmin, json=)
+{
+  write,format="Reading jkobj: %s\n",fnmin;
+
+  if (json==1)
+    oo= jsbox(jsnox(text_lines(fnmin)));
+  else 
+    oo= oxrestore((f=openb(fnmin)));
+  save, use(), [], use_method(fromdox, oo);  // got that wrong, at first ...
+  return f;
+}
+
+local jkobj;
+/* DOCUMENT jkobj
+     
+   SEE ALSO:
+ */
+tmp= save(jkobj_const, write, read, todox, fromdox, load, dump);
+jkobj = closure(tmp, jkobj_const);
+
+restore, scratch;
 
 /* --------------------  use_kdef  --------------------- */
 scratch= save(scratch,tmp);

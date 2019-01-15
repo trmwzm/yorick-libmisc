@@ -3223,12 +3223,14 @@ func oxwrite (f, o, &onm, lvl)
   idnt2= strchar(char(array(32,nidnt*lvl)));
 
   // only on call
+  is_scratch= 0;
   if (is_string(onm)) {
     onm= save(string(0),onm);
     // stash scratch
     s= info(o);
     ws= where(strmatch(s,"= object with"));
     if (numberof(ws)) {
+      is_scratch= 1;
       s= discrete(strtrim(strtok(s(ws),"=")(1,)));
       write,f,swrite(s,format=",%s")(sum),\
           format="scratch= save(scratch%s);\n\n";
@@ -3257,6 +3259,7 @@ func oxwrite (f, o, &onm, lvl)
   } else {
     write,f,"}",format="%s\n";
     write,f,"";
+    if (is_scratch==1)
     write,f,"restore, scratch;",format="%s\n";
   }
   return f;
