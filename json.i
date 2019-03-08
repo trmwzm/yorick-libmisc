@@ -44,7 +44,7 @@ save, ojd, "true", 1;
 save, ojd, "false", 0;
 save, ojd, "[{}]", save(); // this one not
 
-func ox2jsn(args)
+func ox2jsn (args)
 {
   // expepected args: oxy_object/json-value, FMT=
   if (args(0)==0 || args(0)>2 || numberof(args(-))!=0)

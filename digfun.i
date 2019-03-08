@@ -4,7 +4,7 @@ require, "poly_fit.i";
 scratch= save(scratch, tmp);
 tmp= save(eval, _eval1, stats, scale, elacs, fromdox, todox,  \
           todox, fromdox, load, dump);
-func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid=, \
+func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, y1=, y0=, tension=, nxfit=, equid=, \
              quiet=, help=, load=, json=, pdb=)
 /* DOCUMENT f= digfun (y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid=, quiet=)
    F is a closure evaluating Y(XP) by interpolation of the
@@ -13,6 +13,11 @@ func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid
    for polynomial interpolation POLY, DEGREE is that of the polynomial
    for spline interpolation     SPLINE, DYDX0/1=:start/end slopes  TENSION=: tension
    for spline interpolation     SPLINET, DYDX0/1=:start/end slopes NXFIT=: number of cubic knots
+   =====
+   usage
+   =====
+   digfun() -> ["lin","splinelsq","spline","poly","legendre"]
+   nxfit= for splinelsq; dydx0/dydx1= for spline
  */
 {
   clsn= "digfun";
@@ -47,7 +52,9 @@ func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid
   ob, clsn=clsn, dy=dy, nxy=nxy, ny=ny, type=type;
 
   ob, stats, y, x;
-  ob, scale, y, x, dydx0, dydx1;
+  ob, scale, y, x, dydx0, dydx1, y0, y1;
+
+  ob, y=y, x=x;
 
   ob, y=y, x=x;
 
@@ -58,6 +65,8 @@ func digfun (base, y, x, type=, degree=, dydx0=, dydx1=, tension=, nxfit=, equid
     save, ob(splin), dydx0=dydx0;
     save, ob(splin), dydx1=dydx1;
     save, ob(splin), equid=equid;
+    if (type=="splinelsq")
+      save, ob(splin), y1=y1, y0=y0;
     if (!quiet && type=="spline" && (!is_void(nxfit) || !is_void(equid)))
       write,"Warning: provided NXFIT=, or EQUID=, keys not used, see splinelsq.";
     if (!quiet && !is_void(degree))
@@ -124,7 +133,7 @@ func stats (&y, &x)
   ymax= y(,max);
   save, use, xmin, xmax, ymin, ymax;
 }
-func scale (&y, &x, &dydx0, &dydx1)
+func scale (&y, &x, &dydx0, &dydx1, &y0, &y1)
 {
   use, xmin, xmax, ymin, ymax;
   x= (x-xmin)/(xmax-xmin)-0.5;
@@ -134,7 +143,10 @@ func scale (&y, &x, &dydx0, &dydx1)
     dydx0*= (xmax-xmin)/(ymax-ymin+m);
   if (!is_void(dydx1))
     dydx1*= (xmax-xmin)/(ymax-ymin+m);
-
+  if (!is_void(y0))
+    y0= (y0-ymin)/(ymax-ymin+m)-0.5;
+  if (!is_void(y1))
+    y1= (y1-ymin)/(ymax-ymin+m)-0.5;
 }
 func elacs (&y, &x,deriv=,deriv2=,integ=)
 {
@@ -253,7 +265,9 @@ func digfun_splinelsq (base, ob, y, x)
   a= array(0.0,[3,ob(ny),3,ob(splin,nxfit)]);
   for (i=1; i<=ob(ny); i++)
     a(i,1:3,..)= splinelsq(y(i,..),x,xf,dydx0=(is_void(ob(splin,dydx0))? []: ob(splin,dydx0,i)), \
-                      dydx1=(is_void(ob(splin,dydx1))? []: ob(splin,dydx1,i)));
+                           dydx1=(is_void(ob(splin,dydx1))? []: ob(splin,dydx1,i)), \
+                           y0=(is_void(ob(splin,y0))? []: ob(splin,y0,i)), \
+                           y1=(is_void(ob(splin,y1))? []: ob(splin,y1,i)));
 
   save, ob, a;
 

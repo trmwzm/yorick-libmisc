@@ -1592,15 +1592,16 @@ func sumintpow(n,a)
 /*-------------------------------------------------------------------------------------*/
 
 func tile (dd,dtlo,center=)
-    /* DOCUMENT tile (dd,dtlo)
-       2D rectangular tiling of 2D rectangular domain.  Output is
-       base index (lower left in "x-y/dim1-2" pic.) of each tile.
-       dd=    data dimension as in dimsof(data)
-       dtlo=  dimension ONLY (no preceeding rank) of output tile.
-       The tile is just the chunk size wich, in tiling with overlap,
-       is also the non-overlapping tile dimension (output dimensions.)
+/* DOCUMENT tile (dd,dtlo)
+   OBSOLETE: use tile.i
+   2D rectangular tiling of 2D rectangular domain.  Output is
+   base index (lower left in "x-y/dim1-2" pic.) of each tile.
+   dd=    data dimension as in dimsof(data)
+   dtlo=  dimension ONLY (no preceeding rank) of output tile.
+   The tile is just the chunk size wich, in tiling with overlap,
+   is also the non-overlapping tile dimension (output dimensions.)
 
-    */
+*/
 {
   dtlo*= array(1,dd(1));
   if (center==1)
@@ -1609,7 +1610,8 @@ func tile (dd,dtlo,center=)
     off= array(0,dd(1));
 
   dt= long(ceil((dd-_(0,off))*1.0/_(1,dtlo))); // d-dimensional tile index dims
-  for (n=1,i=1;i<=dt(1);i++)n*= dt(i+1);
+  for (n=1,i=1;i<=dt(1);i++)
+    n*= dt(i+1);
   out= reform((indim(indgen(n),dt)-1)*dtlo+1,_(dt(1)+1,dt(1),dt(2:)))+off;
   return out;
 }
@@ -1645,37 +1647,37 @@ func equidx (y, x, n)
 /*-------------------------------------------------------------------------------------*/
 
 func tile_ndx (it,dd,dtlo,ovl,&din,&dout,&tin,&tout)
-    /* DOCUMENT  tile_ndx (it,dd,dtlo,&din,&dout,&tin,&tout)
-       first inputs id as those of "tile";
-       dd=    data dimension as in dimsof(data)
-       dtlo=  dimension ONLY (no preceeding rank) of output tile.
-       ovl=   one-side overlap (0 if none)
-       USAGE
-       ====
-       test driver.....
-       func tile_test (dum)
-       {
-       dd= [2,100,400]
-       dtlo= [14,41];
-       ovl= [5,6];
-       local din, dout, tin, tout;
-       tile_ndx, (it=tile(dd,dtlo)), dd, dtlo, ovl, din, dout, tin, tout;
-       tl= array(0.0,_(dd(1),dtlo+2*ovl));
-       im= roll(span(0,1,dd(2))*span(0,1,dd(3))(-,));
-       im2= array(structof(im),dimsof(im));
-       for (i=1;i<=numberof(it(1,));i++) {
+/* DOCUMENT  tile_ndx (it,dd,dtlo,&din,&dout,&tin,&tout)
+   OBSOLETE: use tile.i
+   first inputs id as those of "tile";
+   dd=    data dimension as in dimsof(data)
+   dtlo=  dimension ONLY (no preceeding rank) of output tile.
+   ovl=   one-side overlap (0 if none)
+   USAGE
+   ====
+   test driver.....
+   func tile_test (dum)
+   {
+     dd= [2,100,400];
+     dtlo= [14,41];
+     ovl= [5,6];
+     local din, dout, tin, tout;
+     tile_ndx, (it=tile(dd,dtlo)), dd, dtlo, ovl, din, dout, tin, tout;
+     tl= array(0.0,_(dd(1),dtlo+2*ovl));
+     im= roll(span(0,1,dd(2))*span(0,1,dd(3))(-,));
+     im2= array(structof(im),dimsof(im));
+     for (i=1;i<=numberof(it(1,));i++) {
        tl(*)= 0;
        tl(tin(1,1,i):tin(2,1,i),tin(1,2,i):tin(2,2,i))=
-       im(din(1,1,i):din(2,1,i),din(1,2,i):din(2,2,i));
+           im(din(1,1,i):din(2,1,i),din(1,2,i):din(2,2,i));
        im2(dout(1,1,i):dout(2,1,i),dout(1,2,i):dout(2,2,i))=
-       tl(tout(1,1,i):tout(2,1,i),tout(1,2,i):tout(2,2,i));
+           tl(tout(1,1,i):tout(2,1,i),tout(1,2,i):tout(2,2,i));
        pli,im2;
-       }
-       plmk,it(2,*)-1,it(1,*)-1,width=30,color="red",marker=1,msize=.3;
-       return im-im2;
-       }
-
-    */
+     }
+     plmk,it(2,*)-1,it(1,*)-1,width=30,color="red",marker=1,msize=.3;
+     return im-im2;
+   }
+*/
 {
   n= dd(1);
   dtlo*= array(1,n);
@@ -3223,12 +3225,14 @@ func oxwrite (f, o, &onm, lvl)
   idnt2= strchar(char(array(32,nidnt*lvl)));
 
   // only on call
+  is_scratch= 0;
   if (is_string(onm)) {
     onm= save(string(0),onm);
     // stash scratch
     s= info(o);
     ws= where(strmatch(s,"= object with"));
     if (numberof(ws)) {
+      is_scratch= 1;
       s= discrete(strtrim(strtok(s(ws),"=")(1,)));
       write,f,swrite(s,format=",%s")(sum),\
           format="scratch= save(scratch%s);\n\n";
@@ -3257,6 +3261,7 @@ func oxwrite (f, o, &onm, lvl)
   } else {
     write,f,"}",format="%s\n";
     write,f,"";
+    if (is_scratch==1)
     write,f,"restore, scratch;",format="%s\n";
   }
   return f;
