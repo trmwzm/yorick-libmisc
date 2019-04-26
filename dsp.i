@@ -1090,9 +1090,9 @@ func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=)
 
 /*--------------------------------------------------------------*/
 
-func  pksamp2d (cin,rndx,&rpk,&cpk,&covs,&bx,&sf,&imx,&cfft, \
-                &fftws_in, &fftws_out, box=,osf=,carrier=,   \
-                prox=,fcplx=)
+func  pksamp2d (cin, rndx, &rpk, &cpk, &covs, &bx, &sf, &imx, &cfft, \
+                &fftws_in, &fftws_out, box=, osf=, carrier=,   \
+                prox=, fcplx=)
 /* DOCUMENT pksamp2d (cin,rndx,&rpk,&cpk,&sent,box=,osf=,dbgfig=)
    does peak analysis across a decimal index in the
    first dimension of cin.  This is "looped" on all
@@ -1111,81 +1111,44 @@ func  pksamp2d (cin,rndx,&rpk,&cpk,&covs,&bx,&sf,&imx,&cfft, \
 
    NOTE4: Output self-consistant
           rpk == long(rndx)-(bx-1)/2 +(zmx-1.)/sf
+
    c=array(complex,[2,100,100]);
    c(50,50)= 1+1i*1.0;
    rrq= array(49.0,2);
    crq= pksamp2d(c,rrq,rpk,cpk);
  */
 {
-  if (is_void(box)) box= 16;
-  box+= [0,0];
-  if (is_void(osf)) osf= 16;
-  osf+= [0,0];
+  box= [0,0]+(is_void(box)? 16: box);
+  osf= [0,0]+(is_void(osf)? 16: osf);
   bx= box;
   sf= osf;
 
-  if (anyof(2 > box))error, "Warning: box == "+pr1(box);
-  if (anyof(2 > osf))error, "Warning: osf == "+pr1(osf);
+  if (anyof(2 > box))
+    error, "Warning: box == "+pr1(box);
+  if (anyof(2 > osf))
+    error, "Warning: osf == "+pr1(osf);
 
-  ndx= long(rndx) - (box-1)/2;
+  ndx= long(rndx)-(box-1)/2;
 
-  if (is_stream(cin)) {
-    name= (*get_vars(cin)(1))(1);
-    d= dimsof(get_member(cin,name));
-    n1= d(2);
-    n2= d(3);
-    if (anyof(ndx<0)||anyof(ndx+box>[n1,n2]))
-      return;
-    if (fcplx!=1)
-      cfft= get_member(cin,name)(ndx(1)+1:ndx(1)+box(1), ndx(2)+1:ndx(2)+box(2));
-    else
-      cfft= get_member(cin,name)(1,ndx(1)+1:ndx(1)+box(1), ndx(2)+1:ndx(2)+box(2))+\
-            1i*get_member(cin,name)(2,ndx(1)+1:ndx(1)+box(1), ndx(2)+1:ndx(2)+box(2))
-  } else {
-    d= dimsof(cin);
-    n1= d(2+(fcplx==1));
-    n2= d(3+(fcplx==1));
-    if (anyof(ndx<0)||anyof(ndx+box>[n1,n2]))
-      return;
-    //     grab a window around the sample;
-    if (fcplx!=1)
-      cfft= cin(ndx(1)+1:ndx(1)+box(1), ndx(2)+1:ndx(2)+box(2));
-    else
-      cfft= cin(1,ndx(1)+1:ndx(1)+box(1), ndx(2)+1:ndx(2)+box(2))+\
-            1i*cin(2,ndx(1)+1:ndx(1)+box(1), ndx(2)+1:ndx(2)+box(2));
-  }
+  cfft= extractarr((fcplx==1? _(3,2,box): _(2,box)), \
+                    (is_stream(cin)? get_member(cin,(*get_vars(cin)(1))(1)): cin), \
+                    (fcplx==1? _(0,ndx): ndx));
 
   osfft= osf*box;
   covs= interpol2d(cfft, osfft(1), osfft(2), caro, fftws_in, fftws_out, \
-                   carrier=carrier)
+                   carrier=carrier);
 
-  //     sample at requested index
-  rrsd= rndx - ndx;   // input rndx assumed 0-based  rndx==0 for cin(1)
+  // sample at requested index
+  rrsd= rndx - ndx;              // input rndx assumed 0-based  rndx==0 for cin(1)
   rndxos= nint(osf*rrsd);
   cndx= covs(rndxos(1)+1,rndxos(2)+1);
 
   w= where(abs(cndx)==0);
-  if (numberof(w)) cndx(w)= 1.0;
+  if (numberof(w))
+    cndx(w)= 1.0;
 
-  //     sample at peak mag in vicinity of requested index
-  extern prox_weight;
-  if (!is_void(prox)) {
-    //movs= abs(covs)(*)(mxx)-1;
-    //movs= [movs%osfft(1),movs/osfft(1)];
-    //if (numberof(prox)==1) prox= [prox(1),prox(1)];
-    //dy= (movs-osfft/2)*(2.0*prox)/osfft // lm&lM offset
-    lm= -prox;
-    lM=  prox;
-    if (is_void(prox_weight)||anyof(dimsof(prox_weight)(2:)!=osfft)) {
-      prox_weight= exp (-span(lm(1),lM(1),osfft(1))^2-\
-                         span(lm(2),lM(2),osfft(2))(-,)^2);
-    }
-    movs= (abs(covs)*prox_weight)(*)(mxx)-1;
-    movs= [movs%osfft(1),movs/osfft(1)];
-  } else {
-    movs= abs(covs)(*)(mxx)-1;
-    movs= [movs%osfft(1),movs/osfft(1)];
-  }
+  movs= abs(covs)(*)(mxx)-1;
+  movs= [movs%osfft(1),movs/osfft(1)];
 
   imx= movs+1;
   cpk= covs(imx(1),imx(2));

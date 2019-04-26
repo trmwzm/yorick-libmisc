@@ -2,13 +2,19 @@ require, "dsp.i";
 
 func realo2ar (&o, &out, &j, membi=)
 /* DOCUMENT flatten struct (oxy) of ONLY float arrays into a 1D array
-   array= realo2ar(o);   // o --> array
-   realo2ar, o, array;   // array --> o
-   ATTN: membi works "simply" only for flat structure (no obj(obj))
+   usage ---
    o= save(pi,e=exp(1),r=random(2,3),pi2=[2*pi]);
-   where(realo2ar(o,membi=1)==o(*,"r"))
+   or= realo2ar(o);    // o --> array
+   or(1)= 0;
+   oo= o(:);           // copy object
+   realo2ar, oo, or;   // array --> o (o is preexisting!)
+   oo(pi);
+
+   MEMBI= returns an array of member indices in storage order
+   o(*,realo2ar(o,membi=1));
+   ATTN: membi works "simply" only for flat structure (no obj(obj))
    SEE ALSO:
- */
+*/
 {
   if (is_void(out)) {
     dar= [];
@@ -16,9 +22,9 @@ func realo2ar (&o, &out, &j, membi=)
       oi= o(noop(i));
       if (is_real(oi))
         if (membi==1)
-        dar= _(dar,array(i,numberof(oi)));
-      else
-        dar= _(dar,reform(double(oi),numberof(oi)));
+          dar= _(dar,array(i,numberof(oi)));
+        else
+          dar= _(dar,reform(double(oi),numberof(oi)));
       else if (is_obj(oi))
         dar= _(dar,realo2ar(oi));
       else
@@ -40,7 +46,7 @@ func realo2ar (&o, &out, &j, membi=)
         error,"incorrect input type.";
     }
   } else
-      error,"incorrect input type.";
+    error,"incorrect input type.";
 }
 
 func polyfun(x, a, &grad)

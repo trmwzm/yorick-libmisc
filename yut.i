@@ -889,7 +889,7 @@ func extractarr (args)
       w= where(m);
       ia= ia(w);
       if (ida) { // not a subroutine
-        a= array(structof(args(2,:)),_(ndim,da));
+        a= array(structof(args(2,:))(0),_(ndim,da));
         a(w)= args(2,:)(ia);
       } else {
         if (!am_subroutine()) {
@@ -898,11 +898,12 @@ func extractarr (args)
           return b;
         } else {
           a(w)= args(2,:)(ia);
+          args, 1, a;
         }
       }
     } else {
       if (ida) {
-        a= array(structof(args(2,:)),_(ndim,da));
+        a= array(structof(args(2,:))(0),_(ndim,da));
         return a;
       }
       if (!am_subroutine())
