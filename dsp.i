@@ -1024,8 +1024,8 @@ func  pksamp (cin,rndx,&rpk,&cpk,&sent,win=,osf=,carrier=,dbgfig=,fcplx=)
 
 /*-------------------------------------------------------------------------------------*/
 
-func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=)
-/* DOCUMENT interpol2d (a, m1, m2, carrier=, parsev=)
+func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=, ambig=)
+/* DOCUMENT interpol2d (a, m1, m2, carrier=, parsev=, ambig=)
    func interpol2d(a, m1, m2, carrier=)
    Sinc interpolation on reg grid: dimensions from dimsof(a) -> nint([m1,m2])
    nx=35;ny=67;dx=1.23;dy=0.384;x0=102.;y0=893;x=indgen(0:nx)*dx+x0;y=indgen(0:ny)*dy+y0;
@@ -1034,23 +1034,26 @@ func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=)
  */
 {
   s= dimsof(a);
-  if (s(1) != 2) error,"interpol2d requires 2dArray, fac1, fac2";
+  if (s(1) != 2)
+    error,"interpol2d requires 2dArray, fac1, fac2";
+
   n1= s(2);
   n2= s(3);
-  if (is_void(m1)) m1= n1;
-  if (is_void(m2)) m2= n2;
-  m1= long(m1+0.5);
-  m2= long(m2+0.5);
-  if (n1>m1||n2>m2) error,"interpol2d requires m_i>size_i";
+  m1= is_void(m1)? n1: long(m1+0.5);
+  m2= is_void(m2)? n2: long(m2+0.5);
+
+  if (n1>m1||n2>m2)
+    error,"interpol2d requires m_i>size_i";
 
   b= array(complex,m1,m2);
 
-  if (is_void(fftws_in)) fftws_in= fft_setup(dimsof(a));
+  if (is_void(fftws_in))
+    fftws_in= fft_setup(dimsof(a));
 
-  //     zeropad to oversample;
-  offset= [(n1-1)/2,(n2-1)/2];
+  // zero-iad to oversample;
+  offset= ([n1,n2]-1)/2;
   if (!is_void(carrier)){
-    if (structof(carrier)==string) {
+    if (carrier=="est") {
       carrier= carrierest(a);
     } else {
       carrier= carrier%1;
@@ -1082,7 +1085,8 @@ func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=)
 
   b= roll(b, -offset);
 
-  if (is_void(fftws_out)) fftws_out= fft_setup(dimsof(b));
+  if (is_void(fftws_out))
+    fftws_out= fft_setup(dimsof(b));
   fft_inplace, b, [-1,-1], setup= fftws_out;
 
   return structof(a)(b);
@@ -1163,6 +1167,60 @@ func  pksamp2d (cin, rndx, &rpk, &cpk, &covs, &bx, &sf, &imx, &cfft, \
   //}
 
   return cndx;
+}
+
+func deamb (a, m)
+/* DOCUMENT deamb (a,m)
+   A: Fourier analyzed signal
+   M: ambiguity number, leading dimension is of length rank-of-A
+   returns 
+   SEE ALSO:
+ */
+{
+  da= dimsof(a);
+  ra= da(1);
+  dm= dimsof(m);
+  if (dm(1)!=ra+1)
+    error,"ambiguity number array incorrect dimensions.";
+  if (!is_integer(m))
+    error,"expecting integer ambiguity number.";
+  mp= abs(m(,*)(,ptp))+1;
+  mm= m(,*)(,min);
+  dam= _(2*ra,transpose([da(2:),mp]));
+  aa= array(structof(a)(0),dam);
+  if (ra==1) {
+    for (i=1;i<=mp(1);i++) {
+      mm= m(d,..)==(mm(d)+i-1);
+      if (anyof(mm))
+        aa(,i)= a(where(mm));
+    }
+  } else if (ra==2) {
+    for (i=1;i<=mp(1);i++) {
+      for (j=1;j<=mp(2);j++) {
+        mm= m(1,..)==(mm(1)+i-1) & \
+          m(2,..)==(mm(2)+j-1);
+        if (anyof(mm))
+          aa(,i,,j)= a(where(mm));
+      }
+    }
+  } else if (ra==3) {
+    for (i=1;i<=mp(1);i++) {
+      for (j=1;j<=mp(2);j++) {
+        for (k=1;k<=mp(3);k++) {
+        mm= m(1,..)==(mm(1)+i-1) & \
+          m(2,..)==(mm(2)+j-1) & \
+          m(3,..)==(mm(3)+k-1);
+        if (anyof(mm))
+          aa(,i,,j,,k)= a(where(mm));
+        }
+      }
+    }
+  } else
+      error,"rank>3 not allowed.";
+
+  damp= _(da*(1),da(2:)*mp);
+
+  return reform(aa,damp);
 }
 
 /*-------------------------------------------------------------------------------------*/
