@@ -1573,6 +1573,25 @@ func poly2(x, c) {
 
 /*-------------------------------------------------------------------------------------*/
 
+func centroid (a,norm=)
+{
+  ab= abs(a);
+  if (norm && norm>1)
+    ab= ab^norm;
+  ab/= sum(ab);
+  da= dimsof(a);
+  out= array(0,da(1));
+  for (i=1;i<=da(1);i++) {
+    ind= indgen(da(i+1));
+    for (j=1;j<i;j++)
+      ind= ind(-,);
+    out(i)= nint(sum(ind*ab));
+  }
+  return out;
+}
+
+/*-------------------------------------------------------------------------------------*/
+
 func sumintpow(n,a)
     /* DOCUMENT sumintpow(n,a)
        FUN!: returns double= SUM_{1:n} n^a, n & a are positive integers

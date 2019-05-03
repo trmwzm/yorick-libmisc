@@ -5,6 +5,7 @@ require, "bessel.i";
 require, "convcorrel.i";
 require, "fpanels.i";
 require, "convol.i";
+require, "nfft.i";
 
 /*----------------------------------------------------------------------*/
 
@@ -14,6 +15,8 @@ func windex (w,n)
    SEE ALSO:
  */
 {
+  if (n==0)
+    return w;
   nn= numberof(w);
   n2= n<=nn? (n-1)/2: (nn-1)/2;
   y= array(0.,n);
@@ -1013,7 +1016,7 @@ func  pksamp (cin,rndx,&rpk,&cpk,&sent,win=,osf=,carrier=,dbgfig=,fcplx=)
   sent(wval)= -(aovs*log(max(aovs,1e-40)))(sum,);
 
   // debug fig
-  if (dbgfig==1){
+  if (dbgfig==1) {
     fma;pli,aovs;
     plg,indgen(0:d(3)-1),pkndxos%osfft,color="red";
     plg,indgen(0:d(3)-1),movs,color="magenta";
@@ -1033,6 +1036,14 @@ func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=, a
    zz=interpol2d(z,200,200);
  */
 {
+  local ctr;
+  if (!is_void(ambig)) {
+    ck= roll(fft(a,1));
+    cck= deamb(ck,ambig,ctr);
+    a= fft(cck/numberof(a),-1);
+    carrout= ambig(,*)(,min)+double(ctr)/dimsof(a)(2:);
+  } 
+
   s= dimsof(a);
   if (s(1) != 2)
     error,"interpol2d requires 2dArray, fac1, fac2";
@@ -1052,7 +1063,7 @@ func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=, a
 
   // zero-iad to oversample;
   offset= ([n1,n2]-1)/2;
-  if (!is_void(carrier)){
+  if (is_void(ctr) && !is_void(carrier)) {
     if (carrier=="est") {
       carrier= carrierest(a);
     } else {
@@ -1063,20 +1074,20 @@ func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=, a
     offset-= carrier;
   }
 
-  b(1:n1,1:n2)= roll(fft(a, [1,1], setup=fftws_in), offset);
+  b(1:n1,1:n2)= roll(fft(a, [1,1], setup=fftws_in), (is_void(ctr)? offset: ctr));
 
   renorm= ba= 0;
-  if (!(n1%2) && m1>n1 && structof(a)==complex){
+  if (!(n1%2) && m1>n1 && structof(a)==complex) {
     ba+= (abs(b(n1,))^2)(sum);
     b(n1,)= 0;
     renorm= 1;
   }
-  if (!(n2%2) && m2>n2 && structof(a)==complex){
+  if (!(n2%2) && m2>n2 && structof(a)==complex) {
     ba+= (abs(b(,n2))^2)(sum);
     b(,n2)= 0;
     renorm= 1;
   }
-  if (renorm && parsev){
+  if (renorm && parsev) {
     bat= n1*n2*(abs(a)^2)(*)(sum);     //bat/(n1*n2);  //checking parseval
     b*= sqrt(bat/(bat-ba))/(n1*n2);    //(abs(b)^2)(*)(sum)*(n1*n2);
   } else{
@@ -1096,7 +1107,7 @@ func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=, a
 
 func  pksamp2d (cin, rndx, &rpk, &cpk, &covs, &bx, &sf, &imx, &cfft, \
                 &fftws_in, &fftws_out, box=, osf=, carrier=,   \
-                prox=, fcplx=)
+                prox=, fcplx=, ambig=)
 /* DOCUMENT pksamp2d (cin,rndx,&rpk,&cpk,&sent,box=,osf=,dbgfig=)
    does peak analysis across a decimal index in the
    first dimension of cin.  This is "looped" on all
@@ -1124,6 +1135,10 @@ func  pksamp2d (cin, rndx, &rpk, &cpk, &covs, &bx, &sf, &imx, &cfft, \
 {
   box= [0,0]+(is_void(box)? 16: box);
   osf= [0,0]+(is_void(osf)? 16: osf);
+
+  if (is_void(cin))
+    return save(box,osf);
+
   bx= box;
   sf= osf;
 
@@ -1133,14 +1148,14 @@ func  pksamp2d (cin, rndx, &rpk, &cpk, &covs, &bx, &sf, &imx, &cfft, \
     error, "Warning: osf == "+pr1(osf);
 
   ndx= long(rndx)-(box-1)/2;
+  osfft= osf*box;
 
   cfft= extractarr((fcplx==1? _(3,2,box): _(2,box)), \
                     (is_stream(cin)? get_member(cin,(*get_vars(cin)(1))(1)): cin), \
                     (fcplx==1? _(0,ndx): ndx));
 
-  osfft= osf*box;
   covs= interpol2d(cfft, osfft(1), osfft(2), caro, fftws_in, fftws_out, \
-                   carrier=carrier);
+                   carrier=carrier, ambig=ambig);
 
   // sample at requested index
   rrsd= rndx - ndx;              // input rndx assumed 0-based  rndx==0 for cin(1)
@@ -1169,11 +1184,10 @@ func  pksamp2d (cin, rndx, &rpk, &cpk, &covs, &bx, &sf, &imx, &cfft, \
   return cndx;
 }
 
-func deamb (a, m)
+func deamb (a, m, &ctr)
 /* DOCUMENT deamb (a,m)
    A: Fourier analyzed signal
    M: ambiguity number, leading dimension is of length rank-of-A
-   returns 
    SEE ALSO:
  */
 {
@@ -1185,42 +1199,53 @@ func deamb (a, m)
   if (!is_integer(m))
     error,"expecting integer ambiguity number.";
   mp= abs(m(,*)(,ptp))+1;
-  mm= m(,*)(,min);
-  dam= _(2*ra,transpose([da(2:),mp]));
+  mmn= m(,*)(,min);
+  dam= _(2*ra,transpose([da(2:),mp])(*));
   aa= array(structof(a)(0),dam);
   if (ra==1) {
     for (i=1;i<=mp(1);i++) {
-      mm= m(d,..)==(mm(d)+i-1);
-      if (anyof(mm))
-        aa(,i)= a(where(mm));
+      msk= m(1,..)==(mmn(1)+i-1);
+      if (anyof(msk) && (w=where(msk))(1)) {
+        aaa= array(structof(a)(0),da);
+        aaa(w)= a(w);
+        aa(,i)= a(w);
+      }
     }
   } else if (ra==2) {
     for (i=1;i<=mp(1);i++) {
       for (j=1;j<=mp(2);j++) {
-        mm= m(1,..)==(mm(1)+i-1) & \
-          m(2,..)==(mm(2)+j-1);
-        if (anyof(mm))
-          aa(,i,,j)= a(where(mm));
+        msk= (m(1,..)==(mmn(1)+i-1)) & (m(2,..)==(mmn(2)+j-1));
+        if (anyof(msk) && (w=where(msk))(1)) {
+          aaa= array(structof(a)(0),da);
+          aaa(w)= a(w);
+          aa(,i,,j)= aaa;
+        }
       }
     }
   } else if (ra==3) {
     for (i=1;i<=mp(1);i++) {
       for (j=1;j<=mp(2);j++) {
         for (k=1;k<=mp(3);k++) {
-        mm= m(1,..)==(mm(1)+i-1) & \
-          m(2,..)==(mm(2)+j-1) & \
-          m(3,..)==(mm(3)+k-1);
-        if (anyof(mm))
-          aa(,i,,j,,k)= a(where(mm));
+          msk= (m(1,..)==(mmn(1)+i-1)) &          \
+            (m(2,..)==(mmn(2)+j-1)) &            \
+            (m(3,..)==(mmn(3)+k-1));
+          if (anyof(msk) && (w=where(msk))(1)) {
+            aaa= array(structof(a)(0),da);
+            aaa(w)= a(w);
+            aa(,i,,j,,k)= a(w);
+        }
         }
       }
     }
   } else
       error,"rank>3 not allowed.";
 
-  damp= _(da*(1),da(2:)*mp);
+  damp= _(da(1),(da(2:)*mp)(*));
+  aa= reform(aa,damp);
 
-  return reform(aa,damp);
+  ctr= centroid(aa,norm=2)-1;
+
+  return roll(aa,-ctr);
 }
 
 /*-------------------------------------------------------------------------------------*/
@@ -2665,9 +2690,50 @@ func carrierest (a)
   return out;
 }
 
+func ptsim2d (n, m, bwf=, off=, car=, wght=)
+/* DOCUMENT c= ptsim2d (n, m, bwf=, off=, car=, wght=)
+   [N,M]: dimension lenfgths
+   BWF=:  bandwidth *fractions* in ]0.,1.]
+   OFF=:  in samples
+   CAR=:  carrier, used straight c*= exp(1i*car*indgen(0:n-1));
+   WGHT=: a= (1+WGHT)/2 then a+(1-a)*cos(k*res),  ie WGHT is the *constant* pedestal
+     
+   SEE ALSO:
+ */
+{
+  bwf= [0.,0.]+(is_void(bwf)? 1.0: bwf);
+  dm= [n,m];
+  dmf= nint(bwf*dm);
+  if (anyof(dmf>dm | dmf<=2))
+    error,"bandwidth too small.";
+  off= [0.,0.]+(is_void(off)? 0.0: off);
+  car= [0.,0.]+(is_void(car)? 0.0: car);
+  wght= [0.,0.]+(is_void(wght)? 1.0: wght);
+
+  c= windex(hamming(dmf(1),(1+wght(1))/2),dm(1)) *      \
+     windex(hamming(dmf(2),(1+wght(2))/2),dm(2))(-,);
+
+  // offset
+  if (abs(off(1))>0)
+    c*= exp((1i*2*pi/n*off(1))*fftindgen(n));
+  if (abs(off(2))>0)
+    c*= exp((1i*2*pi/m*off(2))*fftindgen(m))(-,);
+
+  // to time/space
+  c= fft(c,-1);
+
+  // carriers
+  if (abs(car(1))>0)
+    c*= exp((1i*car(1))*indgen(0:n-1));
+  if (abs(car(2))>0)
+    c*= exp((1i*car(2))*indgen(0:m-1))(-,);
+
+  return c;
+}
 /*--------------------------------------------------------------------------*/
 
-func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, winpic=, winanl=, nexpand=, xbiname=, \
+func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, ambig=, \
+                winpic=, winanl=, nexpand=, xbiname=,                   \
                 prox=,ybiname=,sunit=,legend=,carrier=,color=,advance=,deg=,scale=,\
                 offset=,landscape=,width=,type=,islrwidth=,pkintlev=,pretit=,fcplx=)
 /* DOCUMENT peakanl2d(z,n1,n2,m1,m2,mm1,mm2,winpic=,winanl=,
@@ -2679,6 +2745,8 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, winpic=,
   (1) grab "z" arround [n1, n2]
   (2) size of "z" patch is of size [m1, m2] unless- /1/ it does not fit or
      /2/ "m1" or "m2" are set as == -1 in which case the wholw "z" row/col/both are grabbed
+
+  peakanl2d(ptsim2d(256,512,off=[128,256.],bwf=.9,wght=.5),[128,256.],winanl=4,advance=1,carrier=0);
 
   z=roll(fft(fft_dist([2,300,200])<10));
   nx= 300;
@@ -2713,7 +2781,7 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, winpic=,
   // sample Z at long(rndx) - (box-1)/2
   /**/local zz, bx, sf, zmx, cim;
   crq= pksamp2d (z, rndx, rpk, cpk, zz, bx, sf, zmx, cim, fftws_in, fftws_out, \
-                 box=box, osf=osf, carrier=carrier,prox=prox,fcplx=fcplx);
+                 box=box, osf=osf, ambig=ambig, carrier=carrier, prox=prox, fcplx=fcplx);
 
   if (is_void(crq)) {
     write," out of bounds: pix/img_sz: "+pr1(rndx)+" "+pr1(dimsof(z));
@@ -3083,27 +3151,51 @@ func fft_freq (dim)
 
 /*--------------- FFT UTILS---------------*/
 
-func fftindgen (n,rll=,off=)
+func fftindgen (n, rll=, off=, inv=)
+/* DOCUMENT ki= fftindgen (n) = (i=indgen(0:n-1)) - n*(i >= (n+1)/2);
+   max freq (n odd; ki<0 if n%2) at [n/2+1]
 
-/* DOCUMENT fftindgen (n) = (i=indgen(0:n-1)) - n*(i >= (n+1)/2);
-     -- largest freq (n/2; <0 if n%2) at [n/2+1]
-        abs(fftindgen(n)(n/2+1))==n/2
-     -- 0 == roll(fftindgen(n))(n/2+1) is true
-     -- largest freq [<0  n odd, neg. one if even] in (roll(fftindgen(n))(1)
-     -- roll(fftindgen(n)) == indgen(-n/2:n-1-n/2)
+   *** not complete/well-def !!! ***
+   func fftindgen_test (n, rll, off, inv) {
+     out= [];
+     out= _(out,abs(fftindgen(n)(n/2+1))==n/2);
+     out= _(out,roll(fftindgen(n))(n/2+1)==0);
+     if (rll)
+       out= _(out,fftindgen(n,rll=rll)(n/2+1)==0);
+     else
+       out= _(out,abs(fftindgen(n))(mxx)==(n/2+1));
+     if (inv) 
+       out= _(out,allof(fftindgen(fftindgen(n,rll=rll,off=off),inv=inv,rll=rll,off=off)==indgen(0:n-1))==1);
+     return out;
+   }
+   for (n=3;n<5;n++)
+     for (rll=0;rll<=1;rll++)
+       for (off=0;off<=1;off++)
+          for (inv=0;inv<=1;inv++)
+            fftindgen_test(n, rll, off, inv);
+            
+   -- largest freq [<0  n odd, neg. one if even] in (roll(fftindgen(n))(1)
+   -- roll(fftindgen(n)) == indgen(-n/2:n-1-n/2)
+
    n=3;   fftindgen(n)==[0,1,-1];    roll(fftindgen(n)) == [-1,0,1]
    n=4;   fftindgen(n)==[0,1,2,-1];  roll(fftindgen(n)) == [2,-1,0,1]
-
-   to invert func fftindgen_inv(i){n=numberof(i);return i + n*(i <0);}
-
-   fftindgen(n,rll=1) == roll(fftindgen(n))
  */
 {
-  if (rll) {
-    return indgen(-n/2:n-1-n/2);
+  if (is_void(off))
+    off= 0;
+  if (inv) {
+    m= numberof(n);
+    if (rll) {
+      return n+m/2;
+    } else {
+      n-= off;
+      return n+m*(n<0);
+    }
   } else {
-    if (is_void(off)) off= 0;
-    return (i=indgen(off:n-1+off)) - n*(i >= (n+1)/2);
+    if (rll) {
+      return indgen(-n/2:n-1-n/2);
+    } else
+      return (i=indgen(0:n-1))-n*(i>=(n+1)/2)+off;
   }
 }
 
