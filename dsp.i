@@ -19,7 +19,7 @@ func windex (w,n)
     return w;
   nn= numberof(w);
   n2= n<=nn? (n-1)/2: (nn-1)/2;
-  y= array(0.,n);
+  y= array(structof(w),n);
   y(:n2+1)= w(:n2+1);
   y(-n2+1:)= w(-n2+1:);
   if (n<nn && n%2==0)
