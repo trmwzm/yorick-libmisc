@@ -380,6 +380,31 @@ g, plg, random(10), random(10);
 g, plg, random(10), random(10),color="red";
 g, plg, random(10), random(10),type=0;
 
+/* functor (?) function with default data which can be set dynamically */
+scratch= save(scratch, tmp);
+tmp= save(eval_);
+func funclos (base, void, key=)
+/* DOCUMENT funclos (base,key=)
+*/
+{
+  ob= base(:);
+
+  ob, key= is_void(key)? random(3): key;
+
+  return closure(ob, eval_); // eval_ is an obj member, see closure/restore below
+}
+func  eval_ (x, &f, key=)
+/* here the default values for kw are set with closure def, but
+   kw defaults may still be overwritten with call
+ */
+{
+  use_kdef, use(), key;
+  f= sum(key*x);
+  return f;
+}
+funclos= closure(funclos, restore(tmp));
+restore, scratch;
+
 /* -------------------------- hu? -------------------------- */
 #if 0
 func test (nx)

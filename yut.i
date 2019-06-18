@@ -834,8 +834,11 @@ func extractarr (args)
   } else {
     da= dimsof(a);
   }
+
   ndim= da(1);
   off+= array(0,ndim);
+  // if (dimsof(off)(1)>1 || (dimsof(off)(1)>0 && dimsof(off)(2)!=ndim))
+  //   error,"broken now -- use to work (?).";
 
   if (da(1) != db(1))
     error, "a and b must have same numberof of dimensions";
@@ -843,7 +846,7 @@ func extractarr (args)
   da= da(2:);
   db= db(2:);
 
-  ia= indgen(0:da(ndim)-1)+off(ndim,..);
+  ia= indgen(0:da(ndim)-1)+off(ndim,..)(-,..);
   if (wrap==1)
     ia= ia%db(ndim) + db(ndim)*(ia<0);
   else {
@@ -855,7 +858,7 @@ func extractarr (args)
     }
   }
   for (i=ndim-1 ; i>=1 ; --i) {
-    iia= indgen(0:da(i)-1)+off(i,..);
+    iia= indgen(0:da(i)-1)+off(i,..)(-,..);
     if (wrap==1)
       iia= iia%db(i) + db(i)*(iia<0);
     else {

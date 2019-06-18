@@ -1,43 +1,6 @@
 require, "yut.i";         //embedarr extractarr
 
-func correl2d_sum (a, b, srch=, off=)
-/* DOCUMENT correl(a,b,srch=,off=)
-  off+[(i=c(*)(mxx)-1)%srch(1)+1,i/srch(1)+1]-srch/2-1;
-  cross correlation of b with a, 
-  -  dims do not have to be id., but
-  the offset is == 0 for id. starting pix. [1,1]
-  -  if an offset is specified, it will translate the output
-  ie. the full offset will be above expression
-  usage example: -------
-  n= m= 200
-  a= random(n,m);
-  b= img_pad(a,n+10,m+20,just=0);
-  if (anyof(off)) b= roll(b,off);
-  c= correl2d(a,b,srch=srch,off=off);
-  off+[(i=c(*)(mxx)-1)%srch(1)+1,i/srch(1)+1]-srch/2-1;
- */
-{
-  if (is_void(off))
-    off= [0,0];
-  off+= [0,0];
-  if (is_void(srch))
-    srch= 5;
-  srch+= [0,0];
-
-  db= dimsof(b)
-  da= dimsof(a)
-  dmx= max(da,db)+_(0,abs(off)+srch/2+1);
-
-  bp= embedarr(b,array(double,dmx)); //0-padded b
-  ao= off+[1,0]*indgen(-srch(1)/2:srch(1)-srch(1)/2-1)(-,..)+\
-          [0,1]*indgen(-srch(2)/2:srch(2)-srch(2)/2-1)(-,-,..);
-
-  bb= extractarr(da,bp,ao,wrap=1);
-  
-  return (a*bb)(sum,sum,..);
-}
-
-func correl2d ( a, b, &work, &nt, srch=, off=)
+func correl2d ( a, b, &mx, &work, &nt, srch=, off=)
 /* DOCUMENT correl(a,b,srch=,off=)
   off+[(i=c(*)(mxx)-1)%srch(1)+1,i/srch(1)+1]-srch/2-1;
   cross correlation of b with a, 
@@ -83,9 +46,11 @@ func correl2d ( a, b, &work, &nt, srch=, off=)
     n1(0)= nconv;
 
   //return convoln(a,b(::-1,::-1),n0=nb-srch/2-off,n1=nb-1-srch/2+srch-off);
-  return convcorreln(a,b,work,nt,n0=n0,n1=n1,correl=1);
-}
+  c= convcorreln(a,b,work,nt,n0=n0,n1=n1,correl=1);
 
+  mx= off+[(i=c(*)(mxx)-1)%srch(1)+1,i/srch(1)+1]-srch/2-1;
+  return c;
+}
 
 func convcorreln (a, b, &work, &nt, n0=, n1=, zc=, correl=)
 /* DOCUMENT convcorreln(a, b, &work, &nt, n0=, n1=, zc=, correl=)
@@ -168,7 +133,45 @@ func convcorreln (a, b, &work, &nt, n0=, n1=, zc=, correl=)
 }
 
 #if 0
-func test_correl (n, m, &w, srch=, off=, nit=)
+func correl2d_sum (a, b, &mx, srch=, off=)
+/* DOCUMENT c= correl(a, b, srch=, off=)
+  off+[(i=c(*)(mxx)-1)%srch(1)+1,i/srch(1)+1]-srch/2-1;
+  cross correlation of b with a, 
+  -  dims do not have to be id., but
+  the offset is == 0 for id. starting pix. [1,1]
+  -  if an offset is specified, it will translate the output
+  ie. the full offset will be above expression
+  usage example: -------
+  n= m= 200;
+  mx= [];
+  a= random_n(n,m);
+  b= img_pad(a,n+10,m+20,just=0);
+  if (anyof(off)) b= roll(b,off);
+  c= correl2d_sum(a,b,mx,srch=srch,off=off);
+ */
+{
+  off= [0,0]+(is_void(off)? 0: off);
+  srch= [0,0]+(is_void(srch)? 5: srch);
+
+  db= dimsof(b)
+  da= dimsof(a)
+  dmx= max(da,db)+_(0,abs(off)+srch/2+1);
+
+  bp= embedarr(b,array(double,dmx)); //0-padded b
+  ao= off+[1,0]*indgen(-srch(1)/2:srch(1)-srch(1)/2-1)(-,..)+\
+          [0,1]*indgen(-srch(2)/2:srch(2)-srch(2)/2-1)(-,-,..);
+
+  bb= extractarr(da,bp,ao,wrap=1);
+
+  c= (a*bb)(sum,sum,..);
+
+  mx= off+[(i=c(*)(mxx)-1)%srch(1)+1,i/srch(1)+1]-srch/2-1;
+  return c;
+}
+#endif
+
+#if 1
+func test_correl (n, m, &w, srch=, off=, nit=, plot=)
 {
   if (is_void(n))
     n= 200;
@@ -194,24 +197,28 @@ func test_correl (n, m, &w, srch=, off=, nit=)
   t0= t= t1= t2= array(0.0,3);
   timer, t; t0= t;
 
-  // sum
-  if (is_void(nit))
-    nit= 1;
-  for (i=1;i<=nit;i++)
-    c= correl2d_sum(a,b,srch=srch,off=off);
-  off+[(i=c(*)(mxx)-1)%srch(1)+1,i/srch(1)+1]-srch/2-1;
-  timer, t,t1;
+  local mx;
+
+  // // sum
+  // if (is_void(nit))
+  //   nit= 1;
+  // for (i=1;i<=nit;i++)
+  //   c= correl2d_sum(a,b,mx,srch=srch,off=off);
+  // timer, t,t1;
 
   // fft
   for (i=1;i<=nit;i++)
-    c2= correl2d(a,b,w,srch=srch,off=off);
-  off+[(i=c2(*)(mxx)-1)%srch(1)+1,i/srch(1)+1]-srch/2-1;
+    c= correl2d(a,b,mx,w,srch=srch,off=off);
   timer, t,t2;
   timer_print, "sum  ",t1,"fft   ",t2;
 
-  m= abs(c)>0.;
-  avg(m*abs(c-c2)/max(1e-30,c));
-  
+  // m= abs(c)>0.;
+  // avg(m*abs(c-c2)/max(1e-30,c));
+
+  if (plot) {
+    window,0;fma;pli,c;
+    // window,1;fma;pli,c2;
+  }
   return c;
 }
 #endif

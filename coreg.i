@@ -2,7 +2,7 @@ require, "dsp.i";
 require, "poly_fit.i";
 if (!is_void(mp_size)) mp_require, "mpool.i";;
 
-func correl2d_fast(a,b,&work,srch=)
+func correl2d_fast(a, b, &work, srch=)
 /* DOCUMENT correl(a,b,srch=)
   off+[(i=c(*)(mxx)-1)%srch(1)+1,i/srch(1)+1]-srch/2-1;
   cross correlation of b with a, 
@@ -17,27 +17,28 @@ func correl2d_fast(a,b,&work,srch=)
   statarr, a(:srch(1),:srch(2))-correl2d_fast(a,b,srch=srch)
  */
 {
-  if (is_void(srch)) srch= 5;
-  srch+= [0,0];
+  srch= [0,0]+(is_void(srch)? 5: srch);
 
   typo= structof(a(1)*b(1));  
   da= dimsof(a);
   db= dimsof(b);
-  if (da(1)==3 && db(1)==2) b= [b];
+  if (da(1)==3 && db(1)==2)
+    b= [b];
   db= dimsof(b);
 
-  nd = da(1);
-  dab = max(da,db);
-  dt = array(nd, 1+nd);
-  for (i=1 ; i<=2 ; ++i) dt(1+i) = fft_good(dab(i+1));
+  nd= da(1);
+  dab= max(da,db);
+  dt= array(nd, 1+nd);
+  for (i= ; i<=2 ; ++i)
+    dt(1+i)= fft_good(dab(i+1));
   if (nd==3) dt(0)= da(4);
-  at = array(complex, dt);
+  at= array(complex, dt);
   if (nd==3) dt(0)= 1;
-  bt = array(complex, dt);
+  bt= array(complex, dt);
 
   at(1:da(2),1:da(3),..)= a;
   bt(1:db(2),1:db(3),..)= b;
-  nt = numberof(bt);
+  nt= numberof(bt);
 
   bt(1:srch(1)-srch(1)/2-1,..)= 0;  //framing
   bt(-srch(1)/2+1:,..)= 0;
@@ -47,8 +48,8 @@ func correl2d_fast(a,b,&work,srch=)
   if (is_void(work)) work= fft_setup(dimsof(at),[1,1]);
   fft_inplace, at, [1,1], setup=work;
   fft_inplace, bt, [1,1], setup=work;
-  at = conj(bt)*at;
-  bt = [];
+  at= conj(bt)*at;
+  bt= [];
 
   fft_inplace, at, [-1,-1], setup=work;
 
