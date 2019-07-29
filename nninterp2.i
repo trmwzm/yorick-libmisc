@@ -63,6 +63,7 @@ func nninterp2(y0,x0, z,y,x,reg, &ondx, outside=)
   if (scalar) mask= mask(1);
   return merge(za,zb,mask);
 }
+
 func interp21(y0,x0, z,y,x,reg, &ondx, outside=)
 /* DOCUMENT z0= nninterp2(y0,x0, z,y,x,,  &ondx)
          or z0= nninterp2(y0,x0, z,y,x,reg, &ondx)
@@ -117,12 +118,12 @@ func interp21(y0,x0, z,y,x,reg, &ondx, outside=)
     z01= z(ndx-1);
 
     // 2nd index lin interp
-    dy= y01-y00;
+    dy= (y01-y00+y11-y10)/2;
     f= (y0-y00)/dy;
     z0= z00*(1-f)+z01*f;
     
     // 2nd index lin interp
-    dy= y11-y10;
+    // dy= y11-y10;
     f= (y0-y10)/dy;
     z1= z10*(1-f)+z11*f;
     dy= [];
@@ -144,7 +145,9 @@ func interp21(y0,x0, z,y,x,reg, &ondx, outside=)
   }
 
   if (scalar) mask= mask(1);
-  return merge(za,zb,mask);
+  zo= merge(za,zb,mask);
+  zo= min(max(min(z),zo),max(z));
+  return zo;
 }
 
 
