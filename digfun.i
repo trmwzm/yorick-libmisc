@@ -107,7 +107,7 @@ func eval (x, deriv=, deriv2=, integ=, outside=, dump=, load=, json=, pdb=)
   for (i=1; i<=ny; i++)
     y(i,..)= use_method(_eval1,i,x,deriv=deriv,deriv2=deriv2,integ=integ);
 
-  //use_method, elacs, y, 1, deriv=deriv,deriv2=deriv2,integ=integ;
+  use_method, elacs, y, 1, deriv=deriv,deriv2=deriv2,integ=integ;
 
   if (!is_void(outside)) {
     m= x<xmin | x>xmax;
@@ -523,11 +523,12 @@ q= rdline(prompt=" q quits");
 #if 0
 
 func foo (x, &df) {
-  y= sqrt(1-x^2);
+  a= 10.0;
+  y= a*sqrt(1-x^2);
   if (is_scalar(x))
-    df= y==0? -1e30: -x/y;
+    df= y==0? -1e30: -a*x/y;
   else
-    df= merge2(-1e30,-x/(y+(y==0)),y==0);
+    df= merge2(-1e30,-a*x/(y+(y==0)),y==0);
   return y;
 }
 n= 40;
