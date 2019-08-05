@@ -1154,6 +1154,12 @@ func  pksamp2d (cin, rndx, &rpk, &cpk, &covs, &bx, &sf, &imx, &cfft, \
                     (is_stream(cin)? get_member(cin,(*get_vars(cin)(1))(1)): cin), \
                     (fcplx==1? _(0,ndx): ndx));
 
+  if (fcplx && is_real(cfft))
+    if (dimsof(cfft)(2)==2)
+      cfft= cfft(1,..)+1i*cfft(2,..);
+    else
+      error,"Not FCPLX.";
+
   covs= interpol2d(cfft, osfft(1), osfft(2), caro, fftws_in, fftws_out, \
                    carrier=carrier, ambig=ambig);
 
