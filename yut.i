@@ -387,7 +387,7 @@ func waitff(fls,tlim,dt=)
     t+= 1;
   }
   if (t>=tlim)
-    error,"alloted time elapsed: "+pr1(tlim)+"hr";
+    error,"alloted time elapsed: "+pr1(tlim)+"hr, missing one of: "+([fls]+" ")(*)(sum);
   return t-2;
 }
 
@@ -402,11 +402,11 @@ func runwaitsafe (cmd,v=,tlim=,dt=)
   utime= 0;
   timestamp, utime;
   rnd= long(random()*1e6);
-  stmp= swrite(rnd,utime,format="tic-%ld-ut-%ld");
+  stmp= swrite(rnd,utime,format="/tmp/tic-%ld-ut-%ld");
   cmd= strpart(cmd,0:0)==";"? strpart(cmd,1:-1): cmd;
   cmd2= "rm -f "+stmp+";"+cmd+"; touch "+stmp+";";
   if (v==1)
-    write,cmd2;
+    write,cmd2,stmp;
   sysafe,cmd2;
   t= waitff(stmp,tlim,dt=dt);
   remove,stmp;
@@ -3272,7 +3272,7 @@ func oxwrite (f, o, &onm, lvl)
       f= oxwrite(f,oi,onm,lvl);
     } else {
       s= swrite(onm(0),o(*,i),pr1(oi)(*)(sum),\
-                format=idnt2+"save, %s, %s"+(o(*,i)? "=": "[],")+" %s;");
+                format=idnt2+"%s, %s"+(o(*,i)? "=": "[],")+" %s;");
       write,f,s,format="%s\n";
     }
   }

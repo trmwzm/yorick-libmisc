@@ -1064,7 +1064,7 @@ func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=, a
   // zero-iad to oversample;
   offset= ([n1,n2]-1)/2;
   if (is_void(ctr) && !is_void(carrier)) {
-    if (carrier=="est") {
+    if (structof(carrier)==string) {
       carrier= carrierest(a);
     } else {
       carrier= carrier%1;
