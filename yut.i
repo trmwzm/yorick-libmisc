@@ -2862,7 +2862,7 @@ func oxcopy (o)
        recursive oxy object copy
     */
 {
-  oo= o(:);
+  oo= o(*)>0? o(:): save();
   for (i=1; i<=o(*); i++) {
     oi= o(noop(i));
     if (is_obj(oi))
