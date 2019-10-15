@@ -274,7 +274,7 @@ func set (key, val, unit=, comment=)
   save, v, comment;
   save, kv, noop(key), v;
 }
-func get (key,typestrct,dims,unit=,verbose=)
+func get (key,typestrct,dims,unit=,verbose=,quiet=)
 {
   use, kv, fixunit;
 
@@ -286,7 +286,10 @@ func get (key,typestrct,dims,unit=,verbose=)
   }
 
   if (is_obj(kv,noop(key),1)<0)
-    error,"key not found";
+    if (quiet)
+      return [];
+    else
+      error,"key not found";
   v= kv(noop(key));
 
   if (is_void(typestrct))
