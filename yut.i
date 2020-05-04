@@ -713,7 +713,6 @@ func readtokey (&f, key, typ, dims, oldbmark, &newbmark, \
 {
   if (typeof(f)=="string") {
     f= open(f,"r");
-    oldbmark= bookmark(f);
   } else {
     if (rewind==1)
       f= open(nameofstream(f),"r");
@@ -724,15 +723,14 @@ func readtokey (&f, key, typ, dims, oldbmark, &newbmark, \
         oldbmark= bookmark(f);
   }
 
-  if (is_void(key))
-    key="";
-  key= strtrim(key);
+  key= is_void(key)? "": strtrim(key);
 
   if (is_void(delim))
     delim = ":;=~\t\n";
 
   for (i=1;i<=numberof(key);i++)
     while((line=rdline(f)) && !strmatch(line,key(i)));
+  backup, f;
   newbmark= bookmark(f);
 
   keyVal= strtok(line,delim);
