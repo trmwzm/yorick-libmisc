@@ -702,6 +702,78 @@ func rjmread (f, delim)
   return strpart(l,strword(l,delim,n));
 }
 
+/*----------------------------------------------------------------------------*/
+
+func readtokey (&f, key, typ, dims, oldbmark, &newbmark, \
+                delim=, rewind=, verbose=, valfirst=)
+/* DOCUMENT: readtokey(&f,key,typ,dims,oldbmark,&newbmark,
+   delim=,rewind=,verbose=,valfirst=)
+   F is file (then returned as handle) or handle
+*/
+{
+  if (typeof(f)=="string") {
+    f= open(f,"r");
+    oldbmark= bookmark(f);
+  } else {
+    if (rewind==1)
+      f= open(nameofstream(f),"r");
+    else
+      if (!is_void(oldbmark))
+        backup, f, oldbmark;
+      else
+        oldbmark= bookmark(f);
+  }
+
+  if (is_void(key))
+    key="";
+  key= strtrim(key);
+
+  if (is_void(delim))
+    delim = ":;=~\t\n";
+
+  for (i=1;i<=numberof(key);i++)
+    while((line=rdline(f)) && !strmatch(line,key(i)));
+  newbmark= bookmark(f);
+
+  keyVal= strtok(line,delim);
+
+  if(is_void(dims))
+    dims = [0];
+  dims0 = dims;                     //local copy
+
+  is_complex = 0;
+  if (typ==complex) {
+    is_complex= 1;
+    if (dims(1)==0)
+      dims0= [1,2];
+    else
+      dims0= _(dims(1)+1,2,dims(2,..));
+  }
+  if (is_void(typ))
+    typ= structof("");
+  is_string= typ==string? 1: 0;
+
+  out= array(typ,dims0);
+
+  vali= valfirst==1? 1: 2;
+  if (is_string) {
+    stmp= keyVal(vali);
+    if (stmp==string(0))
+      stmp="";
+    if (dims0(1)!=0)
+      words = strwords(stmp,nwords,delim=" ;:,");
+    else
+      words = strtrim(stmp);
+    out(*) = words;
+  } else
+    sread_n, keyVal(vali), out;
+
+  if (!is_void(verbose) && verbose==1)
+    print,key,out;
+
+  return out;
+}
+
 /*---------------------------------------------------------------------------*/
 
 func embedarr (args)
@@ -2744,7 +2816,7 @@ func is_oxgrar (o, &s, &d)
     return 0;
   if (o(*)==0)
     return 1;
-  
+
   o1= o(1);
   if (is_obj(o1)) {
     local s1, d1;
@@ -2764,7 +2836,7 @@ func is_oxgrar (o, &s, &d)
   d= dimsof(o1);
   l= is_numerical(o1) || is_string(o1) || is_pointer(o1);
   i= 1;
-  if (l) 
+  if (l)
     while (i++<o(*)) {
       oi= o(1*i);
       if (s!=structof(oi) || nallof(d==dimsof(oi))) {
@@ -2815,7 +2887,7 @@ func arr_oxgr (o, &ier, row=)
     oxgrar_dims_wrkr, o, s, d;
     if (!row)
       d= d(::-1);
-    
+
     d= _(numberof(d),d);
     out= array(s(0),d);
     if (d(1)>2 && is_obj(o(1)))
@@ -2847,7 +2919,7 @@ func arr_oxgr (o, &ier, row=)
         else
           save, out, string(0), arr_oxgr(o(i,..),ier,row=row);
     else
-      for (i=1;i<=(!row? d(0): d(2));i++) 
+      for (i=1;i<=(!row? d(0): d(2));i++)
         if (!row)
           save, out, string(0), o(..,i);
         else
