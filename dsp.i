@@ -1058,7 +1058,7 @@ func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=, a
 
   b= array(complex,m1,m2);
 
-  if (is_void(fftws_in))
+  if (is_void(fftws_in)||anyof(*fftws_in(1)!=[n1,n2]))
     fftws_in= fft_setup(dimsof(a));
 
   // zero-iad to oversample;
