@@ -810,6 +810,28 @@ func writetokey (fnm, key, str, delim=, verbose=, valfirst=)
 
 /*---------------------------------------------------------------------------*/
 
+func readtextlog (fnm, delim=, comment=, n=)
+/* DOCUMENT  ra= readtextlog(fnm,delim=,comment=,n=)
+
+   SEE ALSO:
+ */
+{
+  l= text_lines(fnm);
+  if (is_void(comment))
+    comment= "#";
+  mc= strgrep("^"+comment,l)(2,..)==strlen(comment);
+  if (anyof(mc))
+    l= l(where(!mc));
+  if (is_void(delim))
+    delim= " ";
+  n= is_void(n)? 20: n;
+  ll= strpart(l,strword(l,delim,n));
+  w1= where(ll(,1)!=string(0));
+  return tonum(ll(w1,..));
+}
+
+/*---------------------------------------------------------------------------*/
+
 func embedarr (args)
     /* DOCUMENT embedar (a,&b,off,wrap=)
        embedar (a,f.x,off,wrap=)
