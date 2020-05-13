@@ -715,7 +715,7 @@ func readtokey (&f, key, typ, dims, oldbmark, &newbmark, \
     f= open(f,"r");
   } else {
     if (rewind==1)
-      f= open(nameofstream(f),"r");
+      while(strpart(print(bookmark(f))(2),1:1)!="/"){backup,f;}
     else
       if (!is_void(oldbmark))
         backup, f, oldbmark;
@@ -770,6 +770,42 @@ func readtokey (&f, key, typ, dims, oldbmark, &newbmark, \
     print,key,out;
 
   return out;
+}
+
+/*---------------------------------------------------------------------------*/
+
+func writetokey (fnm, key, str, delim=, verbose=, valfirst=)
+/* DOCUMENT: writetokey(fnm,key,str,
+   delim=,verbose=,valfirst=)
+   F is file (then returned as handle) or handle
+*/
+{
+  if (structof(fnm)!=string)
+    error,"expecting filename.";
+
+  key= is_void(key)? "": strtrim(key);
+
+  if (is_void(delim))
+    delim = ":;=~\t\n";
+
+  ll= text_lines(fnm);
+  n= numberof(ll);
+  for (j=1,i=1;i<=numberof(key);i++)
+    while(!strmatch(ll(j),key(i)) && j<n) j++;
+  line= ll(j);
+
+  keyVal= strtok(line,delim);
+  idx= strgrep(keyVal(1)+" *["+delim+"]",line);
+  dl= strpart(line,idx(2):idx(2));
+
+  vali= valfirst==1? 1: 2;
+  keyVal(vali)= str;
+  sout= keyVal(1)+" "+dl+" "+keyVal(2);
+  ll(j)= sout;
+  write,open(fnm,"w"),ll,format="%s\n";
+
+  if (!is_void(verbose) && verbose==1)
+    write,key,sout,format="key: %s, out: %s";
 }
 
 /*---------------------------------------------------------------------------*/
