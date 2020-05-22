@@ -1041,8 +1041,8 @@ func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=, a
     ck= roll(fft(a,1));
     cck= deamb(ck,ambig,ctr);
     a= fft(cck/numberof(a),-1);
-    carrout= ambig(,*)(,min)+double(ctr)/dimsof(a)(2:);
-  } 
+    carout= ambig(,*)(,min)+double(ctr)/dimsof(a)(2:);
+  }
 
   s= dimsof(a);
   if (s(1) != 2)
@@ -1069,7 +1069,7 @@ func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=, a
     } else {
       carrier= carrier%1;
     }
-    carout= carrier;
+    carout= carrier*double([n1,n2])/[m1,m2];
     carrier= nint(carrier*[n1,n2]);
     offset-= carrier;
   }
@@ -1106,7 +1106,7 @@ func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=, a
 /*--------------------------------------------------------------*/
 
 func  pksamp2d (cin, rndx, &rpk, &cpk, &covs, &bx, &sf, &imx, &cfft, \
-                &fftws_in, &fftws_out, box=, osf=, carrier=,   \
+                &fftws_in, &fftws_out, &caro, box=, osf=, carrier=,   \
                 prox=, fcplx=, ambig=)
 /* DOCUMENT pksamp2d (cin,rndx,&rpk,&cpk,&sent,box=,osf=,dbgfig=)
    does peak analysis across a decimal index in the
@@ -2703,7 +2703,7 @@ func ptsim2d (n, m, bwf=, off=, car=, wght=)
    OFF=:  in samples
    CAR=:  carrier, used straight c*= exp(1i*car*indgen(0:n-1));
    WGHT=: a= (1+WGHT)/2 then a+(1-a)*cos(k*res),  ie WGHT is the *constant* pedestal
-     
+
    SEE ALSO:
  */
 {
@@ -2785,15 +2785,14 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, ambig=, 
  */
 {
   // sample Z at long(rndx) - (box-1)/2
-  /**/local zz, bx, sf, zmx, cim;
-  crq= pksamp2d (z, rndx, rpk, cpk, zz, bx, sf, zmx, cim, fftws_in, fftws_out, \
+  /**/local zz, bx, sf, zmx, cim, kcar;
+  crq= pksamp2d (z, rndx, rpk, cpk, zz, bx, sf, zmx, cim, fftws_in, fftws_out, kcar, \
                  box=box, osf=osf, ambig=ambig, carrier=carrier, prox=prox, fcplx=fcplx);
 
   if (is_void(crq)) {
     write," out of bounds: pix/img_sz: "+pr1(rndx)+" "+pr1(dimsof(z));
     return array(peakAnl,2);
   }
-  kar= carrierest(cim);
 
   sunit= is_void(sunit)?array(string(0),2):sunit+array(string(0),2);
 
@@ -2845,8 +2844,8 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, ambig=, 
 
   xpeak.maxPhase= ypeak.maxPhase= zatan(cpk, deg=deg);
 
-  xpeak.fcar= kar(1);
-  ypeak.fcar= kar(2);
+  xpeak.fcar= kcar(1);
+  ypeak.fcar= kcar(2);
 
   azz= zz.re^2+zz.im^2;
   azzm= max(azz);
@@ -2860,13 +2859,7 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, ambig=, 
 
   win= [m1,m2];
   offset= (win-1)/2;
-  if (!is_void(carrier)) {
-    if (structof(carrier)==string){
-      carrier= carrierest(cim);
-    }
-    carrier= carrier%1;
-  }
-  offset-= nint(carrier*win);
+  offset-= nint(kcar*win);
 
   if (!is_void(winpic)) {
      window,winpic;
@@ -3170,7 +3163,7 @@ func fftindgen (n, rll=, off=, inv=)
        out= _(out,fftindgen(n,rll=rll)(n/2+1)==0);
      else
        out= _(out,abs(fftindgen(n))(mxx)==(n/2+1));
-     if (inv) 
+     if (inv)
        out= _(out,allof(fftindgen(fftindgen(n,rll=rll,off=off),inv=inv,rll=rll,off=off)==indgen(0:n-1))==1);
      return out;
    }
@@ -3179,7 +3172,7 @@ func fftindgen (n, rll=, off=, inv=)
        for (off=0;off<=1;off++)
           for (inv=0;inv<=1;inv++)
             fftindgen_test(n, rll, off, inv);
-            
+
    -- largest freq [<0  n odd, neg. one if even] in (roll(fftindgen(n))(1)
    -- roll(fftindgen(n)) == indgen(-n/2:n-1-n/2)
 
