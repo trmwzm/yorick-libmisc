@@ -1072,8 +1072,7 @@ func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=, a
       carrier= carrier%1;
     }
     carout= carrier*double([n1,n2])/[m1,m2];
-    carrier= nint(carrier*[n1,n2]);
-    offset-= carrier;
+    offset-= nint(carrier*[n1,n2]);
   }
 
   b(1:n1,1:n2)= roll(fft(a, [1,1], setup=fftws_in), (is_void(ctr)? offset: ctr));
@@ -2649,10 +2648,11 @@ func phase2dpic(z,n1,n2,m1,m2,mm1,mm2,winpic=,xbiname=,ybiname=,legend=,center=,
 
 /*--------------------------------------------------------------------------*/
 
-func deramp2d (c,&z1,&z2,fcplx=)
+func deramp2d (c,&z1,&z2,fcar=,fcplx=)
 /* DOCUMENT deramp2d (c,fcplx=)
    joimtly deramp complex or fcomplex arrays c(r,a,slc#)
    across each two leading dimension
+   fcar=: phase rotation to apply in rad/sample
    z1, z2: mean samp-to-samp phase rotations
    in each dimension
  */
@@ -2660,18 +2660,30 @@ func deramp2d (c,&z1,&z2,fcplx=)
   d= dimsof(c);
   if (fcplx==1) {
     if (structof(c)!=float) error,"not fcplx.";
-    z1= (Cmul(c(,1:-1,..)*c(,2:,..),conj2=1))(,*)(,avg);
-    z2= (Cmul(c(,,1:-1)*c(,,2:),conj2=1))(,*)(,avg);
-    z1= z1/max(1,abs(z1(1),z1(2)));
-    z2= z2/max(1,abs(z1(2),z2(2)));
-    z1= float(atan(z1(2),z1(1)));
-    z2= float(atan(z2(2),z2(1)));
+    if (is_void(fcar)) {
+      z1= (Cmul(c(,1:-1,..)*c(,2:,..),conj2=1))(,*)(,avg);
+      z2= (Cmul(c(,,1:-1)*c(,,2:),conj2=1))(,*)(,avg);
+      z1= z1/max(1,abs(z1(1),z1(2)));
+      z2= z2/max(1,abs(z1(2),z2(2)));
+      z1= float(atan(z1(2),z1(1)));
+      z2= float(atan(z2(2),z2(1)));
+    } else {
+      fcar+= [0,0];
+      z1= fcar(1);
+      z2= fcar(2);
+    }
     return Cmul(c,Cexp(z1*indgen(0:d(3)-1)+z2*indgen(0:d(4)-1)(-,)));
   } else {
-    z1= avg(c(1:-1,..)*conj(c(2:,..)));
-    z2= avg(c(,1:-1,..)*conj(c(,2:,..)));
-    z1= zatan(z1/max(1,abs(z1)));
-    z2= zatan(z2/max(1,abs(z2)));
+    if (is_void(fcar)) {
+      z1= avg(c(1:-1,..)*conj(c(2:,..)));
+      z2= avg(c(,1:-1,..)*conj(c(,2:,..)));
+      z1= zatan(z1/max(1,abs(z1)));
+      z2= zatan(z2/max(1,abs(z2)));
+    } else {
+      fcar+= [0,0];
+      z1= fcar(1);
+      z2= fcar(2);
+    }
     return c*exp(1i*(z1*indgen(0:d(2)-1)+z2*indgen(0:d(3)-1)(-,)));
   }
 }
@@ -2788,13 +2800,15 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, ambig=, 
 {
   // sample Z at long(rndx) - (box-1)/2
   /**/local zz, bx, sf, zmx, cim, kcar;
-  crq= pksamp2d (z, rndx, rpk, cpk, zz, bx, sf, zmx, cim, fftws_in, fftws_out, kcar, \
-                 box=box, osf=osf, ambig=ambig, carrier=carrier, prox=prox, fcplx=fcplx);
+  crq= pksamp2d(z, rndx, rpk, cpk, zz, bx, sf, zmx, cim, fftws_in, fftws_out, kcar, \
+                box=box, osf=osf, ambig=ambig, carrier=carrier, prox=prox, fcplx=fcplx);
 
   if (is_void(crq)) {
     write," out of bounds: pix/img_sz: "+pr1(rndx)+" "+pr1(dimsof(z));
     return array(peakAnl,2);
   }
+
+  zz= deramp2d(zz,fcar=-2*pi*kcar);
 
   sunit= is_void(sunit)?array(string(0),2):sunit+array(string(0),2);
 
@@ -2859,10 +2873,6 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, ambig=, 
     xpeak.pkint2= 0.0;
   azz= [];
 
-  win= [m1,m2];
-  offset= (win-1)/2;
-  offset-= nint(kcar*win);
-
   if (!is_void(winpic)) {
      window,winpic;
      if (landscape) {
@@ -2917,6 +2927,8 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, ambig=, 
      // else
      //   plot_vbar,nint(span(-180,180,361)),wrap=360;
      // -- debug
+     win= dimsof(cim)(2:);
+     offset= (win-1)/2;
      im = roll(20*log10(abs(fft(cim)+1e-34)),offset);
      im/= max(im);
      pli,im;
