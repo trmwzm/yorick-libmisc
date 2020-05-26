@@ -1038,6 +1038,8 @@ func interpol2d (a, m1, m2, &carout, &fftws_in, &fftws_out, carrier=, parsev=, a
 {
   local ctr;
   if (!is_void(ambig)) {
+    if (!is_void(carrier))
+      error,"disambiguation array provided, imcompatible with providing/computing carrier.";
     ck= roll(fft(a,1));
     cck= deamb(ck,ambig,ctr);
     a= fft(cck/numberof(a),-1);
@@ -2664,13 +2666,13 @@ func deramp2d (c,&z1,&z2,fcplx=)
     z2= z2/max(1,abs(z1(2),z2(2)));
     z1= float(atan(z1(2),z1(1)));
     z2= float(atan(z2(2),z2(1)));
-    return Cmul(c,Cexp(z1*indgen(d(3))+z2*indgen(d(4))(-,)));
+    return Cmul(c,Cexp(z1*indgen(0:d(3)-1)+z2*indgen(0:d(4)-1)(-,)));
   } else {
     z1= avg(c(1:-1,..)*conj(c(2:,..)));
     z2= avg(c(,1:-1,..)*conj(c(,2:,..)));
     z1= zatan(z1/max(1,abs(z1)));
     z2= zatan(z2/max(1,abs(z2)));
-    return c*exp(1i*(z1*indgen(d(2))+z2*indgen(d(3))(-,)));
+    return c*exp(1i*(z1*indgen(0:d(2)-1)+z2*indgen(0:d(3)-1)(-,)));
   }
 }
 
