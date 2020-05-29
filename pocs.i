@@ -161,8 +161,10 @@ func equispaced (y,x,n,bandfrac,&x10,&it,beta=,niter=,pad=,splin=,tol=)
  return yy;
 }
 
-func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it,beta=,niter=,pad=,tol=,errequi=)
-/* DOCUMENT equispaced2 (z,y,x,nx,xy,bandfrac,&y10,&x10,&err,&it,beta=,niter=,pad=,tol=,errequi=)
+func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it, \
+                  beta=,niter=,pad=,tol=,errequi=)
+/* DOCUMENT equispaced2 (z,y,x,nx,xy,bandfrac,&y10,&x10,&err,&it, \
+                         beta=,niter=,pad=,tol=,errequi=)
 
    N is First dimension length and that dim corresponds to X
    M is Second dimension length and that dim corresponds to Y
@@ -178,14 +180,33 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it,beta=,niter=,pad=,tol=,e
    err= 1; // *** must be non-void to trigger computation
    zz= equispaced2(z,y,x,n,m,0.2,y10,x10,res);
    fma;pli,zz;
+   k= 10000;
+   n= 500;
+   m= 600;
+   p= [1,4];
+   x= random(k);
+   y= random(k);
+   if (0) {
+     z= sin(2*pi*p(1)*x)*sin(2*pi*p(2)*y);
+     local y10, x10;
+     err= 1; // *** must be non-void to trigger computation
+     zz= equispaced2(z,y,x,n,m,0.2,y10,x10,res);
+   } else {
+     a= x+1i*y-0.5*(1+1i);
+     z= log(a);
+     err= 1; // *** must be non-void to trigger computation
+     zz= equispaced2(z,y,x,n,m,0.2,y10,x10,res,pad=1e-2);
+     zz= atan(zz.im,zz.re);
+   }
+   fma;pli,zz;
    SEE ALSO:
  */
 {
   d= dimsof(x,y,z);
-  un= array(structof(z),d);
-  z+= un;
+  un= array(structof(x)(0),d);
+  x+= un;
   y+= un;
-  x+= un; un= [];
+  z+= un; un= [];
   nn= numberof(y);
 
   z= z(*);
@@ -205,12 +226,12 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it,beta=,niter=,pad=,tol=,e
   if (is_void(niter))
     niter= 400;
 
-  zav= avg(z);
-  z-= zav;
   xav= avg(x);
-  x-= xav;
   yav= avg(y);
+  zav= avg(z);
+  x-= xav;
   y-= yav;
+  z-= zav;
 
   xpp= abs(x(ptp));
   x/= xpp;
@@ -233,22 +254,22 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it,beta=,niter=,pad=,tol=,e
 
   op= nfft_new(n,(x-x1)/(x0-x1)-0.5,m,(y-y1)/(y0-y1)-0.5);
 
-  zz= array(0.,n,m);
+  zz= array(structof(z)(0),n,m);
   xx= span(x1,x0,n)(,-:1:m);
   yy= span(y1,y0,m)(-:1:n,);
-  za= z(rms);
+  za= is_complex(z)? double(sqrt((z*conj(z))(avg))): z(rms);
 
   it= 0;
   dz= z;
   toli= dt= 1;
   while (it<niter && dt>tol) {
     if (it>0) {
-      dz= z-interp2(y,x,zz,yy,xx);
-      dza= dz(rms);
-      dt= toli-dza/za;
+      dz= is_complex(z)? z-bicub(x,y,zz,x1,x0,y1,y0): z-interp2(y,x,zz,yy,xx);
+      dza= is_complex(z)? abs(dz)(avg)/za: dz(rms)/za;
+      dt= toli-dza;
       if (dt<0)
         error,"increasing RMS.";
-      toli= dza/za;
+      toli= dza;
     }
     xf= op(dz,1);
     zz+= roll(fft(roll(xf)*win).re)/(n*m);
@@ -261,7 +282,7 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it,beta=,niter=,pad=,tol=,e
     if (errequi) {
       err= roll(fft(roll(xf)).re)/(n*m);
     } else {
-      err= z-interp2(y,x,zz,yy,xx);
+      err= is_complex(z)? z-bicub(x,y,zz,x1,x0,y1,y0): z-interp2(y,x,zz,yy,xx);
       err= reform(err,d);
     }
   }
@@ -270,7 +291,6 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it,beta=,niter=,pad=,tol=,e
   y10*= ypp;
   x10+= xav;
   y10+= yav;
-
   zz+= zav;
 
   return zz;
