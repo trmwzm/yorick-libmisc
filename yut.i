@@ -794,18 +794,21 @@ func writetokey (fnm, key, str, delim=, verbose=, valfirst=)
     while(!strmatch(ll(j),key(i)) && j<n) j++;
   line= ll(j);
 
+  ss= strchar(".()");          // table () -> .
+  t = strtrtable(ss(2),ss(1));
+  strtrtable,ss(3),ss(1),t;
   keyVal= strtok(line,delim);
-  idx= strgrep(keyVal(1)+" *["+delim+"]",line);
+  idx= strgrep(strtranslate(keyVal(1),t)+" *["+delim+"]",line);
   dl= strpart(line,idx(2):idx(2));
 
   vali= valfirst==1? 1: 2;
   keyVal(vali)= str;
-  sout= keyVal(1)+" "+dl+" "+keyVal(2);
+  sout= keyVal(1)+dl+" "+keyVal(2);
   ll(j)= sout;
   write,open(fnm,"w"),ll,format="%s\n";
 
   if (!is_void(verbose) && verbose==1)
-    write,key,sout,format="key: %s, out: %s";
+    write,key,dl,sout,format="key: %s, - delim: %s - out: %s\n";
 }
 
 /*---------------------------------------------------------------------------*/
