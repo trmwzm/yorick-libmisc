@@ -174,17 +174,6 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it, \
    m= 600;
    p= [1,4];
    x= random(k);
-   y= random(k)
-   z= sin(2*pi*p(1)*x)*sin(2*pi*p(2)*y);
-   local y10, x10;
-   err= 1; // *** must be non-void to trigger computation
-   zz= equispaced2(z,y,x,n,m,0.2,y10,x10,res);
-   fma;pli,zz;
-   k= 10000;
-   n= 500;
-   m= 600;
-   p= [1,4];
-   x= random(k);
    y= random(k);
    if (0) {
      z= sin(2*pi*p(1)*x)*sin(2*pi*p(2)*y);
@@ -195,10 +184,13 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it, \
      a= x+1i*y-0.5*(1+1i);
      z= log(a);
      err= 1; // *** must be non-void to trigger computation
+     y= 5*y+123.;
+     x= 8*x+89.;
      zz= equispaced2(z,y,x,n,m,0.2,y10,x10,res,pad=1e-2);
      zz= atan(zz.im,zz.re);
    }
    fma;pli,zz;
+
    SEE ALSO:
  */
 {
@@ -278,13 +270,11 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it, \
   if (it==niter)
     write,"WARNING pocs/equispaced2 max iterations reached: "+pr1([toli,dt]);
 
-  if (!is_void(err)) {
-    if (errequi) {
-      err= roll(fft(roll(xf)).re)/(n*m);
-    } else {
-      err= is_complex(z)? z-bicub(x,y,zz,x1,x0,y1,y0): z-interp2(y,x,zz,yy,xx);
-      err= reform(err,d);
-    }
+  if (errequi) {
+    err= roll(fft(roll(xf)).re)/(n*m);
+  } else {
+    err= is_complex(z)? z-bicub(x,y,zz,x1,x0,y1,y0): z-interp2(y,x,zz,yy,xx);
+    err= reform(err,d);
   }
 
   x10*= xpp;
