@@ -218,6 +218,9 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it, \
   if (is_void(niter))
     niter= 400;
 
+  statarr,y,cmt="Y";
+  statarr,x,cmt="X";
+
   xav= avg(x);
   yav= avg(y);
   zav= avg(z);
@@ -237,11 +240,12 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it, \
        windex(kaiser(max(1,long(m*bandfrac(2))),beta(2)),m)(-:1:n,..);
 
   pad= is_void(pad)? [0,0]: (numberof(pad)==1? [pad(1),pad(1)]: pad);
-  x1= min(x)-pad(1);
-  x0= max(x)+pad(1)+dx;
+
+  x1= min(x)-pad(1)/xpp;
+  x0= max(x)+pad(1)/xpp+dx;
   x10= [x1,x0];
-  y1= min(y)-pad(1);
-  y0= max(y)+pad(1)+dy;
+  y1= min(y)-pad(1)/ypp;
+  y0= max(y)+pad(1)/ypp+dy;
   y10= [y1,y0];
 
   op= nfft_new(n,(x-x1)/(x0-x1)-0.5,m,(y-y1)/(y0-y1)-0.5);
