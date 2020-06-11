@@ -256,28 +256,29 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it, \
   za= is_complex(z)? double(sqrt((z*conj(z))(avg))): z(rms);
 
   it= 0;
-  dz= z;
+  err= z;
   toli= dt= 1;
   while (it<niter && dt>tol) {
     if (it>0) {
-      dz= is_complex(z)? z-bicub(x,y,zz,x1,x0,y1,y0): z-interp2(y,x,zz,yy,xx);
-      dza= is_complex(z)? abs(dz)(avg)/za: dz(rms)/za;
+      err= is_complex(z)? z-bicub(x,y,zz,x1,x0,y1,y0): z-interp2(y,x,zz,yy,xx);
+      dza= is_complex(z)? abs(err)(avg)/za: err(rms)/za;
       dt= toli-dza;
       if (dt<0)
         error,"increasing RMS.";
       toli= dza;
     }
-    xf= op(dz,1);
-    zz+= roll(fft(roll(xf)*win).re)/(n*m);
+    xf= op(err,1);
+    zz+= is_complex(z)? roll(fft(roll(xf)*win))/(n*m): roll(fft(roll(xf)*win).re)/(n*m);
     it+= 1;
   }
   if (it==niter)
     write,"WARNING pocs/equispaced2 max iterations reached: "+pr1([toli,dt]);
 
+  err= is_complex(z)? z-bicub(x,y,zz,x1,x0,y1,y0): z-interp2(y,x,zz,yy,xx);
   if (errequi) {
-    err= roll(fft(roll(xf)).re)/(n*m);
+    xf= op(err,1);
+    err= is_complex(z)? roll(fft(roll(xf)*win))/(n*m): roll(fft(roll(xf)).re)/(n*m);
   } else {
-    err= is_complex(z)? z-bicub(x,y,zz,x1,x0,y1,y0): z-interp2(y,x,zz,yy,xx);
     err= reform(err,d);
   }
 
