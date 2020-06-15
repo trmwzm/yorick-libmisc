@@ -218,9 +218,6 @@ func equispaced2 (z,y,x,n,m,bandfrac,&y10,&x10,&err,&it, \
   if (is_void(niter))
     niter= 400;
 
-  statarr,y,cmt="Y";
-  statarr,x,cmt="X";
-
   xav= avg(x);
   yav= avg(y);
   zav= avg(z);
