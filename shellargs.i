@@ -1,8 +1,10 @@
+require, "yut.i";
+
 scratch = save(scratch, tmp);
 tmp = save(add, set, get, help);
 
 /* DOCUMENT s= shellargs();
-            s= shellargs("-a", save(val=1,help="option a"[,flag=1])) 
+            s= shellargs("-a", save(val=1,help="option a"[,flag=1]))
    s is a shell argument parsing object
    methods:
    -------
@@ -11,7 +13,7 @@ tmp = save(add, set, get, help);
             declare or register an option.
             * first arg is comand line key string.
             * second arg is object with default val and help string.
-            * use flag=1 if the key is to be used as a flag only. 
+            * use flag=1 if the key is to be used as a flag only.
      help
          s, help;
             display options.
@@ -20,7 +22,7 @@ tmp = save(add, set, get, help);
             parse the command line, sets options.
             * first arg is the "chopped" command line: get_argv()(4:)
             * output are the indices of non-key, positional, comand line args.
-     get           
+     get
          a= s(get,"-a"[,v=1][,set=1])
             extract options, or check if they were set (use set=1).
             * first arg is key as it was declared using the add method.
@@ -43,7 +45,7 @@ tmp = save(add, set, get, help);
     write,"OPTIONS:";
     opt, help;
     quit;
-  } 
+  }
 
   ar= ar(ar1:);
 
@@ -72,10 +74,10 @@ func add(..)
     a1= next_arg();
     a2= next_arg();
     if (!is_obj(a2)) error,"not obj save(val=,help=(string),[flag=1 for key-flag]).";
-    if (is_obj(a2,val,1)<0) save,a2,val= 0; 
-    if (is_obj(a2,help,1)<0) save,a2,help= ""; 
-    if (is_obj(a2,flag,1)<0) save,a2,flag= 0; 
-    if (is_obj(a2,type,1)<0) save,a2,type= structof(a2.val); 
+    if (is_obj(a2,val,1)<0) save,a2,val= 0;
+    if (is_obj(a2,help,1)<0) save,a2,help= "";
+    if (is_obj(a2,flag,1)<0) save,a2,flag= 0;
+    if (is_obj(a2,type,1)<0) save,a2,type= structof(a2.val);
     if (is_obj(a2,set,1)<0) save,a2,set= 0;
     if (is_obj(a2,dims,1)<0) save,a2,dims= dimsof(a2.val);
     if (structof(a1)==string &&
@@ -84,11 +86,16 @@ func add(..)
       error,"provide save(val=,help=,[flag=1 for key-flag]))";
   }
 }
-func set(ar)
+func set(ar,log=)
 {
   // inited args
   use, dat;
-  if ((nai=dat(*))==0||is_void(ar)) return; 
+  if (!is_void(log))
+    if (!is_string(log))
+      error,"expecting log= string.";
+    else
+      write,open(log,"w"),strconcat(ar," "),format="%s\n";
+  if ((nai=dat(*))==0||is_void(ar)) return;
   // command line (stripped?)
   local mf;            // numeric args mask
   num= tonum(ar,mf);
@@ -107,19 +114,19 @@ func set(ar)
       da= dat(*,ia);
       if (strlen(da) &&\
           numberof((w=where(ar(wk)==da)))) {  // arg key match
-        if (numberof(w)>1) 
+        if (numberof(w)>1)
           error,"duplicate key: "+da;
         else
           w= w(1);
         if (!dat(noop(ia)).flag) {  // keyword
           typ= dat(noop(ia)).type;
           dims= dat(noop(ia)).dims;
-          for (n=1,i=1;i<=dims(1);i++) n*=dims(i+1);  // n=numberof(val)  
+          for (n=1,i=1;i<=dims(1);i++) n*=dims(i+1);  // n=numberof(val)
           iv= dims(0)==0? wk(w)+1: indgen(wk(w)+1:wk(w)+n);
-          // if (w(1)==na||anyof(iv>numberof(mk))||anyof(mk(iv))) 
+          // if (w(1)==na||anyof(iv>numberof(mk))||anyof(mk(iv)))
           if (w==na||iv(1)>numberof(mk)||anyof(mk(iv))) // donnot know which is right - below?
-            error,"keyword needs a value: "+da; 
-          if (dims(0)==0) 
+            error,"keyword needs a value: "+da;
+          if (dims(0)==0)
             save,dat(noop(ia)),val=\
             (typ==string? ar(iv): typ(num(iv)));
           else
@@ -131,7 +138,7 @@ func set(ar)
           save,dat(noop(ia)),val= 1;
           save,dat(noop(ia)),set= 1;
           mall(wk(w))= 1;     // flag processed args
-        } 
+        }
       }
     }
   }
@@ -166,15 +173,15 @@ func get(kp,v=,set=)
   np= numberof(wp);
   if (structof(kp)==string) {        // key-word or -flag arg
     if (noneof(strmatch(da,kp))) error,"unknown key.";
-    if (set==1) 
-      out= dat(noop(kp)).set; 
+    if (set==1)
+      out= dat(noop(kp)).set;
     else
-      out= dat(noop(kp)).val; 
+      out= dat(noop(kp)).val;
     hlp= dat(noop(kp)).help;
   } else if (structof(kp)==long||structof(kp)==int) {   // positional arg
     if (kp>np) error,"not that many positional args.";
-    if (set==1) 
-      out= dat(wp(kp)).set; 
+    if (set==1)
+      out= dat(wp(kp)).set;
     else
       out= dat(wp(kp)).val;
     hlp= dat(wp(kp)).help;
@@ -183,13 +190,13 @@ func get(kp,v=,set=)
   }
   if (v==1) {
     s= swrite(out);
-    if ((ns=numberof(s))>1) 
+    if ((ns=numberof(s))>1)
       s= "["+(s(1:min(3,ns))+", ")(sum)+(ns>3? "...]": "]");
     write,hlp,s,format="Option: %-30s %s\n";
   }
   return out;
 }
-func help 
+func help
 {
   restore, use, dat;
   na= dat(*);

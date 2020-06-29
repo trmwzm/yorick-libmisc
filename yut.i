@@ -367,6 +367,12 @@ func diradd(s1,s2)
   return (strpart(s2,1:1)=="/"? s2: s1+s2);
 }
 
+/*--------------------------------------------------------------------*/
+
+func strtimestamp() {
+ return strtranslate(timestamp(),strtrtable(32,95));
+}
+
 /* -------------------------------------------------------------------*/
 
 func waitff(fls,tlim,dt=)
