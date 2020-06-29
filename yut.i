@@ -369,7 +369,7 @@ func diradd(s1,s2)
 
 /*--------------------------------------------------------------------*/
 
-func strtimestamp() {
+func strtimestamp(dum) {
  return strtranslate(timestamp(),strtrtable(32,95));
 }
 
