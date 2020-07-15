@@ -87,14 +87,26 @@ func add(..)
   }
 }
 func set(ar,log=)
+/* could move get_argv() call in here
+   then find yorick with i=where(strgrepm("yorick$",ar))(1)
+   then ar=ar(i+2+1:)  // yorick -i scrptnm args
+   then pick scrptnm for log ...
+ */
 {
   // inited args
   use, dat;
+  iyo= 0;
+  if (is_void(ar)) {
+    ar= get_argv();
+    iyo= where(strgrepm("yorick$",ar))(1);
+    ar= ar(iyo+2+1:);
+  }
   if (!is_void(log))
     if (!is_string(log))
       error,"expecting log= string.";
     else
       write,open(log,"w"),strconcat(ar," "),format="%s\n";
+
   if ((nai=dat(*))==0||is_void(ar)) return;
   // command line (stripped?)
   local mf;            // numeric args mask
@@ -162,7 +174,7 @@ func set(ar,log=)
     }
     if (anyof((m=!mall & mp))) error,"too many positional args: "+ar(where(m))(sum);
   }
-  return where(mp);
+  return iyo>0? ar(where(mp)): where(mp);
 }
 func get(kp,v=,set=)
 {
