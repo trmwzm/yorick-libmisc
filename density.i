@@ -2,10 +2,9 @@ require, "dsp.i";
 
 /* adapted from  Éric Thiébaut */
 
-func density(s, x, bw=, adjust=, verb=, kernel=, histo=, exact=,
+func density(s, x, bw=, adjust=, verbose=, kernel=, histo=, exact=,
              nsamples=, debug=)
 /* DOCUMENT density(s, x)
-
      This function estimates the density of 1-D data S at positions X.
      Argument S gives the sampled data, argument X gives the position where to
      estimate the density.  The density is computed by convolving the sample
@@ -29,7 +28,7 @@ func density(s, x, bw=, adjust=, verb=, kernel=, histo=, exact=,
 
      Keyword BW can be used to specify the bandwidth.  If unspecified, the
      bandwidth is computed according to a rule that is optimal for Gaussian
-     distributed data. If keyword VERB is true, the value of the bandwidth
+     distributed data. If keyword VERBOSE is true, the value of the bandwidth
      automatically computed is printed.  The theoretical optimal bandwidth is:
 
         BW = rms(S)/numberof(S)^0.2
@@ -62,11 +61,11 @@ func density(s, x, bw=, adjust=, verb=, kernel=, histo=, exact=,
 {
   // FIXME: there should be a special case for integer valued data
 
-  /* Select the kernel (default is "Epanechnikov"). */
-  if (is_void(kernel)) {
-    kernel = 3;
-  }
-  if (is_obj(DENSITY_KERNEL,noop(kernel),1)<0 && is_string(kernel)) {
+  // Select the kernel if not sepcified (default is "Epanechnikov")
+  kernel= is_void(kernel)? 3: kernel;
+
+  // select kernel from string
+  if (is_obj(DENSITY_KERNEL,kernel,1)>=0 && is_string(kernel)) {
     m= strmatch(DENSITY_KERNEL(*,),kernel);
     if (anyof(m)) {
       w= where(m);
@@ -80,75 +79,72 @@ func density(s, x, bw=, adjust=, verb=, kernel=, histo=, exact=,
   ok= DENSITY_KERNEL(noop(kernel));
 
   /* Compute bandwidth. */
-  ndata = numberof(s);
+  ndata= numberof(s);
   if (is_void(bw)) {
-    sigma = s(*)(rms);
-    bw = sigma/ndata^0.2;
-    if (verb) write, format="estimated bandwidth = %g\n", bw;
+    sigma= s(*)(rms);
+    bw= sigma/ndata^0.2;
+    if (verbose)
+      write, format="estimated bandwidth = %g\n", bw;
   }
-  if (! is_void(adjust)) {
-    bw *= adjust;
-  }
-  h = ok(bw)*bw;
-  q = 1.0/(histo ? h : h*ndata);
+
+  // adjust BW
+  if (!is_void(adjust))
+    bw*= adjust;
+
+  h= ok(bw)*bw;
+  q= 1.0/(histo? h: h*ndata);  // normalization fact.: histogram vs. density
 
   if (exact) {
     /* Compute density by convolving the data samples with the selected
        kernel. */
   slow:
     f = ok(fc);
-    pdf = array(double, dimsof(x));
-    n = numberof(x);
-    for (i = 1; i <= n; ++i) {
-      pdf(i) = q*f(h, s, x(i));
-    }
+    pdf= array(double, dimsof(x));
+    n= numberof(x);
+    for (i =1; i<=n; ++i)
+      pdf(i)= q*ok(fc,h,s,x(i));
     return pdf;
   }
 
-  /* Compute an histogram HST on a regular grid using linear interpolation of
-     data samples. */
-  if (is_void(nsamples)) {
-    nsamples = 1024;
-  } else {
-    nsamples = fft_good(nsamples);
-  }
-  xmin = min(x);
-  xmax = max(x);
-  if (xmin == xmax) {
-    /* Use "slow" computation. */
-    goto slow;
-  }
-  kernel_width = ok(w);
-  smin = xmin - h*kernel_width;
-  smax = xmax + h*kernel_width;
-  s = s(where((s >= smin)&(s <= smax)));
-  if (is_void(s)) return array(double, dimsof(x));
-  smid = (smax + smin)/2.0;
-  imid = (nsamples + 1)/2.0;
-  step = (smax - smin)/(nsamples - 1);
-  xs = step*(indgen(nsamples) - imid) + smid; // positions of samples
-  u = (1.0/step)*(s - smid) + imid;
-  v = floor(u);
-  u -= v;
-  i = long(v);
-  v = [];
-  hst = (histogram(i, 1.0 - u, top=nsamples) +
-         histogram(i + 1, u, top=nsamples+1)(:-1));
+  xmin= min(x);
+  xmax= max(x);
+  if (xmin==xmax)
+    goto slow; // single density sample by "slow" computation.
+
+  // histogram on a regular grid using linear interpolation of samples;
+  nsamples= is_void(nsamples)? long(10*(xmax-xmin)/bw): nsamples;
+  nsamples = fft_good(nsamples);
+  if (verbose)
+    write,format="number of approximating regular grid samples: %d\n",nsamples;
+
+  smin= xmin-h;
+  smax= xmax+h;
+  s= s(where((s>=smin)&(s<=smax)));
+  if (is_void(s))
+    return array(double, dimsof(x));
+  smid= (smax+smin)/2.0;
+  imid= (nsamples+1)/2.0;
+  step= (smax-smin)/(nsamples-1);
+  xs= step*(indgen(nsamples)-imid)+smid; // positions of samples
+  u= (1.0/step)*(s-smid)+imid;
+  v= floor(u);
+  u-= v;
+  i= long(v);
+  v= [];
+  hst= (histogram(i, 1.0 - u, top=nsamples) + \
+        histogram(i + 1, u, top=nsamples+1)(:-1));
 
   /* Convolve histogram HST with selected kernel using FFT. */
-  ker = ok(f);
-  ker = ker((step/h)*fftindgen(nsamples));
-  if (h < 3.0*step) write, format="WARNING - %s\n",
-                      "use more samples with keyword NSAMPLES in density() function";
-  if (verb) write, format="refinement factor = %g\n", h/step;
-  if (is_func(fftw_plan)) {
-    forward = fftw_plan(nsamples, 1, real=1);
-    backward = fftw_plan(nsamples, -1, real=1);
-    ys = fftw(fftw(hst, forward)*fftw(ker, forward), backward);
-  } else {
-    ws = fft_setup([1,nsamples]);
-    ys = double(fft(fft(hst, +1, setup=ws)*fft(ker, +1, setup=ws), -1, setup=ws));
-  }
+  ker= ok(f);
+  ker= ker((step/h)*fftindgen(nsamples));
+  if (h<3.0*step)
+    write, format="WARNING - %s\n","insuficient #samples, see: NSAMPLES keyword";
+  if (verbose)
+    write,format="refinement factor = %g\n",h/step;
+
+  ws = fft_setup([1,nsamples]);
+  ys = double(fft(fft(hst,+1,setup=ws)*fft(ker,+1,setup=ws),-1,setup=ws));
+
   if (debug) {
     plg, hst, xs, color="green";
     plg, (1.0/(h*nsamples*sum(ker)))*ys, xs, color="red";

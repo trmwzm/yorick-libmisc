@@ -1,9 +1,9 @@
 # these values filled in by    yorick -batch make.i
-Y_MAKEDIR=/u/pmr0/test/trm/spack-gcc-8.2.0/opt/spack/linux-centos6-x86_64/gcc-8.2.0/yorick-f90-plugin-opr6ciodh2yfiw6occgmlroh2qkknti4
-Y_EXE=/u/pmr0/test/trm/spack-gcc-8.2.0/opt/spack/linux-centos6-x86_64/gcc-8.2.0/yorick-f90-plugin-opr6ciodh2yfiw6occgmlroh2qkknti4/bin/yorick
+Y_MAKEDIR=/home/trm/usr/libexec/yorick
+Y_EXE=/home/trm/usr/libexec/yorick/bin/yorick
 Y_EXE_PKGS=
-Y_EXE_HOME=/u/pmr0/test/trm/spack-gcc-8.2.0/opt/spack/linux-centos6-x86_64/gcc-8.2.0/yorick-f90-plugin-opr6ciodh2yfiw6occgmlroh2qkknti4
-Y_EXE_SITE=/u/pmr0/test/trm/spack-gcc-8.2.0/opt/spack/linux-centos6-x86_64/gcc-8.2.0/yorick-f90-plugin-opr6ciodh2yfiw6occgmlroh2qkknti4
+Y_EXE_HOME=/home/trm/usr/libexec/yorick
+Y_EXE_SITE=/home/trm/usr/libexec/yorick
 Y_HOME_PKG=
 
 #
@@ -18,7 +18,7 @@ Y_HOME_PKG=
 PKG_NAME = libmisc
 # include files for this package
 PKG_I= ascii.i convcorrel.i dbase.i dsp.i fcomplex.i fmin.i fzero.i img.i \
-       linalg.i memfmap.i pocs.i rdf.i rotation.i \
+       linalg.i memfmap.i pocs.i rdf.i rotation.i density.i \
        shellargs.i xplot0.i yut.i bicub.i coreg.i digfun.i fitpoly.i \
        fpanels.i imbinavrg.i inpolygon.i lmfit.i \
        plot.i poly_fit.i rdf-refac.i rwflat.i time.i xplot.i gaupro.i \
