@@ -1,11 +1,22 @@
 require, "dsp.i";
 
-/* adapted from  Éric Thiébaut */
+// adapted from Éric Thiébaut
+scratch= save(scratch, tmp, o, knm);
+knm= ["uniform","triangle","epanechnikov","biweight","triweight","normal", \
+                     "cosine","cubic_b_spline","quadratic_b_spline"];
+for (i=1, o=save(); i<=numberof(knm); i++) {
+  save,o,"kernel_"+knm(i),[];
+  save,o,"kernel_convolve_"+knm(i),[];
+}
+save, scratch, [], o;
+tmp= save(eval_, knm, [], o);
 
-func density(s, x, bw=, adjust=, verbose=, kernel=, histo=, exact=,
-             nsamples=, debug=)
-/* DOCUMENT density(s, x)
-     This function estimates the density of 1-D data S at positions X.
+// density estimation class
+func density_est (base, void, kernel=)
+/* DOCUMENT density_est (base, kernel=)
+     KERNEL= uniform, triangle, epanechnikov, biweight, triweight, normal, \
+                     cosine, cubic_b_spline, quadratic_b_spline
+        This function estimates the density of 1-D data S at positions X.
      Argument S gives the sampled data, argument X gives the position where to
      estimate the density.  The density is computed by convolving the sample
      density by a smoothing kernel with a bandwidth adapted to the sampled
@@ -18,8 +29,8 @@ func density(s, x, bw=, adjust=, verbose=, kernel=, histo=, exact=,
      value of this keyword can be one of:
 
        "uniform"            "biweight"           "cosine"
-       "triangle"           "triweight"          "cubbspline"
-       "epanechnikov"       "normal"             "quadbspline"
+       "triangle"           "triweight"          "cubic_b_spline"
+       "epanechnikov"       "normal"             "quadratic_b_spline"
 
      Case does not matter and the few first letters of the kernel name can be
      used as far as the abbreviated name is unique.  By default,
@@ -44,41 +55,114 @@ func density(s, x, bw=, adjust=, verbose=, kernel=, histo=, exact=,
      be set with keyword NSAMPLES (by default, NSAMPLES=1024) to tune the
      precision.
 
-
    EXAMPLE:
-     include, "random.i";
-     s = 3.2 + 2.1*random_n(200);
-     x = span(-10.0, 10.0, 100);
-     plg, density(s, x), x;
-
+     de= density_est();
+     dn= de(random_n(10000), (n=span(-3,3,100)));
+     fma;plg,dn,n;
 
    REFERENCES
      [1] D. W. Scott, "Multivariate density estimation: theory, practice, and
          visualization," John Wiley & Sons (New York), 1992.
-
-   SEE ALSO: hist.
- */
+*/
 {
-  // FIXME: there should be a special case for integer valued data
+  ob= base(:);
 
-  // Select the kernel if not sepcified (default is "Epanechnikov")
-  kernel= is_void(kernel)? 3: kernel;
+  if (is_void(kernel))
+    kernel= 3;
+  if (is_string(kernel)) {
+    m= strmatch(knm,kernel);
+    if (noneof(m) || sum(m)>1)
+      error,"unknown, or ambiguous kernel name.";
+    kernel= knm(where(m)(1));
+  } else if (is_integer(kernel))
+    kernel= ob(knm,kernel);
+  else
+    error,"expecting integer [index in table], or string [name].";
 
-  // select kernel from string
-  if (is_obj(DENSITY_KERNEL,kernel,1)>=0 && is_string(kernel)) {
-    m= strmatch(DENSITY_KERNEL(*,),kernel);
-    if (anyof(m)) {
-      w= where(m);
-      if (numberof(w)>1)
-        error, "kernel match not unique.";
-      else
-        ok= DENSITY_KERNEL(w(1));
-    } else
-      error,"no matching kernel: "+kernel;
-  }
-  ok= DENSITY_KERNEL(noop(kernel));
+  density_kernel= save();
 
-  /* Compute bandwidth. */
+  uniform= o= save();
+  save,o,f= ob(kernel_uniform);
+  save,o,fc= ob(kernel_convolve_uniform);
+  save,o,bw= 3.68622; /* =  uniform */
+  save,o,w= 1.0;
+  save,density_kernel,uniform;
+
+  triangle= o= save();
+  save,o,f= ob(kernel_triangle);
+  save,o,fc= ob(kernel_convolve_triangle);
+  save,o,bw= 2.57603; /* = (2^12*pi)^0.1  triangle */
+  save,o,w= 2.0;
+  save,density_kernel,triangle;
+
+  epanechnikov= o= save();
+  save,o,f= ob(kernel_epanechnikov);
+  save,o,fc= ob(kernel_convolve_epanechnikov);
+  save,o,bw= 2.34491; /* = (40*sqrt(pi))^0.2   epanechnikov */
+  save,o,w= 2.0;
+  save,density_kernel,epanechnikov;
+
+  biweight= o= save();
+  save,o,f= ob(kernel_biweight);
+  save,o,fc= ob(kernel_convolve_biweight);
+  save,o,bw= 2.77794; /* =  biweight */
+  save,o,w= 2.0;
+  save,density_kernel,biweight;
+
+  triweight= o= save();
+  save,o,f= ob(kernel_triweight);
+  save,o,fc= ob(kernel_convolve_triweight);
+  save,o,bw= 3.15448; /* =  triweight */
+  save,o,w= 2.0;
+  save,density_kernel,triweight;
+
+  normal= o= save();
+  save,o,f= ob(kernel_normal);
+  save,o,fc= ob(kernel_convolve_normal);
+  save,o,bw= 1.05922; /* = (4.0/3.0)^0.2  normal */
+  save,o,w= 75.2807;
+  save,density_kernel,normal;
+
+  cosine= o= save();
+  save,o,f= ob(kernel_cosine);
+  save,o,fc= ob(kernel_convolve_cosine);
+  save,o,bw= 2.40971; /* = (pi^13/36.0/(pi^2 - 8.0)^4)^0.1 cosine */
+  save,o,w= 2.0;
+  save,density_kernel,cosine;
+
+  cubic_b_spline= o= save();
+  save,o,f= ob(kernel_quadratic_b_spline);
+  save,o,fc= ob(kernel_convolve_quadratic_b_spline);
+  save,o,bw= 1.82764; /* = (1208.0/105.0*sqrt(pi))^0.2 cubic b-spline */
+  save,o,w= 3.0;
+  save,density_kernel,cubic_b_spline;
+
+  quadratic_b_spline= o= save();
+  save,o,f= ob(kernel_cubic_b_spline);
+  save,o,fc= ob(kernel_convolve_cubic_b_spline);
+  save,o,bw= 2.10768; /* quadratic b-spline */
+  save,o,w= 4.0;
+  save,density_kernel,quadratic_b_spline;
+  /* for a cubic b-spline, i found empirically:
+   *   bw ~ 1.9 * sigma / n^(1/5)
+   *
+   * theoretical computation yields (see [1] p. 131, theorem 6.1):
+   *   bw ~ 1.82764 * sigma / n^(1/5)
+   */
+
+  save,ob,"kernel",save([],density_kernel(noop(kernel)), \
+                        [],save("name",kernel));
+
+  return closure(ob,eval_); // eval_ is an obj member, see closure/restore below
+}
+func  eval_ (s, x, bw=, adjust=, verbose=, histo=, exact=,
+             nsamples=, debug=)
+{
+  use,kernel;
+  if (verbose)
+    write,format="density estimation kernel name = %s\n", kernel(name);
+
+  // Compute bandwidth.
   ndata= numberof(s);
   if (is_void(bw)) {
     sigma= s(*)(rms);
@@ -91,18 +175,17 @@ func density(s, x, bw=, adjust=, verbose=, kernel=, histo=, exact=,
   if (!is_void(adjust))
     bw*= adjust;
 
-  h= ok(bw)*bw;
+  h= kernel(bw)*bw;
   q= 1.0/(histo? h: h*ndata);  // normalization fact.: histogram vs. density
 
+  // Compute density by convolution of data samples with selected kernel
   if (exact) {
-    /* Compute density by convolving the data samples with the selected
-       kernel. */
   slow:
-    f = ok(fc);
+    f = kernel(fc);
     pdf= array(double, dimsof(x));
     n= numberof(x);
     for (i =1; i<=n; ++i)
-      pdf(i)= q*ok(fc,h,s,x(i));
+      pdf(i)= q*kernel(fc,h,s,x(i));
     return pdf;
   }
 
@@ -134,8 +217,8 @@ func density(s, x, bw=, adjust=, verbose=, kernel=, histo=, exact=,
   hst= (histogram(i, 1.0 - u, top=nsamples) + \
         histogram(i + 1, u, top=nsamples+1)(:-1));
 
-  /* Convolve histogram HST with selected kernel using FFT. */
-  ker= ok(f);
+  // Convolve histogram HST with selected kernel using FFT.
+  ker= kernel(f);
   ker= ker((step/h)*fftindgen(nsamples));
   if (h<3.0*step)
     write, format="WARNING - %s\n","insuficient #samples, see: NSAMPLES keyword";
@@ -151,28 +234,25 @@ func density(s, x, bw=, adjust=, verbose=, kernel=, histo=, exact=,
     fft_plg, ker, color="blue", scale = step/h;
   }
 
-  /* Finally interpolate sampled density. */
+  // interpolate sampled density
   return (q/nsamples)*interp(ys, xs, x);
 }
-
 // FIXME: [-1,1]?
-func _density_kernel_uniform(t)
+func kernel_uniform(t)
 {
   t = abs(t);
   return (t < 0.5) + 0.5*(t == 0.5);
 }
 
-func _density_kernel_convolve_uniform(h, t, t0)
+func kernel_convolve_uniform(h, t, t0)
 {
   return double(numberof(where(abs(t - t0) < h/2.0)));
 }
-
-func _density_kernel_triangle(t)
+func kernel_triangle(t)
 {
   return max(1.0 - abs(t), 0.0);
 }
-
-func _density_kernel_convolve_triangle(h, t, t0)
+func kernel_convolve_triangle(h, t, t0)
 {
   u = abs(t - t0);
   if (is_array((i = where(u < h)))) {
@@ -180,13 +260,11 @@ func _density_kernel_convolve_triangle(h, t, t0)
   }
   return 0.0;
 }
-
-func _density_kernel_Epanechnikov(t)
+func kernel_epanechnikov(t)
 {
   return 0.75*max(0.0, 1.0 - t*t);
 }
-
-func _density_kernel_convolve_Epanechnikov(h, t, t0)
+func kernel_convolve_epanechnikov(h, t, t0)
 {
   u = abs(t - t0);
   if (is_array((i = where(u < h)))) {
@@ -195,14 +273,12 @@ func _density_kernel_convolve_Epanechnikov(h, t, t0)
   }
   return 0.0;
 }
-
-func _density_kernel_biweight(t)
+func kernel_biweight(t)
 {
   t = max(0.0, 1.0 - t*t);
   return 0.9375*t*t;
 }
-
-func _density_kernel_convolve_biweight(h, t, t0)
+func kernel_convolve_biweight(h, t, t0)
 {
   u = abs(t - t0);
   if (is_array((i = where(u < h)))) {
@@ -212,14 +288,12 @@ func _density_kernel_convolve_biweight(h, t, t0)
   }
   return 0.0;
 }
-
-func _density_kernel_triweight(t)
+func kernel_triweight(t)
 {
   t = max(0.0, 1.0 - t*t);
   return 1.09375*t*t*t;
 }
-
-func _density_kernel_convolve_triweight(h, t, t0)
+func kernel_convolve_triweight(h, t, t0)
 {
   u = abs(t - t0);
   if (is_array((i = where(u < h)))) {
@@ -229,19 +303,18 @@ func _density_kernel_convolve_triweight(h, t, t0)
   }
   return 0.0;
 }
-
-func _density_kernel_normal(t)
+func kernel_normal(t)
 {
   return (1.0/sqrt(2*pi))*exp(-0.5*t*t);
 }
 
-func _density_kernel_convolve_normal(h, t, t0)
+func kernel_convolve_normal(h, t, t0)
 {
   u = t - t0;
   return sum(exp(-(0.5/(h*h))*u*u))/sqrt(2.0*pi);
 }
 
-func _density_kernel_cosine(t)
+func kernel_cosine(t)
 {
   k = array(double, dimsof(t));
   j = where(abs(t) < 1.0);
@@ -250,8 +323,7 @@ func _density_kernel_cosine(t)
   }
   return k;
 }
-
-func _density_kernel_convolve_cosine(h, t, t0)
+func kernel_convolve_cosine(h, t, t0)
 {
   u = abs(t - t0);
   if (is_array((i = where(u < h)))) {
@@ -259,8 +331,7 @@ func _density_kernel_convolve_cosine(h, t, t0)
   }
   return 0.0;
 }
-
-func _density_kernel_quadratic_B_spline(t)
+func kernel_quadratic_b_spline(t)
 {
   k = array(double, dimsof(t));
   t = abs(t);
@@ -278,8 +349,7 @@ func _density_kernel_quadratic_B_spline(t)
   }
   return k;
 }
-
-func _density_kernel_convolve_quadratic_B_spline(h, t, t0)
+func kernel_convolve_quadratic_b_spline(h, t, t0)
 {
   s = 0.0;
   u = abs(t - t0);
@@ -297,8 +367,7 @@ func _density_kernel_convolve_quadratic_B_spline(h, t, t0)
   }
   return s;
 }
-
-func _density_kernel_cubic_B_spline(t)
+func kernel_cubic_b_spline(t)
 {
   k = array(double, dimsof(t));
   t = abs(t);
@@ -315,8 +384,7 @@ func _density_kernel_cubic_B_spline(t)
   }
   return k;
 }
-
-func _density_kernel_convolve_cubic_B_spline(h, t, t0)
+func kernel_convolve_cubic_b_spline(h, t, t0)
 {
   s = 0.0;
   t = abs(t - t0);
@@ -334,99 +402,27 @@ func _density_kernel_convolve_cubic_B_spline(h, t, t0)
   }
   return s;
 }
-
-func density_test(s, x, adjust=)
-{
-  if (is_void(s)) {
-    s = random_n(300);
-  }
-  if (is_void(x)) {
-    t = (max(s) - min(s))*1E-2;
-    x = span(min(s) - t, max(s) + t, 500);
-  }
-  n = DENSITY_KERNEL(*);
-  colors = ["DeepSkyBlue","DarkOrange","SpringGreen","DarkRed",
-            "DarkViolet","MediumBlue","Goldenrod","DarkKhaki",
-            "SaddleBrown", "ForestGreen","DarkCyan"];
-  for (i = 1; i <= n; ++i) {
-    color = colors(i);
-    kernel = DENSITY_KERNEL(*,i);
-    plg, density(s, x, kernel=kernel, adjust=adjust), x, color=pl_get_color(color);
-    write, format="%20s -> %s kernel\n", color, kernel;
-  }
-}
-
-scratch= save(uniform,triangle,epanechnikov,biweight,triweight,normal, \
-                     cosine,cubbspline,quadbspline);
-
-DENSITY_KERNEL= save();
-
-uniform= o= save();
-save,o,f= _density_kernel_uniform;
-save,o,fc= _density_kernel_convolve_uniform;
-save,o,bw= 3.68622; /* =  uniform */
-save,o,w= 1.0;
-save,DENSITY_KERNEL,uniform;
-
-triangle= o= save();
-save,o,f= _density_kernel_triangle;
-save,o,fc= _density_kernel_convolve_triangle;
-save,o,bw= 2.57603; /* = (2^12*pi)^0.1  triangle */
-save,o,w= 2.0;
-save,DENSITY_KERNEL,triangle;
-
-epanechnikov= o= save();
-save,o,f= _density_kernel_Epanechnikov;
-save,o,fc= _density_kernel_convolve_Epanechnikov;
-save,o,bw= 2.34491; /* = (40*sqrt(pi))^0.2   Epanechnikov */
-save,o,w= 2.0;
-save,DENSITY_KERNEL,epanechnikov;
-
-biweight= o= save();
-save,o,f= _density_kernel_biweight;
-save,o,fc= _density_kernel_convolve_biweight;
-save,o,bw= 2.77794; /* =  biweight */
-save,o,w= 2.0;
-save,DENSITY_KERNEL,biweight;
-
-triweight= o= save();
-save,o,f= _density_kernel_triweight;
-save,o,fc= _density_kernel_convolve_triweight;
-save,o,bw= 3.15448; /* =  triweight */
-save,o,w= 2.0;
-save,DENSITY_KERNEL,triweight;
-
-normal= o= save();
-save,o,f= _density_kernel_normal
-save,o,fc= _density_kernel_convolve_normal;
-save,o,bw= 1.05922; /* = (4.0/3.0)^0.2  normal */
-save,o,w= 75.2807;
-save,DENSITY_KERNEL,normal;
-
-cosine= o= save();
-save,o,f= _density_kernel_cosine;
-save,o,fc= _density_kernel_convolve_cosine;
-save,o,bw= 2.40971; /* = (pi^13/36.0/(pi^2 - 8.0)^4)^0.1 cosine */
-save,o,w= 2.0;
-save,DENSITY_KERNEL,cosine;
-
-cubbspline= o= save();
-save,o,f= _density_kernel_quadratic_B_spline;
-save,o,fc= _density_kernel_convolve_quadratic_B_spline;
-save,o,bw= 1.82764; /* = (1208.0/105.0*sqrt(pi))^0.2 cubic B-spline */
-save,o,w= 3.0;
-save,DENSITY_KERNEL,cubbspline;
-
-quadbspline= o= save();
-save,o,f= _density_kernel_cubic_B_spline;
-save,o,fc= _density_kernel_convolve_cubic_B_spline;
-save,o,bw= 2.10768; /* quadratic B-spline */
-save,o,w= 4.0;
-save,DENSITY_KERNEL,quadbspline;
-/* for a cubic B-spline, I found empirically:
- *   BW ~ 1.9 * sigma / n^(1/5)
- *
- * theoretical computation yields (see [1] p. 131, Theorem 6.1):
- *   BW ~ 1.82764 * sigma / n^(1/5)
- */
+density_est= closure(density_est, restore(tmp));
 restore, scratch;
+
+
+// func density_test(s, x, adjust=)
+// {
+//   if (is_void(s)) {
+//     s = random_n(300);
+//   }
+//   if (is_void(x)) {
+//     t = (max(s) - min(s))*1E-2;
+//     x = span(min(s) - t, max(s) + t, 500);
+//   }
+//   n = DENSITY_KERNEL(*);
+//   colors = ["DeepSkyBlue","DarkOrange","SpringGreen","DarkRed",
+//             "DarkViolet","MediumBlue","Goldenrod","DarkKhaki",
+//             "SaddleBrown", "ForestGreen","DarkCyan"];
+//   for (i = 1; i <= n; ++i) {
+//     color = colors(i);
+//     kernel = DENSITY_KERNEL(*,i);
+//     plg, density(s, x, kernel=kernel, adjust=adjust), x, color=pl_get_color(color);
+//     write, format="%20s -> %s kernel\n", color, kernel;
+//   }
+// }
