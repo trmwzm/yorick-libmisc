@@ -1,9 +1,9 @@
 # these values filled in by    yorick -batch make.i
-Y_MAKEDIR=/home/trm/usr/libexec/yorick
-Y_EXE=/home/trm/usr/libexec/yorick/bin/yorick
+Y_MAKEDIR=/home/trm/dev/yorick/yorick/relocate
+Y_EXE=/home/trm/dev/yorick/yorick/relocate/bin/yorick
 Y_EXE_PKGS=
-Y_EXE_HOME=/home/trm/usr/libexec/yorick
-Y_EXE_SITE=/home/trm/usr/libexec/yorick
+Y_EXE_HOME=/home/trm/dev/yorick/yorick/relocate
+Y_EXE_SITE=/home/trm/dev/yorick/yorick/relocate
 Y_HOME_PKG=
 
 #
