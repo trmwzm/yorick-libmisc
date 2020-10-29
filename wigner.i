@@ -146,8 +146,6 @@ func lacf(x, mlag, type=){
  }
  return typeconv(typex, y);
 }
-require,"trm.i";
-require,"dsp.i";
 
 /*--------------------------------------------------------------*/
 

@@ -61,6 +61,22 @@ func eval(code, tmp=, debug=)
   return eval_result;
 }
 
+func abspath(dir)
+/*  DOCUMENT abspath(dir)
+    make directory -- and parents ---
+    returns absolute path.
+ */
+{
+  if (is_void(dir))
+    dir= "./";
+  mkdirp, dir;
+  pw0= get_cwd();
+  cd,dir;
+  dir= get_cwd();
+  cd,pw0;
+  return dir;
+}
+
 func pwd(nil)
     /* DOCUMENT pwd
        -or- pwd()
