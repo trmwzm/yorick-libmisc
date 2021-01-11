@@ -1,6 +1,27 @@
 require, "yut.i";
 require, "json.i";
 
+// save/restore mechanics
+a= 1;b= 2;            // l1
+scratch= save(scratch, tmp);
+{
+  tmp= save(a,b);
+  a= 10;b= 20;          // tmp members val are still that from l1
+  x= restore(tmp);      // restore tmp's members values to those before l3
+                        //   set its its members keys and values as those of X with
+                        //   current values, new[>l3] -- or old[<l3] if they were not reset
+}
+restore, scratch;       // switch scratch and tmp to l1 state
+
+// override a restore with keyword
+func tst(o, k=) {
+  k= !is_void(k)? k: o(k);
+  tmp= save(k);
+  restore,o;
+  restore,tmp;
+  return k;
+}
+
 /* functor (?) function with stashed data*/
 scratch= save(scratch, tmp);
 tmp= save(eval_);
@@ -329,11 +350,11 @@ func dump (fnmout, json=, szmx=)
 {
   write,format="Writing jkobj: %s\n",fnmout;
   o= use_method(todox,);
-  
+
   if (json==1) {
     s= oxjsn(oxjsb(o,rootdir=dirname(fnmout),szmx=szmx));
     write,open(fnmout,"w"),s,format="%s";
-  } else 
+  } else
     oxsave, (f=createb(fnmout)), o;
   return f;
 }
@@ -343,7 +364,7 @@ func load (fnmin, json=)
 
   if (json==1)
     oo= jsbox(jsnox(text_lines(fnmin)));
-  else 
+  else
     oo= oxrestore((f=openb(fnmin)));
   save, use(), [], use_method(fromdox, oo);  // got that wrong, at first ...
   return f;
@@ -351,7 +372,7 @@ func load (fnmin, json=)
 
 local jkobj;
 /* DOCUMENT jkobj
-     
+
    SEE ALSO:
  */
 tmp= save(jkobj_const, write, read, todox, fromdox, load, dump);
