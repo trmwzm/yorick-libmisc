@@ -186,11 +186,11 @@ func dump (fnmout, json=, szmx=)
   write,format="Write dbase: %s\n",fnmout;
 
   o= use_method(todox,);
-  
+
   if (json==1) {
     s= oxjsn(oxjsb(o,rootdir=dirname(fnmout),szmx=szmx));
     write,open(fnmout,"w"),s,format="%s";
-  } else 
+  } else
     oxsave, (f=createb(fnmout)), o;
   return f;
 }
@@ -199,10 +199,93 @@ func load (fnmin, json=)
   write,format="Reading dbase: %s\n",fnmin;
   if (json==1)
     oo= jsbox(jsnox(text_lines(fnmin)));
-  else 
+  else
     oo= oxrestore((f=openb(fnmin)));
   save, use(), [], use_method(fromdox, oo);  // got that wrong, at first ...
   return f;
 }
 dbase = closure(dbase, restore(tmp));
 restore, scratch;
+
+
+func db_text (fnm, deg=, db=)
+/* DOCUMENT db_text (fnm)
+   returns a dbase object from a simple ascii rep. in file or str array FNM.
+   Ascii representation is:
+     ^# for comments,
+     records as columns# 2,3,...
+     first column contains keynames
+     ... convenience is to use first line as "type" ... not necessary.
+     EXAMPLE:
+   sysdesc= [\
+   "type       uav-p        uav-l       uav-ka      asar-l      asar-s", \
+   "bw         20.0e6       80.0e6      80.0e6      75.0e6      75.0e6", \
+   "bws        22.5e6       90.0e6      90.0e6      83.33e6     83.33e6", \
+   ....
+   "#--- legend ---",              \
+   "#bw        radar bandwidth [Hz]",         \
+   "#bws       complex sampling bandwidth [Hz]",  \
+   ...      ]
+   DEG=1: special *_deg keys -> add radians non-key member named [*] to record
+   DB=1:  special *_db keys -> add radians non-key member named [*] to record
+   SEE ALSO:
+ */
+{
+  if (is_scalar(fnm))
+    fl= text_lines(fnm);
+  else
+    fl= fnm;
+
+  // remove comments
+  fl= fl(where(!strgrepm("^#",fl)));
+
+  q= text_cells(strchar((fl+"\n")(sum))(:-1)," ");
+  m= q!=string(0);
+  n= dimsof(q)(0);
+  if (anyof(m))
+    q= reform(q((w=where(m))),[2,numberof(w)/n,n]);
+
+  // dbase with row label keys
+  rdb= dbase(q(1,..));    // bw, bws, hp, ht, re, f0, la, ....
+
+  // add one DB object per table column past col#1
+  dq= dimsof(q);
+  radeg= pi/180;
+  for (i=2;i<=dq(2);i++) {
+    ro= save();
+    x= tonum(q(i,..),m);
+    for (j=1;j<=dq(3);j++) {
+      save,ro,q(1,j),(m(j)? x(j): q(i,j));
+      if (deg==1 && m(j) && strgrepm("_deg$",q(1,j))) // add radians non-dbkey member
+        save,ro,strpart(q(1,j),:-4),x(j)*radeg;
+      if (db==1 && m(j) && strgrepm("_deg$",q(1,j))) // add lin scale non-dbkey member
+        save,ro,strpart(q(1,j),:-3),10^(x(j)/10.0);
+    }
+    rdb,add,ro;
+  }
+
+  return rdb;
+}
+
+func text_db (db)
+/* DOCUMENT text_db (db)
+   write a scalar record member database object to string array.
+   SEE ALSO:
+ */
+{
+  knm= db(keys);
+  kn= numberof(knm);
+  rn= db(records,*);
+  s= array(string(0),rn+1,kn);
+  for (i=1;i<=kn;i++) {
+    s(1,i)= knm(i);
+    for (j=1;j<=rn;j++) {
+      x= db(record,j)(knm(i));
+      if (numberof(x)>1)
+        error,"only scalar record members allowed.";
+      s(j+1,i)= is_string(x)? x: totxt(x);
+    }
+  }
+  wmx= max(strlen(s));
+  return swrite(s,format=swrite(-(wmx+1),format="%%%ds"))(sum,);
+}
