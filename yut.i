@@ -184,7 +184,7 @@ func is_null(var)
 
 /*-------------------------------------------------------------------------------------*/
 
-func struct_element(stru,&name,&type,&strutype)
+func struct_element(stru, &name, &type, &strutype)
     /* DOCUMENT struct_element, stru, name, type, strutype;
        -or-  struct_element(stru,,type)
        -or-  ...
@@ -201,15 +201,25 @@ func struct_element(stru,&name,&type,&strutype)
     */
 {
   local name,type;
-  if (typeof(stru) != "struct_definition") stru= structof(stru);
+  if (typeof(stru) != "struct_definition")
+    stru= structof(stru);
 
   /* print a representation of the structure */
   stru= print(stru);
 
-  if (stru(1)=="[]") {name= type= string([]); return name;}
+  if (stru(1)=="[]") {
+    name= type= string([]);
+    return name;
+  }
+
   /* find the name of each element */
   strutype= strpart(stru(1),8:-2);
-  if (numberof(stru)==2) {name= type= string([]); return name;}
+
+  if (numberof(stru)==2) {
+    name= type= string([]);
+    return name;
+  }
+
   stru= strtrim(stru(2:-1));
   stru= strtok(stru," ");
 

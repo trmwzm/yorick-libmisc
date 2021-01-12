@@ -128,27 +128,49 @@ func rdf (base,f,vo)
   // look for valid key=val
   m&= key!=string(0);
 
-  // handle SUFFIX with a kludge
-  sf= key=="suffix";
-  m&= !sf;
-  if (anyof(sf)) {              // dealing with suffix !kludge!
-    isf= sf(cum)(2:)+1;
-    suf= val(where(sf));
-    suf= _("",strpart(suf,strword(suf,"\"",2))(1,..));
-    key(isf)+= " "+suf(isf);
-  }
-
   ikv= where(m);
   if (numberof(ikv)==0)
     error,"RDF file void.";
   else
     txt= txt(ikv);
-  save,ob,ikv;
-
   cm= cm(ikv); val= val(ikv); unit= unit(ikv); key= key(ikv);
 
   // check & format keys:
   key= ob(mkk,key);
+
+  // handle PRE/SUF-FIX
+  for (sf="",pf="",ls=0,lp=0,i=1;i<=numberof(key);i++) {
+    if (key(i)=="suffix") {
+      if (val(i)==string(0)) {
+        sf= "";
+        ls= 0;
+      } else {
+        sf= " "+ob(mkk,val(i));
+        ls= 1;
+      }
+
+    } else if (key(i)=="prefix") {
+      if (val(i)==string(0)) {
+        pf= "";
+        lp= 0;
+      } else {
+        pf= ob(mkk,val(i))+" ";
+        lp= 1;
+      }
+    } else {
+      if (lp)
+        key(i)= pf+key(i);
+      if (ls)
+        key(i)= key(i)+sf;
+    }
+  }
+  ikv= where(key!="suffix" & key!="prefix");
+  if (numberof(ikv)==0)
+    error,"RDF file void.";
+  else
+    txt= txt(ikv);
+  save,ob,ikv;
+  cm= cm(ikv); val= val(ikv); unit= unit(ikv); key= key(ikv);
 
   // format units
   strcase,0,unit;
