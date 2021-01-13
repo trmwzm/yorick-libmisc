@@ -208,15 +208,16 @@ dbase = closure(dbase, restore(tmp));
 restore, scratch;
 
 
-func db_text (fnm, deg=, db=)
+func db_text (fnm, deg=, db=, colrec=)
 /* DOCUMENT db_text (fnm)
    returns a dbase object from a simple ascii rep. in file or str array FNM.
+   COLREC=1: treat columns are records, default is lines as records
    Ascii representation is:
      ^# for comments,
      records as columns# 2,3,...
      first column contains keynames
      ... convenience is to use first line as "type" ... not necessary.
-     EXAMPLE:
+     EXAMPLE: (COLREC=1)
    sysdesc= [\
    "type       uav-p        uav-l       uav-ka      asar-l      asar-s", \
    "bw         20.0e6       80.0e6      80.0e6      75.0e6      75.0e6", \
@@ -250,16 +251,24 @@ func db_text (fnm, deg=, db=)
 
   // add one DB object per table column past col#1
   dq= dimsof(q);
+  if (colrec==1) {
+    nr= dq(2)-1;
+    nk= dq(3);
+  } else {
+    nr= dq(3)-1;
+    nk= dq(2);
+  }
   radeg= pi/180;
-  for (i=2;i<=dq(2);i++) {
+  for (i=2;i<=nr+1;i++) {
     ro= save();
-    x= tonum(q(i,..),m);
-    for (j=1;j<=dq(3);j++) {
-      save,ro,q(1,j),(m(j)? x(j): q(i,j));
-      if (deg==1 && m(j) && strgrepm("_deg$",q(1,j))) // add radians non-dbkey member
-        save,ro,strpart(q(1,j),:-4),x(j)*radeg;
-      if (db==1 && m(j) && strgrepm("_deg$",q(1,j))) // add lin scale non-dbkey member
-        save,ro,strpart(q(1,j),:-3),10^(x(j)/10.0);
+    x= colrec==1? tonum(q(i,..),m): tonum(q(..,i),m);
+    for (j=1;j<=nk;j++) {
+      knm= colrec==1? q(1,j): q(j,1);
+      save,ro,noop(knm),(m(j)? x(j): (colrec==1? q(i,j): q(j,i)));
+      if (deg==1 && m(j) && strgrepm("_deg$",knm)) // add radians non-dbkey member
+        save,ro,strpart(knm,:-4),x(j)*radeg;
+      if (db==1 && m(j) && strgrepm("_deg$",knm)) // add lin scale non-dbkey member
+        save,ro,strpart(knm,:-3),10^(x(j)/10.0);
     }
     rdb,add,ro;
   }
@@ -267,23 +276,30 @@ func db_text (fnm, deg=, db=)
   return rdb;
 }
 
-func text_db (db)
+func text_db (db, colrec=)
 /* DOCUMENT text_db (db)
    write a scalar record member database object to string array.
+   COLREC=1:  store records as columns, default is lines.
    SEE ALSO:
  */
 {
   knm= db(keys);
   kn= numberof(knm);
   rn= db(records,*);
-  s= array(string(0),rn+1,kn);
+  s= colrec==1? array(string(0),rn+1,kn): array(string(0),kn,rn+1);
   for (i=1;i<=kn;i++) {
-    s(1,i)= knm(i);
+    if (colrec==1)
+      s(1,i)= knm(i);
+    else
+      s(i,1)= knm(i);
     for (j=1;j<=rn;j++) {
       x= db(record,j)(knm(i));
       if (numberof(x)>1)
         error,"only scalar record members allowed.";
-      s(j+1,i)= is_string(x)? x: totxt(x);
+      if (colrec==1)
+        s(j+1,i)= is_string(x)? x: totxt(x);
+      else
+        s(i,j+1)= is_string(x)? x: totxt(x);
     }
   }
   wmx= max(strlen(s));
