@@ -3,6 +3,7 @@ require, "json.i";
 
 scratch = save(scratch, tmp);
 tmp = save(add, key, get, record, write, read, todox, fromdox, load, dump);
+save, tmp, totext, fromtext;
 
 func dbase(base, .., read=)
 /* DOCUMENT > db= dbase(keyname1, keyname2, ...);
@@ -54,11 +55,39 @@ func dbase(base, .., read=)
      and build index lists for the record or get methods:
        > list = where(database(key,"x") < 1.5);
 
-    To save or retrieve a database object from file
-       > db, write, filename;
-       > db= dbase();
-       > db, read, filename;
- */
+     TOTEXT
+        write a scalar record member database object to string array.
+        COLREC=1:  store records as columns, default is lines.
+        usage:
+        d= dbase();
+        d= d(fromtext,fnm,[colrec=1]);
+
+     FROMTEXT
+        returns a dbase object from a simple ascii rep. in file or str array FNM.
+        COLREC=1: treat columns are records, default is lines as records
+        Ascii representation is:
+        ^# for comments,
+        records as columns# 2,3,...
+        first column contains keynames
+        ... convenience is to use first line as "type" ... not necessary.
+        EXAMPLE: (COLREC=1)
+        sysdesc= [                                                      \
+        "type       uav-p        uav-l       uav-ka      asar-l      asar-s", \
+        "bw         20.0e6       80.0e6      80.0e6      75.0e6      75.0e6", \
+        "bws        22.5e6       90.0e6      90.0e6      83.33e6     83.33e6", \
+        ....
+        "#--- legend ---",                    \
+        "#bw        radar bandwidth [Hz]",        \
+        "#bws       complex sampling bandwidth [Hz]", \
+        ...      ]
+        DEG=1: special *_deg keys -> add radians non-key member named [*] to record
+        DB=1:  special *_db keys -> add radians non-key member named [*] to record
+
+     To save or retrieve a database object from file
+     > db, write, filename;
+        > db= dbase();
+     > db, read, filename;
+*/
 {
   local keys, klist, records;
   while (more_args()) grow, keys, next_arg();
@@ -204,34 +233,41 @@ func load (fnmin, json=)
   save, use(), [], use_method(fromdox, oo);  // got that wrong, at first ...
   return f;
 }
-dbase = closure(dbase, restore(tmp));
-restore, scratch;
-
-
-func db_text (fnm, deg=, db=, colrec=)
-/* DOCUMENT db_text (fnm)
-   returns a dbase object from a simple ascii rep. in file or str array FNM.
-   COLREC=1: treat columns are records, default is lines as records
-   Ascii representation is:
-     ^# for comments,
-     records as columns# 2,3,...
-     first column contains keynames
-     ... convenience is to use first line as "type" ... not necessary.
-     EXAMPLE: (COLREC=1)
-   sysdesc= [\
-   "type       uav-p        uav-l       uav-ka      asar-l      asar-s", \
-   "bw         20.0e6       80.0e6      80.0e6      75.0e6      75.0e6", \
-   "bws        22.5e6       90.0e6      90.0e6      83.33e6     83.33e6", \
-   ....
-   "#--- legend ---",              \
-   "#bw        radar bandwidth [Hz]",         \
-   "#bws       complex sampling bandwidth [Hz]",  \
-   ...      ]
-   DEG=1: special *_deg keys -> add radians non-key member named [*] to record
-   DB=1:  special *_db keys -> add radians non-key member named [*] to record
+func totext(colrec=, fmt=)
+/* DOCUMENT text_db (db)
+   write a scalar record member database object to string array.
+   ONLY key/names/values are written to text, ***not*** other record members.
+   COLREC=1:  store records as columns, default is lines.
    SEE ALSO:
  */
 {
+  use, keys, records;
+  kn= numberof(keys);
+  rn= records(*);
+  s= colrec==1? array(string(0),rn+1,kn): array(string(0),kn,rn+1);
+  for (i=1;i<=kn;i++) {
+    if (colrec==1)
+      s(1,i)= keys(i);
+    else
+      s(i,1)= keys(i);
+    for (j=1;j<=rn;j++) {
+      x= records(noop(j),keys(i));
+      if (numberof(x)>1)
+        error,"only scalar record members allowed.";
+      if (colrec==1)
+        s(j+1,i)= is_string(x)? x: totxt(x,fmt);
+      else
+        s(i,j+1)= is_string(x)? x: totxt(x,fmt);
+    }
+  }
+  wmx= max(strlen(s));
+
+  return swrite(s,format=swrite(-(wmx+1),format="%%%ds"))(sum,);
+}
+func fromtext (fnm, colrec=, deg=, db=)
+{
+  use, keys;
+
   if (is_scalar(fnm))
     fl= text_lines(fnm);
   else
@@ -246,8 +282,8 @@ func db_text (fnm, deg=, db=, colrec=)
   if (anyof(m))
     q= reform(q((w=where(m))),[2,numberof(w)/n,n]);
 
-  // dbase with row label keys
-  rdb= dbase(q(1,..));    // bw, bws, hp, ht, re, f0, la, ....
+  // dbase with row label key: q(1,..);    // bw, bws, hp, ht, re, f0, la, ....
+  keys= q(1,..);
 
   // add one DB object per table column past col#1
   dq= dimsof(q);
@@ -270,38 +306,8 @@ func db_text (fnm, deg=, db=, colrec=)
       if (db==1 && m(j) && strgrepm("_deg$",knm)) // add lin scale non-dbkey member
         save,ro,strpart(knm,:-3),10^(x(j)/10.0);
     }
-    rdb,add,ro;
+    use_method, add, ro;
   }
-
-  return rdb;
 }
-
-func text_db (db, colrec=)
-/* DOCUMENT text_db (db)
-   write a scalar record member database object to string array.
-   COLREC=1:  store records as columns, default is lines.
-   SEE ALSO:
- */
-{
-  knm= db(keys);
-  kn= numberof(knm);
-  rn= db(records,*);
-  s= colrec==1? array(string(0),rn+1,kn): array(string(0),kn,rn+1);
-  for (i=1;i<=kn;i++) {
-    if (colrec==1)
-      s(1,i)= knm(i);
-    else
-      s(i,1)= knm(i);
-    for (j=1;j<=rn;j++) {
-      x= db(record,j)(knm(i));
-      if (numberof(x)>1)
-        error,"only scalar record members allowed.";
-      if (colrec==1)
-        s(j+1,i)= is_string(x)? x: totxt(x);
-      else
-        s(i,j+1)= is_string(x)? x: totxt(x);
-    }
-  }
-  wmx= max(strlen(s));
-  return swrite(s,format=swrite(-(wmx+1),format="%%%ds"))(sum,);
-}
+dbase = closure(dbase, restore(tmp));
+restore, scratch;
