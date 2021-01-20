@@ -3917,7 +3917,13 @@ func use_kdef (args)
     /* DOCUMENT use_kdef,use(),kw1,kw2,...
        sets default value of listed keywords from context object,
        if found as members.
-       --- usage ---
+       --- usage#1 ---
+       o=save(a=pi)
+       func t(o,a=){use_kdef,o,pi,a; a; b;}
+       t,o; // 3.14159i, []
+       *OR* (if restoring all for convenience -- prob not a great idea)
+       func t(o,a=){use_kdef,o,a;tmp=save(a);restore,o;restore,tmp;a;}
+       --- usage#2 ---
        scratch= save(scratch,tmp);
        tmp= save(plg_);
        func graph (base,void) {
