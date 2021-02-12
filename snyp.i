@@ -380,7 +380,7 @@ jkobj = closure(tmp, jkobj_const);
 
 restore, scratch;
 
-/* --------------------  use_kdef  --------------------- */
+/* --------------------  use_kwdflt  --------------------- */
 scratch= save(scratch,tmp);
 tmp= save(plg);
 func graph (base,void)
@@ -388,7 +388,7 @@ func graph (base,void)
   return base(:);
 }
 func plg (y, x, color=, type=) {
-  use_kdef, use(), color, type;
+  use_kwdflt, use(), color, type;
   plg, y, x, color=color, type=type;
 }
 graph= closure(graph,restore(tmp));
@@ -419,7 +419,7 @@ func  eval_ (x, &f, key=)
    kw defaults may still be overwritten with call
  */
 {
-  use_kdef, use(), key;
+  use_kwdflt, use(), key;
   f= sum(key*x);
   return f;
 }

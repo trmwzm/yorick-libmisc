@@ -3913,35 +3913,41 @@ func duplicateb(fstrmi,fstrmo,vars,nvars)
     ssave, fstrmo,name_list(i),get_member(fstrmi,name_list(i));
 }
 
-func use_kdef (args)
-    /* DOCUMENT use_kdef,use(),kw1,kw2,...
+func use_kwdflt (args)
+/* DOCUMENT use_kwdflt,use(),kw1,kw2,...
        sets default value of listed keywords from context object,
        if found as members.
        --- usage#1 ---
-       o=save(a=pi)
-       func t(o,a=){use_kdef,o,pi,a; a; b;}
-       t,o; // 3.14159i, []
-       *OR* (if restoring all for convenience -- prob not a great idea)
-       func t(o,a=){use_kdef,o,a;tmp=save(a);restore,o;restore,tmp;a;}
+   > o= save(a=pi,e=exp(1),c=sqrt(2));
+   > func t(o, a=, e=) {use_kdef,o,a,e,c; a; e;c;}
+   > c= 1;
+   > t,o;
+     3.14159
+     2.71828
+     1       << *NOTE* C not a keyword, thus extern value if not defined
+   *OR* ( restore all members for convenience -- prob not a great idea)
+   > func t(o, a=) {use_kwdflt,o,a; tmp=save(a); restore,o; restore,tmp; a;}
+   *NOTE: restoring O in func *CLOBBERS* all external values with member vals,
+          unless LOCAL.
        --- usage#2 ---
-       scratch= save(scratch,tmp);
-       tmp= save(plg_);
-       func graph (base,void) {
+   > scratch= save(scratch,tmp);
+   > tmp= save(plg_);
+   > func graph (base,void) {
        return base(:);
        }
-       func plg_ (y, x, color=, type=) {
-       use_kdef, use(), color, type;
+   > func plg_ (y, x, color=, type=) {
+        use_kwdflt, use(), color, type;
        plg, y, x, color=color, type=type;
        }
-       graph= closure(graph,restore(tmp));
-       restore, scratch;
-
-       g= graph();
-       g, color="blue",type=3;
-       fma;
-       g, plg_, random(10), random(10);
-       g, plg_, random(10), random(10),color="red";
-       g, plg_, random(10), random(10),type=0;
+    > graph= closure(graph,restore(tmp));
+    > restore, scratch;
+    ...
+    > g= graph();
+    > g, color="blue",type=3;
+    > fma;
+    > g, plg_, random(10), random(10);
+    > g, plg_, random(10), random(10),color="red";
+    > g, plg_, random(10), random(10),type=0;
     */
 {
   obj= args(1);
@@ -3953,4 +3959,4 @@ func use_kdef (args)
     if (is_void(args(i)) && args(0,i)==0 && is_obj(obj,args(-,i),1)==0)
       args, i, obj(args(-,i));
 }
-wrap_args, use_kdef;
+wrap_args, use_kwdflt;
