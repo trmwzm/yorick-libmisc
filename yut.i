@@ -3915,9 +3915,9 @@ func duplicateb(fstrmi,fstrmo,vars,nvars)
 
 func use_kwdflt (args)
 /* DOCUMENT use_kwdflt,use(),kw1,kw2,...
-       sets default value of listed keywords from context object,
-       if found as members.
-       --- usage#1 ---
+   sets default value of listed keywords from context object,
+   if found as members.
+   --- usage#1 ---
    > o= save(a=pi,e=exp(1),c=sqrt(2));
    > func t(o, a=, e=) {use_kdef,o,a,e,c; a; e;c;}
    > c= 1;
@@ -3929,16 +3929,16 @@ func use_kwdflt (args)
    > func t(o, a=) {use_kwdflt,o,a; tmp=save(a); restore,o; restore,tmp; a;}
    *NOTE: restoring O in func *CLOBBERS* all external values with member vals,
           unless LOCAL.
-       --- usage#2 ---
+   --- usage#2 ---
    > scratch= save(scratch,tmp);
    > tmp= save(plg_);
    > func graph (base,void) {
-       return base(:);
-       }
+        return base(:);
+     }
    > func plg_ (y, x, color=, type=) {
         use_kwdflt, use(), color, type;
-       plg, y, x, color=color, type=type;
-       }
+        plg, y, x, color=color, type=type;
+      }
     > graph= closure(graph,restore(tmp));
     > restore, scratch;
     ...
@@ -3948,7 +3948,7 @@ func use_kwdflt (args)
     > g, plg_, random(10), random(10);
     > g, plg_, random(10), random(10),color="red";
     > g, plg_, random(10), random(10),type=0;
-    */
+*/
 {
   obj= args(1);
   if (is_void(obj))

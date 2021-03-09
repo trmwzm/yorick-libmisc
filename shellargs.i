@@ -73,15 +73,29 @@ func add(..)
   while (more_args()) {
     a1= next_arg();
     a2= next_arg();
-    if (!is_obj(a2)) error,"not obj save(val=,help=(string),[flag=1 for key-flag]).";
-    if (is_obj(a2,val,1)<0) save,a2,val= 0;
-    if (is_obj(a2,help,1)<0) save,a2,help= "";
-    if (is_obj(a2,flag,1)<0) save,a2,flag= 0;
-    if (is_obj(a2,type,1)<0) save,a2,type= structof(a2.val);
-    if (is_obj(a2,set,1)<0) save,a2,set= 0;
-    if (is_obj(a2,dims,1)<0) save,a2,dims= dimsof(a2.val);
+    amvoid= 0;
+    if (!is_obj(a2))
+      error,"not obj save(val=,help=(string),[flag=1 for key-flag]).";
+    if (is_obj(a2,val,1)>=0 && is_void(a2(val)))
+      if (is_obj(a2,type,1)<0 || is_obj(a2,dims,1)<0 )
+        error,"If VOID value, type= and dims= must be provided.";
+      else
+        amvoid= 1;
+    if (is_obj(a2,val,1)<0)
+      save,a2,val= 0;
+    if (is_obj(a2,help,1)<0)
+      save,a2,help= "";
+    if (is_obj(a2,flag,1)<0)
+      save,a2,flag= 0;
+    if (is_obj(a2,type,1)<0)
+      save,a2,type= structof(a2.val);
+    if (is_obj(a2,set,1)<0)
+      save,a2,set= 0;
+    if (is_obj(a2,dims,1)<0)
+      save,a2,dims= dimsof(a2.val);
     if (structof(a1)==string &&
-        structof(a2.help)==string) save, dat, noop(a1), a2;
+        structof(a2.help)==string)
+      save, dat, noop(a1), a2;
     else
       error,"provide save(val=,help=,[flag=1 for key-flag]))";
   }
@@ -228,11 +242,12 @@ func help
     typ= dat(wk(ik)).type;
     dims= dat(wk(ik)).dims;
     typcst= typ==string? typ : double;
+    isv= is_void(dat(wk(ik)).val);
     write,da(wk(ik)),dat(wk(ik)).help,nameof(typ),\
-      typcst(dat(wk(ik)).val)(1),\
+      (isv? "[]": typcst(dat(wk(ik)).val)(1)),   \
       (dat(wk(ik)).flag? "is_flag": ""),\
       (dims(0)==0? "": "dims="+pr1(dims)),\
-      format="%8s:  %-30s [def = %s(%"+(typ==string?"s":"g")+")] %s %s\n";
+      format="%8s:  %-30s [def = %s(%"+(typ==string||isv? "s": "g")+")] %s %s\n";
   }
 }
 shellargs = closure(shellargs, restore(tmp));
