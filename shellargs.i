@@ -215,7 +215,7 @@ func get(kp,v=,set=)
     error,"incorrect arg type.";
   }
   if (v==1) {
-    s= swrite(out);
+    s= is_void(out)? "[]": swrite(out);
     if ((ns=numberof(s))>1)
       s= "["+(s(1:min(3,ns))+", ")(sum)+(ns>3? "...]": "]");
     write,hlp,s,format="Option: %-30s %s\n";

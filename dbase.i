@@ -123,7 +123,7 @@ func add(..)
           error, "unable to guess at any dbase keys from first record";
       }
       for (i=1 ; i<=numberof(keys) ; ++i)
-        save, klist, keys(i),
+        save, klist, keys(i), \
           array(structof(rec(keys(i))), dimsof(rec(keys(i))), 4);
     } else if ((n>3 && !(n&(n-1))) || numberof(klist(keys(1)))<=n) {  /* double all key lists */
       local list;
@@ -233,7 +233,7 @@ func load (fnmin, json=)
   save, use(), [], use_method(fromdox, oo);  // got that wrong, at first ...
   return f;
 }
-func totext(colrec=, fmt=)
+func totext(void, colrec=, fmt=)
 /* DOCUMENT text_db (db)
    write a scalar record member database object to string array.
    ONLY key/names/values are written to text, ***not*** other record members.
@@ -283,7 +283,10 @@ func fromtext (fnm, colrec=, deg=, db=)
     q= reform(q((w=where(m))),[2,numberof(w)/n,n]);
 
   // dbase with row label key: q(1,..);    // bw, bws, hp, ht, re, f0, la, ....
-  keys= q(1,..);
+  if (colrec==1)
+    keys= q(1,..);
+  else
+    keys= q(..,1);
 
   // add one DB object per table column past col#1
   dq= dimsof(q);
