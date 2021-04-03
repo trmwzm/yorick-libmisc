@@ -273,8 +273,9 @@ func fromtext (fnm, colrec=, deg=, db=)
   else
     fl= fnm;
 
+  fl= strtrim(fl);
   // remove comments
-  fl= fl(where(!strgrepm("^#",fl)));
+  fl= fl(where(!strgrepm("^#",fl) & fl!=string(0)));
 
   q= text_cells(strchar((fl+"\n")(sum))(:-1)," ");
   m= q!=string(0);
@@ -303,7 +304,9 @@ func fromtext (fnm, colrec=, deg=, db=)
     x= colrec==1? tonum(q(i,..),m): tonum(q(..,i),m);
     for (j=1;j<=nk;j++) {
       knm= colrec==1? q(1,j): q(j,1);
-      save,ro,noop(knm),(m(j)? x(j): (colrec==1? q(i,j): q(j,i)));
+      val= m(j)>0? merge2(long(x(j)),x(j),m(j)==3): \
+                          (colrec==1? q(i,j): q(j,i));
+      save,ro,noop(knm),val;
       if (deg==1 && m(j) && strgrepm("_deg$",knm)) // add radians non-dbkey member
         save,ro,strpart(knm,:-4),x(j)*radeg;
       if (db==1 && m(j) && strgrepm("_deg$",knm)) // add lin scale non-dbkey member
