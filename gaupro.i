@@ -101,11 +101,11 @@ func gauss_rp(n, corrInDn, seed= , zeromean=)
   /* DOCUMENT gauss_rp(n, corrInDn, nderiv)
    */
   extern pi;
-   
+
   if (seed) random_seed, seed;
 
   nn= fft_good(n);
-   
+
   h = array(complex,nn);
 
   pi= 4*atan(1.0);
@@ -118,7 +118,7 @@ func gauss_rp(n, corrInDn, seed= , zeromean=)
 
   h(2:nk+1) = sq05*random_n(nk) + (1i * sq05) *random_n(nk);
   h(1) = random_n([]);
-  if (!nsamp%2) 
+  if (!nsamp%2)
     h(nk+2)= random_n([]);
 
   kx = indgen(0:nk+1) * dk;
@@ -127,9 +127,9 @@ func gauss_rp(n, corrInDn, seed= , zeromean=)
 
   if (!is_void(zeromean) && zeromean==1)
     h(1) = 0;
-     
+
   h(-nk+1:nn) = conj(h(nk+1:2:-1));
- 
+
   ws = fft_setup(dimsof(h), 1);
   h = fft(h, 1, setup=ws);
 
@@ -262,3 +262,141 @@ func randgauss2 (nx, ny, corx, cory, nd)
   return a*gaussm(random_n(nd,nx,ny),_((nd? 0.: []),corx,cory),fwhm=1);
 }
 
+/*------------------------------------------------------------------------*/
+
+func mkmo(s1, ds, ns, hp, &poserr, cp =, motgauss =, psfac =, seed =, padlen =,
+          err =)
+/* DOCUMENT  mkmo (s1, ds, ns, hp, cp=,motgauss=,psfac=,seed=,padlen=)
+   MOTGAUSS= [[sig_x, sig_y, sig_z],[corl_x,corl_y,corl_z]];
+               sig= 1pt RMS;         corl= 2pt correlation length.
+   PSFAC=  [DS_PS/DS_RAD[-],DS_RAD_SIG,DS_RAD_COR_LEN[m]]
+   Usage:
+   ------
+   SEE: test_mo
+ */
+{
+  if (seed)
+    random_seed, seed;
+
+  if (is_void(padlen))
+    padlen= 0.0;
+
+  expf= 0.7;
+
+  if (!is_void(psfac)) {
+    dsv= ds/psfac(1);
+    nsv= long(psfac(1)*ns+2*long(padlen/dsv+0.5));
+    if (numberof(psfac)>1) {
+      if (numberof(psfac)!=3)
+        error,"expecting [DS_PS/DS_RADAR[-],DS_SIG,DS_COR_LEN[m]]";
+      else
+        dsv+= gaupro_1(nsv-1,gau=psfac(3)/dsv,expf=expf,sig=psfac(2));
+      dsv*= ((ns-1)*ds+2*padlen)/sum(dsv);
+      sv= s1 - padlen + dsv(cum);
+    } else {
+      sv= span(s1-padlen,s1+(ns-1)*ds+padlen,nsv);
+    }
+  } else {
+    sv= s1+indgen(0:ns-1)*ds;
+  }
+  nsv= numberof(sv);
+  dsv= sv(dif)(avg);
+
+  antxyz= array(double,[2,3,nsv]);
+
+  antxyz(1,)= sv;
+  antxyz(2,)= 0.0;
+  antxyz(3,)= hp;
+
+  if (!is_void(motgauss)) {
+    for (ic=1; ic<=3; ic++) {
+      if (allof(motgauss(ic,)))
+        antxyz(ic,..)+= gaupro_1(nsv,gau=motgauss(ic,2)/dsv, \
+                                   expf=expf,sig=motgauss(ic,1));
+    }
+  }
+
+  antxyz(2,..)-= antxyz(2,avg);
+  antxyz(3,..)-= (antxyz(3,avg)-hp);
+
+  if (!is_void(err)) {
+    poserr= array(double,[2,3,nsv]);
+    for (ic=1; ic<=3; ic++) {
+      if (allof(err(ic,)))
+        poserr(ic,..)+= gaupro_1(nsv,gau=err(ic,2)/dsv,        \
+                                 expf=expf,sig=err(ic,1));
+    }
+  }
+  if (!is_void(cp))
+    antxyz(2,..)+= cp;
+
+  return antxyz;
+}
+
+func mkbat (s1, s0, la, &s, ypaav=, ypagau=, psfac=, seed=, padlen=, esa=)
+/* DOCUMENT ypa= mkbat (s1, s0, la, ypaav=, ypagau=, psfac=, seed=, padlen=, esa=)
+            -OR-
+            ypa= mkbat (s, ypaav=, ypagau=, seed=, esa=)
+   *first* form S is computed using Nyquist LA and PSFAC
+   *second form* S is an input
+
+   PSFAC=  [DS_PS/DS_RAD[-],DS_RAD_SIG,DS_RAD_COR_LEN[m]]
+   YPAGAU= [[sig_y, sig_p, sig_r],[corl_y,corl_p,corl_r]];
+             sig= 1pt RMS;         corl= 2pt correlation length.
+
+   Usage:
+   ------
+   ac= mkbat(...seed=.123, \
+     ypagau=[[1.,4.,4.],[0.,700.,500]], \
+     psfac=[1.5,.1,2000.],padlen=100);
+ */
+{
+  if (seed)
+    random_seed, seed;
+
+  expf= 0.7;
+
+  if (!is_void(s0) && !is_void(la)) {
+    if (is_void(padlen))
+      padlen= 0.0;
+
+    lanq= la/2;  // Nyquist sampling
+    nsa= long((s0-s1)/lanq);
+
+    if (!is_void(psfac)) {
+      dsv= lanq/psfac(1);
+      nsv= long(psfac(1)*nsa+2*long(padlen/dsv+0.5));
+      if (numberof(psfac)>1) {
+        if (numberof(psfac)!=3)
+          error,"expecting [DS_PS/DS_RADAR[-],DS_SIG,DS_COR_LEN[m]]";
+        else
+          dsv+= gaupro_1(nsv-1,gau=psfac(3)/dsv,expf=expf,sig=psfac(2));
+        dsv*= ((nsa-1)*lanq+2*padlen)/sum(dsv);
+        s= s1 - padlen + dsv(cum);
+      } else {
+        s= span(s1-padlen,s1+(nsa-1)*lanq+padlen,nsv);
+      }
+    } else {
+      s= s1+indgen(0:nsa-1)*lanq;
+    }
+  } else {
+    s= s1;
+  }
+  ns= numberof(s);
+  dsav= s(dif)(avg);              // averages sampling point spacing
+
+  ypaav= is_void(ypaav)? [0.,0,0]: ypaav;
+  if (numberof(ypaav)<3)
+    ypaav= _(ypaav,array(0.0,3-numberof(ypaav)));
+  ypa= array(ypaav,ns);
+  if (!is_void(ypagau) && dimsof(ypagau)(1)>1) {
+    for (ic=1; ic<=numberof(ypagau(,1)); ic++) {
+      if (allof(ypagau(ic,)))
+        ypa(ic,..)+= gaupro_1(ns,gau=ypagau(ic,2),expf=expf,sig=ypagau(ic,1));
+    }
+  }
+  if (esa==1)
+    ypa(3,)= steer([1,0,0],ypa);  // additional args: cql, ls0 (look angle, target ls)
+
+  return ypa;
+}

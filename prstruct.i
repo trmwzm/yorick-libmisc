@@ -1,4 +1,4 @@
-func prettyprint(name,a,fd=)
+func prettyprint(name, a, fd=)
 /* DOCUMENT prettyprint,name,structure,fd=
    Print the ascii represention of structure "a" suitable
    for editting by hand and for subsequent #including. If fd
@@ -132,7 +132,7 @@ func prpiece(fd,tabs,s,ss)
     }
     write,fd,format="%s%s\n",tabs,str; // print last one
   }
-} 
+}
 
 func info_struct(sname,max_content_length=,fd=)
 /* DOCUMENT print_struct,sname
@@ -149,7 +149,7 @@ func info_struct(sname,max_content_length=,fd=)
   local strvar;
 
   if (max_content_length==[]) max_content_length = 36;
- 
+
   include,["strvar="+sname],1;
 
   for (ne=1;ne<=numberof(strvar);ne++) {
@@ -213,7 +213,7 @@ func info_struct(sname,max_content_length=,fd=)
       if (strlen(vals(i))>max_content_length) {
         vals(i) = strpart(vals(i),1:max_content_length)+"...";
       }
-   
+
       write,fd,format=fmt,keys(i),prefix,to;
       if (numberof(dof)==0) dofs = "[]";
       if (numberof(dof)==1) {

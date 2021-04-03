@@ -1,11 +1,35 @@
 require, "yut.i";
 require, "json.i";
 
+// save/restore mechanics
+a= 1; b= 2;            // l1
+scratch= save(scratch, tmp);
+{
+  tmp= save(a,b);
+  a= 10; b= 20;         // tmp members val are still that from l1
+  x= restore(tmp);      // restore tmp's members values to those before l3
+                        //   set its its members keys and values as those of X with
+                        //   current values, new[>l3] -- or old[<l3] if they were not reset
+}
+restore, scratch;       // switch scratch and tmp to l1 state
+
+// override a restore with keyword
+func tst(o, k=) {
+  k= !is_void(k)? k: o(k);
+  tmp= save(k);
+  restore,o;
+  restore,tmp;
+  return k;
+}
+
 /* functor (?) function with stashed data*/
 scratch= save(scratch, tmp);
 tmp= save(eval_);
 func funclos (base,void,key=)
 /* DOCUMENT funclos (base,key=)
+   f= funclos();
+   save, f.function, key=pi;  //  modify initialization keyword
+   f(2);                      //  6.28319
 */
 {
   ob= base(:);
@@ -329,11 +353,11 @@ func dump (fnmout, json=, szmx=)
 {
   write,format="Writing jkobj: %s\n",fnmout;
   o= use_method(todox,);
-  
+
   if (json==1) {
     s= oxjsn(oxjsb(o,rootdir=dirname(fnmout),szmx=szmx));
     write,open(fnmout,"w"),s,format="%s";
-  } else 
+  } else
     oxsave, (f=createb(fnmout)), o;
   return f;
 }
@@ -343,7 +367,7 @@ func load (fnmin, json=)
 
   if (json==1)
     oo= jsbox(jsnox(text_lines(fnmin)));
-  else 
+  else
     oo= oxrestore((f=openb(fnmin)));
   save, use(), [], use_method(fromdox, oo);  // got that wrong, at first ...
   return f;
@@ -351,7 +375,7 @@ func load (fnmin, json=)
 
 local jkobj;
 /* DOCUMENT jkobj
-     
+
    SEE ALSO:
  */
 tmp= save(jkobj_const, write, read, todox, fromdox, load, dump);
@@ -359,7 +383,19 @@ jkobj = closure(tmp, jkobj_const);
 
 restore, scratch;
 
-/* --------------------  use_kdef  --------------------- */
+/* --------------------  use_kwdflt  --------------------- */
+o= save(a=pi,e=exp(1),c=sqrt(2));
+func t(o, a=, e=) {use_kdef,o,a,e,c; a; e;c;}
+c= 1;
+t,o;
+//   3.14159
+//   2.71828
+//   1       << *NOTE* C not a keyword, thus extern value if not defined
+//   *OR* ( restore all members for convenience -- prob not a great idea)
+func t(o, a=) {use_kwdflt,o,a; tmp=save(a); restore,o; restore,tmp; a;}
+//   *NOTE: restoring O in func *CLOBBERS* all external values with member vals,
+//          unless LOCAL.
+
 scratch= save(scratch,tmp);
 tmp= save(plg);
 func graph (base,void)
@@ -367,7 +403,7 @@ func graph (base,void)
   return base(:);
 }
 func plg (y, x, color=, type=) {
-  use_kdef, use(), color, type;
+  use_kwdflt, use(), color, type;
   plg, y, x, color=color, type=type;
 }
 graph= closure(graph,restore(tmp));
@@ -383,8 +419,8 @@ g, plg, random(10), random(10),type=0;
 /* functor (?) function with default data which can be set dynamically */
 scratch= save(scratch, tmp);
 tmp= save(eval_);
-func funclos (base, void, key=)
-/* DOCUMENT funclos (base,key=)
+func funclos (base, key)
+/* DOCUMENT funclos (key)
 */
 {
   ob= base(:);
@@ -398,7 +434,7 @@ func  eval_ (x, &f, key=)
    kw defaults may still be overwritten with call
  */
 {
-  use_kdef, use(), key;
+  use_kwdflt, use(), key;
   f= sum(key*x);
   return f;
 }
