@@ -2485,6 +2485,24 @@ func sread_n_worker(&s, &var, i)
   }
 }
 
+func loginclude (outfnmroot)
+/* DOCUMENT c= loginclude (outfnmroot)
+     takes a root file name - to which a timestamp will be concatenated -
+     and write out a copy of the current_include (with the include file+dir
+     location added in the first line as a commented header,) as a side-effect.
+     Returns C which is the current_include() as a string;
+   SEE ALSO:
+ */
+{
+  mkdirp,dirname(outfnmroot);
+  s= timestamp();
+  c= current_include();
+  write,open(outfnmroot+"_"+streplace(s,strfind(" ",s,n=5),"_")+".i","w"), \
+    _(swrite(c,format="// from: %s\n"),text_lines(c)), \
+  format="%s\n";
+  return c;
+}
+
 /* ------------------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
 
