@@ -1,9 +1,9 @@
 # these values filled in by    yorick -batch make.i
-Y_MAKEDIR=/home/trm/dev/yorick/yorick/relocate
-Y_EXE=/home/trm/dev/yorick/yorick/relocate/bin/yorick
+Y_MAKEDIR=/home/trm/spack/opt/spack/linux-debian11-haswell/gcc-11.1.0/yorick-f90-plugin-xnpdba62zlt6dkrjwlp3n6hre7kkpuzb
+Y_EXE=/home/trm/spack/opt/spack/linux-debian11-haswell/gcc-11.1.0/yorick-f90-plugin-xnpdba62zlt6dkrjwlp3n6hre7kkpuzb/bin/yorick
 Y_EXE_PKGS=
-Y_EXE_HOME=/home/trm/dev/yorick/yorick/relocate
-Y_EXE_SITE=/home/trm/dev/yorick/yorick/relocate
+Y_EXE_HOME=/home/trm/spack/opt/spack/linux-debian11-haswell/gcc-11.1.0/yorick-f90-plugin-xnpdba62zlt6dkrjwlp3n6hre7kkpuzb
+Y_EXE_SITE=/home/trm/spack/opt/spack/linux-debian11-haswell/gcc-11.1.0/yorick-f90-plugin-xnpdba62zlt6dkrjwlp3n6hre7kkpuzb
 Y_HOME_PKG=
 
 #
@@ -23,7 +23,7 @@ PKG_I= ascii.i convcorrel.i dbase.i dsp.i fcomplex.i fmin.i fzero.i img.i \
        fpanels.i imbinavrg.i inpolygon.i lmfit.i \
        plot.i poly_fit.i rdf-refac.i rwflat.i time.i xplot.i gaupro.i \
        nninterp2.i histop.i moveop.i utils.i \
-       prstruct.i rdcols.i plcm.i plim.i levmar_tools.i scm.i json.i
+       prstruct.i rdcols.i plcm.i plim.i levmar_tools.i scm.i json.i vec2d.i
 # autoload file for this package, if any
 PKG_I_START = libmisc-start.i
 
