@@ -407,7 +407,8 @@ func lmfit(f, x, &a, y, w, fit=, correl=, stdev=, gain=, tol=, deriv=, itmax=,
       saa += anew * anew;
     }
     result.monte_carlo= monte_carlo;
-    result.stdev_monte_carlo= &sqrt(saa / monte_carlo);
+    q= sqrt(saa/monte_carlo);
+    result.stdev_monte_carlo= &q;
   }
   return result;
 }

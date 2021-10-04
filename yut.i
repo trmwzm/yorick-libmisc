@@ -2722,17 +2722,21 @@ func limitsexp (frac,panel=)
 }
 
 func vparray(nx,ny,xm,xM,ym,yM,xgap=,ygap=)
-    /* DOCUMENT
-       nx= 2;
-       ny= 5;
-       xm= 70; xM= 880; ym= 70; yM= 680;
-       xwindow,0,height=600,width=920,units=2,viewport=vparray(nx,ny,xm,xM,ym,yM,xgap=35,ygap=25),size=8;
-       for (i=1;i<=nx*ny;i++) {
-       plsys,i;
-       plg,[0,1];
-       }
-       SEE ALSO:
-    */
+/* DOCUMENT
+   require,"plot.i";
+   nx= 2;
+   ny= 5;
+   xm= 70; xM= 880; ym= 70; yM= 680;
+   vp= vparray(nx,ny,xm,xM,ym,yM,xgap=35,ygap=25);
+   xwindow,window(),height=600,width=920,units=2, \
+     viewport=vp,size=8,xopt=0,yopt=0;
+   for (i=1;i<=nx*ny;i++) {
+     plsys,i;
+     plt,swrite(i),1.9,.8,tosys=1,justify="CH";
+     plg,[0,1];
+   }
+   SEE ALSO:
+*/
 {
   xg= is_void(xgap)? 0: xgap/2;
   yg= is_void(ygap)? 0: ygap/2;
@@ -2749,7 +2753,10 @@ func vparray(nx,ny,xm,xM,ym,yM,xgap=,ygap=)
   ij2= ij1+1;
   ij3= ij1+(nx+1);
 
-  return transpose([xy(1,ij1)+xg,xy(1,ij2)-xg,xy(2,ij1)+yg,xy(2,ij3)-yg]);
+  vp= transpose([xy(1,ij1)+xg,xy(1,ij2)-xg,xy(2,ij1)+yg,xy(2,ij3)-yg]);
+  ii= reform(indgen(nx*ny),[2,nx,ny]);
+  vp= vp(,ii(,::-1));
+  return vp;
 }
 
 func assign (args)
