@@ -258,6 +258,7 @@ func lmfit(f, x, &a, y, w, fit=, correl=, stdev=, gain=, tol=, deriv=, itmax=,
     if (structof(a)!=double)
       error, "bad data type for parameters (complex unsupported)";
   }
+  a0= a;
   na= numberof(a);
   if (is_void(fit))
     fit= indgen(na);
@@ -432,6 +433,9 @@ func lmfit(f, x, &a, y, w, fit=, correl=, stdev=, gain=, tol=, deriv=, itmax=,
       result.monte_carlo= monte_carlo;
       result.stdev_monte_carlo= &q;
     }
+  }
+  if (ox==1) {
+    save, result, a0, a;
   }
   return result;
 }
