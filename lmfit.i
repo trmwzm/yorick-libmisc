@@ -60,7 +60,7 @@ struct lmfit_result {
 };
 
 func lmfit(f, x, &a, y, w, fit=, correl=, stdev=, gain=, tol=, deriv=, itmax=,
-           lambda=, eps=, monte_carlo=)
+           lambda=, eps=, monte_carlo=, ox=)
 /* DOCUMENT lmfit -- Non-linear least-squares fit by Levenberg-Marquardt
    method.
 
@@ -367,9 +367,18 @@ func lmfit(f, x, &a, y, w, fit=, correl=, stdev=, gain=, tol=, deriv=, itmax=,
 
  done:
   sigma= sqrt(nfree/max(chi2,1e-12));
-  result= lmfit_result(neval=neval, niter=niter, nfree=nfree, nfit=nfit,
-                       lambda=lambda, chi2_first=chi2_first, chi2_last=chi2, conv=conv,
-                       sigma=sigma);
+  if (ox==1) {
+    result= save(neval=neval, niter=niter, nfree=nfree, nfit=nfit, \
+                 lambda=lambda, chi2_first=chi2_first, chi2_last=chi2, conv=conv, \
+                 sigma=sigma);
+    save, result, \
+      input_par= save(fit, correl, stdev, gain, tol, deriv, itmax,  \
+                      lambda, eps, monte_carlo);
+  } else {
+    result= lmfit_result(neval=neval, niter=niter, nfree=nfree, nfit=nfit, \
+                         lambda=lambda, chi2_first=chi2_first, chi2_last=chi2, conv=conv, \
+                         sigma=sigma);
+  }
   if (correl || stdev) {
     /* Compute correlation matrice and/or standard deviation vector. */
     alpha(diag)= 1.0;
@@ -381,16 +390,25 @@ func lmfit(f, x, &a, y, w, fit=, correl=, stdev=, gain=, tol=, deriv=, itmax=,
       /* Standard deviation is rescaled assuming that statistically
        * chi2 = nfree +/- sqrt(2*nfree). */
       (tmp2= array(double,na))(fit)= gamma * tmp1 / sigma;
-      result.stdev= &tmp2;
+      if (ox==1)
+        result, stdev= tmp2;
+      else
+        result.stdev= &tmp2;
     }
     if (correl) {
       gamma= 1.0 / tmp1;
       alpha *= gamma(-,) * gamma(,-);
       if (nfit == na) {
-        result.correl= &alpha;
+        if (ox==1)
+          result, correl= alpha;
+        else
+          result.correl= &alpha;
       } else {
         (tmp2= array(double, na, na))(fit,fit)= alpha;
-        result.correl= &tmp2;
+        if (ox==1)
+          result, correl= tmp2;
+        else
+          result.correl= &tmp2;
       }
     }
   }
@@ -406,9 +424,14 @@ func lmfit(f, x, &a, y, w, fit=, correl=, stdev=, gain=, tol=, deriv=, itmax=,
       anew -= a;
       saa += anew * anew;
     }
-    result.monte_carlo= monte_carlo;
     q= sqrt(saa/monte_carlo);
-    result.stdev_monte_carlo= &q;
+    if (ox==1) {
+      result, monte_carlo= monte_carlo;
+      result, stdev_monte_carlo= q;
+    } else {
+      result.monte_carlo= monte_carlo;
+      result.stdev_monte_carlo= &q;
+    }
   }
   return result;
 }
