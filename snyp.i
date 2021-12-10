@@ -1,27 +1,30 @@
 require, "yut.i";
 require, "json.i";
 
+/*---------------------------------------------------------*/
 // save/restore mechanics
-a= 1; b= 2;            // l1
+a= 1; b= 2;             // l1
 scratch= save(scratch, tmp);
 {
   tmp= save(a,b);
   a= 10; b= 20;         // tmp members val are still that from l1
   x= restore(tmp);      // restore tmp's members values to those before l3
-                        //   set its its members keys and values as those of X with
+                        //   SET ITS ITS MEMBERS KEYS AND VALUES AS THOSE OF X with
                         //   current values, new[>l3] -- or old[<l3] if they were not reset
 }
 restore, scratch;       // switch scratch and tmp to l1 state
 
-// override a restore with keyword
+/*---------------------------------------------------------*/
+// pass keyword default values in oxobj and allow override with keyword
 func tst(o, k=) {
   k= !is_void(k)? k: o(k);
   tmp= save(k);
-  restore,o;
+  restore,o;              // ! everything not a keyword better be declared local !
   restore,tmp;
   return k;
 }
 
+/*---------------------------------------------------------*/
 /* functor (?) function with stashed data*/
 scratch= save(scratch, tmp);
 tmp= save(eval_);

@@ -3452,7 +3452,7 @@ func oxwrite (f, o, &onm, lvl)
   s= swrite(onm(0),format="\n"+idnt1+"%s= save(); {");
   write,f,s,format="%s\n";
 
-  print_format,float="%.9g",double="%.9g",complex="%.9g+%.9gi";
+  print_format,float="%.12g",double="%.12g",complex="%.12g+%.12gi";
   for (i=1; i<=o(*); i++) {
     oi= o(noop(i));
     if (is_obj(oi)) {
