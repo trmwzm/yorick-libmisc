@@ -3472,10 +3472,10 @@ func oxwrite_wrkr (f, o, &onm, lvl)
     oi= o(noop(i));
     if (is_obj(oi)) {
       save, onm, string(0), o(*,i);
-      f= oxwrite(f,oi,onm,lvl);
+      f= oxwrite_wrkr(f,oi,onm,lvl);
     } else {
       s= swrite(onm(0),o(*,i),print(oi)(*)(sum),\
-                format=idnt2+"%s, %s"+(o(*,i)? "=": "[],")+" %s;");
+                format=idnt2+(is_func(oi)? "// ": "")+"%s, %s"+(o(*,i)? "=": "[],")+" %s;");
       write,f,s,format="%s\n";
     }
   }
