@@ -3452,19 +3452,19 @@ func oxwrite (f, o, &onm, lvl)
   s= swrite(onm(0),format="\n"+idnt1+"%s= save(); {");
   write,f,s,format="%s\n";
 
-  print_format,float="%.12g",double="%.12g",complex="%.12g+%.12gi";
+  print_format,1000,1,float="%.12g",double="%.12g",complex="%.12g+%.12gi";
   for (i=1; i<=o(*); i++) {
     oi= o(noop(i));
     if (is_obj(oi)) {
       save, onm, string(0), o(*,i);
       f= oxwrite(f,oi,onm,lvl);
     } else {
-      s= swrite(onm(0),o(*,i),pr1(oi)(*)(sum),\
+      s= swrite(onm(0),o(*,i),print(oi)(*)(sum),\
                 format=idnt2+"%s, %s"+(o(*,i)? "=": "[],")+" %s;");
       write,f,s,format="%s\n";
     }
   }
-  print_format;
+  print_format,-1,-1;
 
   if (onm(*)>1) {
     write,f,onm(-1),onm(0),format=idnt1+"} save, %s, %s;\n";
