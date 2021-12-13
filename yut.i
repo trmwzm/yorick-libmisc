@@ -3415,13 +3415,28 @@ func oxrestore (args)
 }
 wrap_args,oxrestore;
 
-func oxwrite (f, o, &onm, lvl)
-    /* DOCUMENT oxwrite, ob, ["object name", if void  "cfg"], doc=;
-       #include "qq.i";
-       oxwrite,open("q.i","w"),o3,"ob";
-       TODO: fix for groups
-       SEE ALSO: oxsave,oxread,oxcopy,oxtypeq;
-    */
+func oxwrite (args)
+/* DOCUMENT oxwrite, ob, ["object name", if void  "cfg"];
+   writes a yorick source file with oxy-object definition:  !! only POD !!
+
+   o3= save(a, b=3 ,c ,d=pi, hl="hello");
+   oxwrite,open("q.i","w"),o3,obnm= "this";
+   ... later ..
+   local this;
+   include,"q.i",1;  // THIS object instanciated
+   TODO: fix for groups
+   SEE ALSO: oxsave, oxread, oxcopy, oxtypeq;
+*/
+{
+  if (args(*)!=2)
+    error,"oxwrite, open(fnm,\"w\"), ob[, obnm=]; // SEE > help,oxwrite";
+  local obnm;
+  obnm= is_void(args(*,))? args(*,2): args("obnm");
+  return  oxwrite_wrkr(args(1),args(2),obnm);
+}
+wrap_args,oxwrite;
+
+func oxwrite_wrkr (f, o, &onm, lvl)
 {
   if (is_string(f))
     f= open(f,"w");
