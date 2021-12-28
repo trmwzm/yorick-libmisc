@@ -3431,7 +3431,7 @@ func oxwrite (args)
   if (args(*)!=2)
     error,"oxwrite, open(fnm,\"w\"), ob[, obnm=]; // SEE > help,oxwrite";
   local obnm;
-  obnm= is_void(args(*,))? args(*,2): args("obnm");
+  obnm= is_void(args(*,))? (args(0,2)==1? "cfg": args(*,2)): args("obnm");
   return  oxwrite_wrkr(args(1),args(2),obnm);
 }
 wrap_args,oxwrite;
@@ -3467,7 +3467,7 @@ func oxwrite_wrkr (f, o, &onm, lvl)
   s= swrite(onm(0),format="\n"+idnt1+"%s= save(); {");
   write,f,s,format="%s\n";
 
-  print_format,1000,1,float="%.12g",double="%.12g",complex="%.12g+%.12gi";
+  print_format,1000,1,float="%.12e",double="%.12e",complex="%.12e+%.12ei";
   for (i=1; i<=o(*); i++) {
     oi= o(noop(i));
     if (is_obj(oi)) {
