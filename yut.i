@@ -330,9 +330,9 @@ func deref(ptr)
 
 /* ------------------------------------------------------------------------ */
 
-func check_file (fnm,..,quiet=)
-    /* DOCUMENT check_file (fnm)
-     */
+func check_file (fnm,.., quiet=, errmsg=)
+/* DOCUMENT check_file (fnm,.., quiet=, errmsg=)
+ */
 {
   list= _lst(fnm(1));
   nf= 1;
@@ -350,11 +350,11 @@ func check_file (fnm,..,quiet=)
       if (quiet)
         return 0;
       else
-        error,"***File: "+fnm+" not found";
+        error,(is_void(errmsg)? "File": errmsg)+": "+fnm+" not found";
 
   return 1;
-
 }
+
 /* ------------------------------------------------------------------------ */
 
 func check_dir (fnm,..,quiet=)
