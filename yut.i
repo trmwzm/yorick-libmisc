@@ -1,5 +1,7 @@
 require, "fcomplex.i";
 
+OXY_VOID_VAL= "oxy_void";
+
 func eval(code, tmp=, debug=)
     /* DOCUMENT eval, code;
        -or- eval(code);
@@ -2842,7 +2844,9 @@ func save_rec(args)
     if (is_string(ar)) {
       i+= 1;
       oi= args(i);
-      if (!is_void(oi) && is_func(oi)==0) // used to thow error
+      if (is_void(oi))
+        save, args(1), prf+ar+suf, OXY_VOID_VAL;
+      else if (is_func(oi)==0) // used to thow error
         save, args(1), prf+ar+suf, oi;
     } else
       if (!is_void(ar) && is_func(ar)==0) // not sure
@@ -2886,6 +2890,7 @@ func restore_rec(args)
       restore, args(1), prf+ar+suf, x;
     } else
       restore, args(1), prf+args(-,i)+suf, x;
+    if (is_scalar(x) && x==OXY_VOID_VAL) write,"void";
     args, i, x;
     i+= 1;
   }
@@ -3194,10 +3199,10 @@ func oxsave (args)
        usage:
        ------
        o= save(pi);
-       o1= save(o,p1=1);
-       o2= save(o1,p2=2);
+       o1= save(o,p1=1,p2=[]);
+       o2= save(o1,p2=2,p3=[]);
        o22= o2(:);
-       o3= save(o2,o22,p3=3);
+       o3= save(o2,o22,p3=3,p4=[]);
 
        o32= o3(:);
        oxsave,createb("q.opdb"),o3;
@@ -3407,6 +3412,8 @@ func oxrestore (args)
           }
           oj= oj((isg? noop(ig): on(j)));
         }
+        if (is_scalar(val) && val==OXY_VOID_VAL)
+          val= [];
         save,oj,on(0),val;
       }
       args,3,oo(1);
