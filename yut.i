@@ -2189,7 +2189,7 @@ func plot_hbar (levs0, colors, offset=, wrap=, off=)
 
 /*---------------------------------------------------------------------------*/
 
-func plt_clic(strg, orient=, height=, justify=, font=, color=, hide=, opaque=,prompt=)
+func plt_clic(strg, q, orient=, height=, justify=, font=, color=, hide=, opaque=,prompt=)
     /* DOCUMENT plt_clic(strg, orient=, height=, justify=, font=, color=, hide=, opaque=,prompt=)
        plt, strg, q(5), q(6),font=font, justify=justify, height=height, orient=orient,\
        color=color,hide=hide,opaque=opaque
@@ -2198,12 +2198,17 @@ func plt_clic(strg, orient=, height=, justify=, font=, color=, hide=, opaque=,pr
        system, button, modifiers]
     */
 {
-  if (prompt==1)write,"clic in plot window to position string\n"+strg;
-  do {q= mouse(-1,0,"");} while(is_void(q));q;
-
-  if (is_void(height)) height=pltitle_height;
-  if (is_void(justify)) justify="CH";
-  if (is_void(font)) font=pltitle_font;
+  if (prompt==1)
+    write,"clic in plot window to position string\n"+strg;
+  if (is_void(q)) {
+    do {q= mouse(-1,0,"");} while(is_void(q));q;
+  }
+  if (is_void(height))
+    height=pltitle_height;
+  if (is_void(justify))
+    justify="CH";
+  if (is_void(font))
+    font=pltitle_font;
 
   plt, strg, q(5), q(6),font=font, justify=justify, height=height, orient=orient,\
       color=color,hide=hide,opaque=opaque;
