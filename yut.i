@@ -3128,8 +3128,12 @@ func oxtypeq (o1,o2,nodim=)
 {
   s1= o1(*,);
   s2= o2(*,);
-  if (numberof(s1)) s1= s1(sort(s2));
-  if (numberof(s2)) s2= s2(sort(s2));
+  ns1= numberof(s1);
+  ns2= numberof(s2);
+  if (ns1 != ns2)
+    return 0;
+  if (ns1) s1= s1(sort(s2));
+  if (ns2) s2= s2(sort(s2));
   if (anyof(s1!=s2))
     return 0;
   else
