@@ -2505,6 +2505,7 @@ func loginclude (outfnmroot, time=)
   mkdirp,dirname(outfnmroot);
   st= strtimestamp();
   c= current_include();
+  outfnmroot= strpart(outfnmroot,-1:)==".i"? strpart(outfnmroot,:-2): outfnmroot);
   lognm= outfnmroot+(time==1? "_"+st: "")+".i";
   if (lognm!=c)
     write,open(lognm,"w"), \
