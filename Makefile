@@ -1,9 +1,9 @@
 # these values filled in by    yorick -batch make.i
-Y_MAKEDIR=/home/trm/spack/opt/spack/linux-debian11-haswell/gcc-11.1.0/yorick-f90-plugin-xnpdba62zlt6dkrjwlp3n6hre7kkpuzb
-Y_EXE=/home/trm/spack/opt/spack/linux-debian11-haswell/gcc-11.1.0/yorick-f90-plugin-xnpdba62zlt6dkrjwlp3n6hre7kkpuzb/bin/yorick
+Y_MAKEDIR=/home/trm/usr/spack/linux-centos7-skylake_avx512/gcc-11.1.0/yorick-f90-plugin-xk3z5lwymak7y44i5jhup45dz6btubay
+Y_EXE=/home/trm/usr/spack/linux-centos7-skylake_avx512/gcc-11.1.0/yorick-f90-plugin-xk3z5lwymak7y44i5jhup45dz6btubay/bin/yorick
 Y_EXE_PKGS=
-Y_EXE_HOME=/home/trm/spack/opt/spack/linux-debian11-haswell/gcc-11.1.0/yorick-f90-plugin-xnpdba62zlt6dkrjwlp3n6hre7kkpuzb
-Y_EXE_SITE=/home/trm/spack/opt/spack/linux-debian11-haswell/gcc-11.1.0/yorick-f90-plugin-xnpdba62zlt6dkrjwlp3n6hre7kkpuzb
+Y_EXE_HOME=/home/trm/usr/spack/linux-centos7-skylake_avx512/gcc-11.1.0/yorick-f90-plugin-xk3z5lwymak7y44i5jhup45dz6btubay
+Y_EXE_SITE=/home/trm/usr/spack/linux-centos7-skylake_avx512/gcc-11.1.0/yorick-f90-plugin-xk3z5lwymak7y44i5jhup45dz6btubay
 Y_HOME_PKG=
 
 #
