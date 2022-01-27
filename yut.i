@@ -386,7 +386,7 @@ func check_dir (fnm,..,quiet=)
 
 /* -------------------------------------------------------------------*/
 
-func diradd(s1,s2)
+func diradd (s1,s2)
     /* DOCUMENT diradd(s1,s2)==s1+s2
        unless s2 is ABSOLUTE path in that case == s2
        SEE ALSO:
@@ -397,8 +397,9 @@ func diradd(s1,s2)
 
 /*--------------------------------------------------------------------*/
 
-func strtimestamp(dum) {
- return strtranslate(timestamp(),strtrtable(32,95));
+func strtimestamp (dum)
+{
+  return strtranslate(timestamp(),strtrtable(32,95));
 }
 
 /* -------------------------------------------------------------------*/
@@ -2492,7 +2493,7 @@ func sread_n_worker(&s, &var, i)
   }
 }
 
-func loginclude (outfnmroot)
+func loginclude (outfnmroot, time=)
 /* DOCUMENT c= loginclude (outfnmroot)
      takes a root file name - to which a timestamp will be concatenated -
      and write out a copy of the current_include (with the include file+dir
@@ -2502,11 +2503,13 @@ func loginclude (outfnmroot)
  */
 {
   mkdirp,dirname(outfnmroot);
-  s= timestamp();
+  st= strtimestamp();
   c= current_include();
-  write,open(outfnmroot+"_"+streplace(s,strfind(" ",s,n=5),"_")+".i","w"), \
-    _(swrite(c,format="// from: %s\n"),text_lines(c)), \
-  format="%s\n";
+  lognm= outfnmroot+(time==1? "_"+st: "")+".i";
+  if (lognm!=c)
+    write,open(lognm,"w"), \
+      _(swrite(c,st,format="// read from: %s, on: %s\n"),text_lines(c)), \
+      format="%s\n";
   return c;
 }
 
