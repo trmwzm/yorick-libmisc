@@ -399,7 +399,9 @@ func diradd (s1,s2)
 
 func strtimestamp (dum)
 {
-  return strtranslate(timestamp(),strtrtable(32,95));
+  s= timestamp();
+  s= streplace(s,strfind("  ",s,n=1)," ");
+  return streplace(s,strfind(" ",s,n=5),"_")
 }
 
 /* -------------------------------------------------------------------*/
@@ -2177,7 +2179,8 @@ func plot_hbar (levs0, colors, offset=, wrap=, off=)
   xndc= span(xl,xr,nlabs);
   yndc= ylabs;
   xdd= xd/(nlevs+1);
-  for (i=1;i<=nlevs;i=i+nskip)plt,pr1(levs(i)),xl + i*xdd,ylabs,height=12,justify="CH";
+  for (i=1;i<=nlevs;i=i+nskip)
+    plt,swrite(levs(i),format="%.3g"),xl+i*xdd,ylabs,height=12,justify="CH";
 
   pldj, xl, yb, xr, yb;
   pldj, xl, yt, xr, yt;
@@ -2493,11 +2496,11 @@ func sread_n_worker(&s, &var, i)
   }
 }
 
-func loginclude (outfnmroot, time=)
+func loginclude (outfnmroot)
 /* DOCUMENT c= loginclude (outfnmroot)
-     takes a root file name - to which a timestamp will be concatenated -
-     and write out a copy of the current_include (with the include file+dir
-     location added in the first line as a commented header,) as a side-effect.
+     takes a root file name OUTFNMROOT, and write out a copy of the
+     CURRENT_INCLUDE prefaced by a commented header
+     consisting the included file and directory path
      Returns C which is the current_include() as a string;
    SEE ALSO:
  */
@@ -2505,11 +2508,11 @@ func loginclude (outfnmroot, time=)
   mkdirp,dirname(outfnmroot);
   st= strtimestamp();
   c= current_include();
-  outfnmroot= strpart(outfnmroot,-1:)==".i"? strpart(outfnmroot,:-2): outfnmroot;
-  lognm= outfnmroot+(time==1? "_"+st: "")+".i";
+  lognm= strpart(outfnmroot,-1:)==".i"? outfnmroot: outfnmroot+".i";
+  doc= "// "+["","current dir: "]+rdline(popen("uname -a;pwd;",0),2);
   if (lognm!=c)
     write,open(lognm,"w"), \
-      _(swrite(c,st,format="// read from: %s, on: %s\n"),text_lines(c)), \
+      _(swrite(c,st,format="// included: %s, on: %s"),doc,"",text_lines(c)), \
       format="%s\n";
   return c;
 }
@@ -2640,7 +2643,8 @@ func plot_vbar (levs0, colors, offset=, wrap=, off=)
   //print, "nlevs, nlabs, nskip", nlevs, nlabs, nskip;
 
   ydd= yd/(nlevs+1);
-  for (i=1;i<=nlevs;i=i+nskip)plt,pr1(levs(i)),xlabs,yb + i*ydd,height=12,justify="LH";
+  for (i=1;i<=nlevs;i=i+nskip)
+    plt,swrite(levs(i),format="%.3g"),xlabs,yb+i*ydd,height=12,justify="LH";
 
   pldj, xl, yb, xr, yb;
   pldj, xl, yt, xr, yt;
