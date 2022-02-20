@@ -3,7 +3,7 @@ require, "json.i";
 
 scratch = save(scratch, tmp);
 tmp = save(add, key, get, record, write, read, todox, fromdox, load, dump);
-save, tmp, totext, fromtext;
+save, tmp, match, totext, fromtext;
 
 func dbase(base, .., read=)
 /* DOCUMENT > db= dbase(keyname1, keyname2, ...);
@@ -14,7 +14,7 @@ func dbase(base, .., read=)
 
      Each record of the database is itself an object.  A record
      must contain one member whose name matches every key name;
-     those key name memebrs must all be arrays whose data type and
+     those key name members must all be arrays whose data type and
      dimensions are the same for every record.  Beyond the key
      name members, a record may contain any number of additional
      members.  The additional members need not be the same for
@@ -55,12 +55,21 @@ func dbase(base, .., read=)
      and build index lists for the record or get methods:
        > list = where(database(key,"x") < 1.5);
 
+     MATCH select matching records from an object whose key/vals are used to
+     match the database record/keys: for string partial matches are accepted.
+     Multiple possible values as search criteria are submitted my using ARRAY
+     values to the selection object
+       !!only works for SCALAR key values !!
+     EXAMPLE: > d= dbase();
+              > d, fromtext, "$YORICK_LIB_SPL/conf/sys.txt",colrec=1;
+              > w= d(match,save(type=["uav","asar-l"]));  // partial, or extract
+
      TOTEXT
         write a scalar record member database object to string array.
         COLREC=1:  store records as columns, default is lines.
         usage:
         d= dbase();
-        d= d(fromtext,fnm,[colrec=1]);
+        d, fromtext, fnm, [colrec=1]; // $YORICK_LIB_SPL/../conf/sys.txt, colrec=1
 
      FROMTEXT
         returns a dbase object from a simple ascii rep. in file or str array FNM.
@@ -111,13 +120,15 @@ func add(..)
   use, keys, klist, records;
   while (more_args()) {
     rec = next_arg();
-    if (!is_obj(rec)) error, "each dbase record must be an object";
+    if (!is_obj(rec))
+      error, "each dbase record must be an object";
     n = records(*);
     if (!n) {                        /* this is first record */
       if (is_void(keys)) {
         keys = rec(*,);
         for (i=1 ; i<=numberof(keys) ; ++i)
-          if (!is_scalar(rec(keys(i)))) keys(i) = string(0);
+          if (!is_scalar(rec(keys(i))))
+            keys(i) = string(0);
         keys = keys(where(keys));
         if (!numberof(keys))
           error, "unable to guess at any dbase keys from first record";
@@ -185,6 +196,39 @@ func get(i)
     save, klist, keys(j), obj(klist, keys(j), .., i);
   save, obj, klist, records=obj(records, noop(i));
   return obj;
+}
+
+func match (ok)
+{
+  use, records, keys, klist;
+  nd= records(*);
+  if (is_void(ok))
+    w= indgen(nd);
+  else if (is_integer(ok)) {
+    if (anyof(ok>nd | ok<1))
+      error,"out og bounds.";
+    return ok;
+  } else {
+    if (!is_obj(ok))
+      error,"expecting database key selection object.";
+    kk= ok(*,);
+    if (nallof((kk(-,..)==keys)(sum,)))
+      error,"keyname not found.";
+    m= array(char(0),nd);     // all record mask, start with all OFF/1
+    mj= m;
+    for (j=1;j<=ok(*);j++) {
+      mj= char(0);     //
+      for (i=1;i<=numberof(ok(noop(j)));i++)
+        if (is_string(ok(noop(j),i)))
+          mj|= strgrepm(ok(noop(j),i),use_method(key,ok(*,j)));  // fuzzy match on string value
+        else
+          mj|= use_method(key,ok(*,j))==ok(noop(j),i);
+      m|= mj
+    }
+    w= where(m);
+  }
+  write,format="Number of dbase records selected: %i\n",numberof(w);
+  return w;
 }
 
 func write (fnm)
