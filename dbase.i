@@ -154,21 +154,23 @@ func add(..)
 
 func key(name)
 {
-  local keys;
-  eq_nocopy, keys, use(keys);
-  if (is_void(keys)) return [];
+  use, keys, records, klist;
+  //eq_nocopy, keys, use(keys);
+  if (is_void(keys))
+    return [];
   if (numberof(name)) {
-    if (nallof((name(-,..)==keys)(sum,..))) error, "unknown key name";
-    keys = name(*);
+    if (nallof((name(-,..)==keys)(sum,..)))
+      error, "unknown key name";
+    keys2= name(*);
   }
-  n = use(records,*);
-  if(is_scalar(name))
-    return use(klist, noop(name), .., 1:n);
+  n= records(*);
+  if (is_scalar(name))
+    return klist(noop(name), .., 1:n);
   /* extract cumulative key lists, then truncate to number of records */
-  klist = save();
-  for (i=1 ; i<=numberof(keys) ; ++i)
-    save, klist, keys(i), use(klist,keys(i),..,1:n);
-  return klist;
+  out= save();
+  for (i=1 ; i<=numberof(keys2) ; ++i)
+    save, out, keys2(i), klist(keys2(i),..,1:n);
+  return out;
 }
 
 func record(i, value)
@@ -214,8 +216,8 @@ func match (ok)
     kk= ok(*,);
     if (nallof((kk(-,..)==keys)(sum,)))
       error,"keyname not found.";
-    m= array(char(0),nd);     // all record mask, start with all OFF/1
-    mj= m;
+    m= array(char(1),nd);     // all record mask, start with all OFF/1
+    mj= array(char(0),nd);
     for (j=1;j<=ok(*);j++) {
       mj= char(0);     //
       for (i=1;i<=numberof(ok(noop(j)));i++)
@@ -223,7 +225,7 @@ func match (ok)
           mj|= strgrepm(ok(noop(j),i),use_method(key,ok(*,j)));  // fuzzy match on string value
         else
           mj|= use_method(key,ok(*,j))==ok(noop(j),i);
-      m|= mj
+      m&= mj;
     }
     w= where(m);
   }
