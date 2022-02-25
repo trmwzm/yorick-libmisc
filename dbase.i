@@ -200,7 +200,7 @@ func get(i)
   return obj;
 }
 
-func match (ok)
+func match (ok, verbose=)
 {
   use, records, keys, klist;
   nd= records(*);
@@ -229,7 +229,8 @@ func match (ok)
     }
     w= where(m);
   }
-  write,format="Number of dbase records selected: %i\n",numberof(w);
+  if (verbose==1)
+    write,format="Number of dbase records selected: %i\n",numberof(w);
   return w;
 }
 
@@ -279,7 +280,7 @@ func load (fnmin, json=)
   save, use(), [], use_method(fromdox, oo);  // got that wrong, at first ...
   return f;
 }
-func totext(void, colrec=, fmt=)
+func totext (f, colrec=, fmt=)
 /* DOCUMENT text_db (db)
    write a scalar record member database object to string array.
    ONLY key/names/values are written to text, ***not*** other record members.
@@ -308,7 +309,16 @@ func totext(void, colrec=, fmt=)
   }
   wmx= max(strlen(s));
 
-  return swrite(s,format=swrite(-(wmx+1),format="%%%ds"))(sum,);
+  ss= swrite(s,format=swrite(-(wmx+1),format="%%%ds"))(sum,);
+  if (!is_void(f)) {
+    if (is_string(f))
+      write,(f=open(f,"w")),ss,format="%s\n";
+    else if (typeof(f)=="text_stream")
+      write,f,ss,format="%s\n";
+    return f;
+  } else {
+    return ss;
+  }
 }
 func fromtext (fnm, colrec=, deg=, db=)
 {
