@@ -55,6 +55,9 @@ func dbase(base, .., read=)
      and build index lists for the record or get methods:
        > list = where(database(key,"x") < 1.5);
 
+     ADD can be used to fill an empty DBASE with and existing one, or to
+     join compatible dbases.
+
      MATCH select matching records from an object whose key/vals are used to
      match the database record/keys: for string partial matches are accepted.
      Multiple possible values as search criteria are submitted my using ARRAY
@@ -115,40 +118,46 @@ func dbase(base, .., read=)
   return obj;
 }
 
-func add(..)
+func add (..)
 {
   use, keys, klist, records;
   while (more_args()) {
     rec = next_arg();
     if (!is_obj(rec))
       error, "each dbase record must be an object";
-    n = records(*);
-    if (!n) {                        /* this is first record */
-      if (is_void(keys)) {
-        keys = rec(*,);
+    // check if the arg is a dbase
+    if ((rec(*,)(-,..)==["klist","key","get","record","keys","records"])(*)(sum)==6) {
+      for (i=1;i<=rec(records,*);i++)
+        use_method, add, rec(records,noop(i));
+    } else {
+      n = records(*);
+      if (!n) {                        /* this is first record */
+        if (is_void(keys)) {
+          keys = rec(*,);
+          for (i=1 ; i<=numberof(keys) ; ++i)
+            if (!is_scalar(rec(keys(i))))
+              keys(i) = string(0);
+          keys = keys(where(keys));
+          if (!numberof(keys))
+            error, "unable to guess at any dbase keys from first record";
+        }
         for (i=1 ; i<=numberof(keys) ; ++i)
-          if (!is_scalar(rec(keys(i))))
-            keys(i) = string(0);
-        keys = keys(where(keys));
-        if (!numberof(keys))
-          error, "unable to guess at any dbase keys from first record";
+          save, klist, keys(i), \
+            array(structof(rec(keys(i))), dimsof(rec(keys(i))), 4);
+      } else if ((n>3 && !(n&(n-1))) || numberof(klist(keys(1)))<=n) {  /* double all key lists */
+        local list;
+        for (i=1 ; i<=numberof(keys) ; ++i) {
+          eq_nocopy, list, klist(keys(i));
+          save, klist, keys(i), grow(list, array(structof(list),dimsof(list)));
+        }
       }
-      for (i=1 ; i<=numberof(keys) ; ++i)
-        save, klist, keys(i), \
-          array(structof(rec(keys(i))), dimsof(rec(keys(i))), 4);
-    } else if ((n>3 && !(n&(n-1))) || numberof(klist(keys(1)))<=n) {  /* double all key lists */
-      local list;
-      for (i=1 ; i<=numberof(keys) ; ++i) {
+      n += 1;
+      for (i=1 ; i<=numberof(keys) ; ++i) {  /* add all key values to klists */
         eq_nocopy, list, klist(keys(i));
-        save, klist, keys(i), grow(list, array(structof(list),dimsof(list)));
+        list(..,n) = rec(keys(i));
       }
+      save, records, string(0), rec;   /* add record itself to records member */
     }
-    n += 1;
-    for (i=1 ; i<=numberof(keys) ; ++i) {  /* add all key values to klists */
-      eq_nocopy, list, klist(keys(i));
-      list(..,n) = rec(keys(i));
-    }
-    save, records, string(0), rec;   /* add record itself to records member */
   }
 }
 

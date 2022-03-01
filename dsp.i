@@ -5,7 +5,7 @@ require, "bessel.i";
 require, "convcorrel.i";
 require, "fpanels.i";
 require, "convol.i";
-require, "nfft.i";
+//require, "nfft.i";
 
 /*----------------------------------------------------------------------*/
 
