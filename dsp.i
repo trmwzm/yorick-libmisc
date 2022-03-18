@@ -919,6 +919,57 @@ func average(x, which)
   reshape, xx;
   return xm;
 }
+
+func sddB (x, amp=)
+/* DOCUMENT sddB (x, amp=)
+     AMP==1 for dB[u/voltage/...]
+     This function estimates the standard deviation of dB values
+     The standard deviation of dB values is not linear. The function
+     is an estimation not an exact computation which is not possible.
+   SEE ALSO:
+ */
+{
+  a= amp==1? 20.0: 10.0;
+  x= 10^(x/a);
+  return a*(x(*)(rms)/(avg(x)*log(10)));
+}
+func meandB (x, amp=)
+/* DOCUMENT
+     This function calculates the mean of dB values
+   SEE ALSO:
+ */
+{
+  a= amp==1? 20.0: 10.0;
+  return a*log10(avg(10^(x/a)));
+}
+func sumdB (x, amp=)
+/* DOCUMENT sumdB (x, amp=)
+     This functions calculates the sum of dB values
+     example : > sumdB([60.,60.]);
+               > 63.0103
+   SEE ALSO:
+ */
+{
+  a= amp==1? 20.0: 10.0;
+  return a*log10(sum(10^(x/a)));
+}
+func nulldB (im, null=, amp=, badval=)
+{
+  out= structof(im)==complex? abs(im): im;
+
+  null= is_void(null)? -1e10: null;
+
+  a= amp==1? 20.0: 10.0;
+
+  badval= is_void(badval)? 0.0: badval;
+
+  m= out>null;
+  if (anyof(m))
+    return merge2(a*log10(out),badval,m);
+
+  return array(badval,dimsof(out));
+}
+
 /*--------------------------------------------------------------------*/
 
 func  pksamp (cin,rndx,&rpk,&cpk,&sent,win=,osf=,carrier=,dbgfig=,fcplx=)
