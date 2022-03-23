@@ -1,4 +1,4 @@
-/* rgb.i - Color oxy object.
+/* rgbox.i - Color oxy object.
  */
 
 func _rgb_oxy(nil)
