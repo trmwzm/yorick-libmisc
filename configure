@@ -1,0 +1,3 @@
+#! /bin/sh
+
+yorick -batch make.i
