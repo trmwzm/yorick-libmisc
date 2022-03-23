@@ -2557,7 +2557,7 @@ func geodesicHdg (Ll1,Ll0,e2=,maj=)
    for either an ellipitical or spherical earth given the initial latitude
    and longitude and the final latitude and longitude.
 
-   NOTES: These results are based on the JPL memo
+   NOTES: These results are based on the geo memo
       "Summary of Mocomp Reference Line Determination Study" , IOM 3346-93-163
    and the paper
       "A Rigourous Non-iterative Procedure for Rapid Inverse Solution of Very
