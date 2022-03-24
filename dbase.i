@@ -77,6 +77,8 @@ func dbase(base, .., read=)
      FROMTEXT
         returns a dbase object from a simple ascii rep. in file or str array FNM.
         COLREC=1: treat columns are records, default is lines as records
+        TAB=1:    treat tabs as spaces, or delim
+        comma=1:  treat comma as spaces, or delim
         Ascii representation is:
         ^# for comments,
         records as columns# 2,3,...
@@ -329,7 +331,7 @@ func totext (f, colrec=, fmt=)
     return ss;
   }
 }
-func fromtext (fnm, colrec=, deg=, db=)
+func fromtext (fnm, colrec=, deg=, db=, tab=, comma=)
 {
   use, keys;
 
@@ -337,6 +339,14 @@ func fromtext (fnm, colrec=, deg=, db=)
     fl= text_lines(fnm);
   else
     fl= fnm;
+
+  if (tab==1 || comma==1) {
+    w= where(strgrepm((tab==1? "\t": ","),fl));
+    if (numberof(w)) {
+      ss= strchar((tab==1? "\t ": ", "));
+      fl(w)= strtranslate(fl(w),strtrtable(ss(1),ss(2)));
+    }
+  }
 
   fl= strtrim(fl);
   // remove comments
