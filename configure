@@ -1,13 +1,4 @@
 #! /bin/sh
-#
-# Configuration script for YLib plugin.
-#
-#------------------------------------------------------------------------------
-#
-# YLib (Yorick Library) is licensed under the MIT "Expat" License.
-#
-# Copyright (C) 2012-2018, Éric Thiébaut <https://github.com/emmt/ylib>
-#
 #------------------------------------------------------------------------------
 
 # Temporaries.
