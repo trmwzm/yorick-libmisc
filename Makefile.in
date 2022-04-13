@@ -56,6 +56,9 @@ PKG_I_START= ${srcdir}/libmisc-start.i
 # non-pkg.i include files for this package, if any
 PKG_I_EXTRA=
 
+Y_EXE_DIR:=$(shell dirname $(Y_EXE))
+PKG_BIN=${srcdir}/yoo
+
 RELEASE_FILES = AUTHORS LICENSE Makefile NEWS README.md \
 	configure ${PKG_I} ${PKG_I_START}
 RELEASE_NAME = $(PKG_NAME)-$(RELEASE_VERSION).tar.bz2
@@ -92,7 +95,14 @@ install:
 	    echo "Installing $$file in Y_HOME/i-start"; \
 	    $(YNSTALL) "$$file" $(DEST_Y_HOME)/i-start; \
 	  done; \
+	fi; \
+  if test -n "$(PKG_BIN)"; then \
+	  for file in $(PKG_BIN); do \
+	    echo "Installing $$file in $(Y_EXE_DIR)"; \
+	    $(YNSTALL) "$$file" $(Y_EXE_DIR); \
+	  done; \
 	fi
+
 
 uninstall:
 	@if test -n "$(PKG_I)" -o -n "$(PKG_I_EXTRA)"; then \
@@ -114,18 +124,24 @@ uninstall:
 	      $(RM) "$$full"; \
 	    fi; \
 	  done; \
+	fi; \
+  if test -n "$(PKG_BIN)"; then \
+	  for file in $(PKG_BIN); do \
+	    echo "Uninstalling $$file from $(Y_EXE_DIR)"; \
+	    $(RM)  $(Y_EXE_DIR)"/$$file"; \
+	  done; \
 	fi
 
 clean:
 	rm -f *~ core* *.core
 
-ylib-start-tmp.i: ${PKG_I}
-	rm -f $@
-	for x in ${PKG_I}; do \
-	  echo -n "autoload, \"$$x\", " >> $@; \
-	  grep <$$x -E '^[ 	]*func[ 	]+[^_]' \
-	  | sed -e 's/^[ 	]*func[ 	][ 	]*\([_0-9A-Za-z]*\).*/\1/' >> $@; \
-	done
+# ylib-start-tmp.i: ${PKG_I}
+# 	rm -f $@
+# 	for x in ${PKG_I}; do \
+# 	  echo -n "autoload, \"$$x\", " >> $@; \
+# 	  grep <$$x -E '^[ 	]*func[ 	]+[^_]' \
+# 	  | sed -e 's/^[ 	]*func[ 	][ 	]*\([_0-9A-Za-z]*\).*/\1/' >> $@; \
+# 	done
 
 
 release: $(RELEASE_NAME)
