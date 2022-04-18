@@ -1,7 +1,7 @@
 yorick-libmisc
 ======
 
-Miscellaneous yorick utils and code stash. Much of it needs a lot of work ...
+Miscellaneous yorick utils and code stash. Much of it needs a lot of work... Also installed -- in `[YPKG_PREFIX]/libexec/bin` -- is the script `yoo` which calls `yorick` through `rlwrap` and send time-stamped logs to `$HOME/.yorick/logs`. Add to path if you need command line editing in the yorick REPL (and you are not using the emacs interface.)
 
 Installation
 ------------

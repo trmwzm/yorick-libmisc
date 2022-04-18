@@ -60,7 +60,7 @@ Y_EXE_DIR:=$(shell dirname $(Y_EXE))
 PKG_BIN=${srcdir}/yoo
 
 RELEASE_FILES = AUTHORS LICENSE Makefile NEWS README.md \
-	configure ${PKG_I} ${PKG_I_START}
+	configure ${PKG_I} ${PKG_I_START} ${PKG_BIN}
 RELEASE_NAME = $(PKG_NAME)-$(RELEASE_VERSION).tar.bz2
 
 # --------------------------------------- standard macros for all packages
