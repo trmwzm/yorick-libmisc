@@ -56,7 +56,7 @@ PKG_I_START= ${srcdir}/libmisc-start.i
 # non-pkg.i include files for this package, if any
 PKG_I_EXTRA=
 
-Y_EXE_DIR:=$(shell dirname $(Y_EXE))
+Y_EXE_DIR:=$(shell dirname $(shell command -v yorick))
 PKG_BIN=${srcdir}/yoo
 
 RELEASE_FILES = AUTHORS LICENSE Makefile NEWS README.md \
