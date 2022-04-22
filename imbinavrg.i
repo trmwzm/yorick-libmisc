@@ -129,7 +129,7 @@ func imbinavrg (z, fac1, fac2, &go1, &go2, badval=, badvalout=)
 
 /*------------------------------------------------------------------*/
 
-func xyzbinavrg (x,y,z, n1, n2, badval=, badvalout=)
+func xyzbinavrg (x, y, z, n1, n2, &go1, &go2, badval=, badvalout=)
 /* DOCUMENT xyzbinavrg
    where x refers to 1st index in output grid
    y refers to 2nd index in output grid
@@ -152,9 +152,12 @@ func xyzbinavrg (x,y,z, n1, n2, badval=, badvalout=)
   ni= numberof(z);
 
   if (is_void(badval))
-    badval= 0;
+    wgd= indgen(numberof(z));
+  else
+    wgd= where(z!=badval);
+
   if (is_void(badvalout))
-    badvalout= badval;
+    badvalout= 0.0;
 
   if (is_void(n1))
     error;
@@ -169,13 +172,11 @@ func xyzbinavrg (x,y,z, n1, n2, badval=, badvalout=)
   xmnmx= [x(*)(min),x(*)(max)];
   ymnmx= [y(*)(min),y(*)(max)];
 
-  lx= xmnmx(dif)(1);
-  ly= ymnmx(dif)(1);
+  lx= double(xmnmx(dif)(1));
+  ly= double(ymnmx(dif)(1));
 
-  go1= span(xmnmx(1)-2.*lx/n1,xmnmx(2)+2.*lx/n1,n1+1);
-  go2= span(ymnmx(1)-2.*ly/n2,ymnmx(2)+2.*ly/n2,n2+1);
-
-  wgd= where(z!=badval);
+  go1= span(xmnmx(1)-2*lx/n1,xmnmx(2)+2*lx/n1,n1+1);
+  go2= span(ymnmx(1)-2*ly/n2,ymnmx(2)+2*ly/n2,n2+1);
 
   li1= digitize(x(wgd),go1)-1;
   li2= digitize(y(wgd),go2)-1;
