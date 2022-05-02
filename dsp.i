@@ -1895,7 +1895,8 @@ func hilbert(x, dir, wrkspc=){
  Routine for computing Hilbert transform of real or complex sequence
  Attn! in DSP the Hilbert transform has a "~loose" interpretation.
  NOTE1: for real input (structof!=complex) return x + 1i*hilbert(x)
-        SEE analyt. (check: hilbert(indgen(4)).im;hilbert(complex(indgen(4))))
+        SEE analyt.
+        check:> n=4; hilbert(indgen(n)).im == hilbert(complex(indgen(n))).re;
  NOTE2: for complex x, with x.im== 0:  hilbert(x).im== 0
  NOTE3: Z= S + iH;  phase atan(H/S); peak freq dH/dt
  mathwrks: hilbert(indgen(4))= [1+1i,2-1i,3-1i,4+1i]
@@ -1970,65 +1971,82 @@ func analyt (x, wrkspc=)
   return x;
 }
 
+#if 0
+func tstiqov(n, t=)
+{
+  if (t==1) {
+    zr= random_n(n);
+    zr-=zr(avg);
+    fma; plg,zr-iq2ov(ov2iq(zr,cout=1)),color="red";plg,zr,type=3;limits;
+    pltitle,"error:red";
+  } else if (t==2) {
+    zr= indgen(n);
+    zr-=zr(avg);
+    fma; plg,zr-iq2ov(ov2iq(zr,cout=1)),color="red";plg,zr,type=3;limits;
+    pltitle,"error:red";
+  } else if (t==3) {
+    z= fmpoly(n,2);
+    z2= ov2iq(iq2ov(z),cout=1);
+    fma;plg,Cabs(fft(z));plg,Cabs(fft(z2)),type=3,color="blue";
+  }
+}
+#endif
 /*--------------------------------------------------------------------------*/
 
 func iq2ov(x)
 /* DOCUMENT
-  func tstiqov(n,t=)
-  {
-  if (t==1){
-    zr=random(n);zr-=zr(avg);
-    fma;plg,zr-ov2iq(iq2ov(zr));plg,zr,type=3;limits;
-  }else if (t==2){
-    zr=indgen(n);zr-=zr(avg);
-    fma;plg,zr-ov2iq(iq2ov(zr));plg,zr,type=3;limits;
-  }else if (t==3){
-    z= exp(1i*pi*300*span(-1,1,n)^2);
-    reshape,zr;reshape,zr,&z,double,[1,2*n];
-    fma; plg,log(abs(fft(z))+1e-30),width=3;
-    plg,log(abs(fft(iq2ov(zr)))/2+1e-30),color="red",type=3,width=3;
-    plg,log(abs(fft(ov2iq(iq2ov(zr),cout=1)))+1e-30),color="blue",type=3,width=3;
-  }
-  }
+  OV is real: 2*N; IQ is complex: N
+
  */
 {
+  ic= is_complex(x);
   ns= numberof(x);
+
   iod= ns%2;
-  ns_2= ns/2;
-  ns_4= ns/4;
+  if (ic==1) {
+    zz= x;
+    zz(2::2)*= -1;
+    fft_inplace, zz, 1;
+    zz= _(zz,0,conj(zz(:2:-1)));   //  [1,2,3,4,5](:2:-1) == [5,4,3,2]
+    fft_inplace, zz, -1;
+    return zz.re*1.0/ns;
+  } else {
+    ns_2= ns/2;
+    ns_4= ns/4;
+    z= array(complex,ns_2+iod);
+    zz= array(complex,ns);
 
-  z= array(complex,ns_2+iod);
-  zz= array(complex,ns);
+    z(1:ns_2)= x(1:ns-iod:2) + 1i*x(2:ns-iod:2);
+    if (iod)
+      z(ns_2+1)= x(ns);
 
-  z(1:ns_2)= x(1:ns-iod:2) + 1i*x(2:ns-iod:2);
-  if (iod)z(ns_2+1)= x(ns);
+    z(1::2)*= -1;
 
-  z(1::2) *= -1;
+    fft_inplace, z, 1;
+    z/= ns_2;
 
-  fft_inplace, z, 1;
-  z /= ns_2;
+    zz(:ns_2+iod)= z;
+    if (!iod)
+      zz(ns_2+1).im= 0;  // NYQ
+    zz(1).im= 0;
 
-  zz(:ns_2+iod)= z;
-  if (!iod)zz(ns_2+1).im= 0;  // NYQ
-  zz(1).im= 0;
+    zz(ns_2+2:ns)= conj(zz(ns_2+iod:2:-1));
 
-  zz(ns_2+2:ns)= conj(zz(ns_2+iod:2:-1));
+    fft_inplace, zz, -1;
 
-  fft_inplace, zz, -1;
-
-  return zz.re;
+    return zz.re(::2);
+  }
 }
 
 /*--------------------------------------------------------------------------*/
 
-func ov2iq(x,cout=)
+func ov2iq(x, cout=)
 {
   local y;
 
   ns= numberof(x);
   iod= ns%2;
   ns_2= ns/2
-  ns_4= ns/4;
 
   z= array(complex,ns);
   zz= array(complex,ns_2+iod);
@@ -2036,17 +2054,17 @@ func ov2iq(x,cout=)
   z= complex(x);
 
   fft_inplace, z, 1;
-  z /= ns;
+  z/= ns;
 
   zz= z(:ns_2+iod);
 
   fft_inplace, zz, -1;
 
-  zz(1::2) *= -1;
+  zz(2::2)*= -1;
 
-  if (cout){
+  if (cout) {
     return zz;
-  }else{
+  } else {
     reshape, y, &zz, double, [1,2*(ns_2+iod)];
     return y(1:ns);
   }
