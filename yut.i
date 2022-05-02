@@ -1,4 +1,5 @@
 require, "fcomplex.i";
+require, "xplot.i";
 
 OXY_VOID_VAL= "oxy_void";
 
@@ -2150,7 +2151,7 @@ func plot_hbar (levs0, colors, offset=, wrap=, off=)
   lastsys= plsys_get();
   plsys, 0
       if (!is_void(colors)) {
-        if (dimsof(colors)(2)==3&&structof(colors)==char)
+        if (dimsof(colors)(0)==3 && structof(colors)==char)
           pli, [colors], xl, yb, xr, yt;
         else
           pli, char(transpose(colors(zcol))), xl, yb, xr, yt;
@@ -2617,15 +2618,15 @@ func plot_vbar (levs0, colors, offset=, wrap=, off=)
 
   //plot colors
   lastsys= plsys_get();
-  plsys, 0
-      if (!is_void(colors)) {
-        pli, char(colors(zcol)), xl, yb, xr, yt;
-      } else {
-        if (!is_void(wrap))
-          pliwrap, zcol, xl, yb, xr, yt, wrap=wrap, off=off;
-        else
-          pli, zcol, xl, yb, xr, yt;
-      }
+  plsys, 0;
+  if (!is_void(colors)) {
+    xpli,  span(0,1,nlevs)(-,), xl, yb, xr, yt, cmap=colors;
+  } else {
+    if (!is_void(wrap))
+      pliwrap, zcol, xl, yb, xr, yt, wrap=wrap, off=off;
+    else
+      pli, zcol, xl, yb, xr, yt;
+  }
 
 
   //plot labels;

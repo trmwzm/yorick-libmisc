@@ -202,16 +202,18 @@ func add (o)
              ikv=_(use(ikv),o(ikv)+numberof(txt));
   save, use(kv), [], o(kv);
 }
-func getfile (f,dir)
+func getfile (f, dir)
 {
   txt= rdfile(f);
 
   // TBP deal with the backlash continuation
-  for (ot=save(),i=1;i<=numberof(txt);)
-    save,ot,string(0),use_method(getline,txt,i);
-  txt= array(string,ot(*));
-  for (i=1;i<=ot(*);i++)
-    txt(i)= ot(noop(i));
+  txt2= array(string,numberof(txt));
+  i= j= 1;
+  do {
+    txt2(j++)= use_method(getline,txt,i);
+  } while (i<=numberof(txt));
+  txt= txt2(:j-1);
+  txt2= [];
 
   m= strgrepm("^include *=",txt,case=1);
   if (is_void(dir))
@@ -296,23 +298,23 @@ func set (key, val, unit=, comment=)
   save, v, comment;
   save, kv, noop(key), v;
 }
-func get (key,typestrct,dims,unit=,verbose=,quiet=)
+func get (kk,typestrct,dims,unit=,verbose=,quiet=)
 {
   use, kv, fixunit;
 
-  key= strcase(0,strtrim(key));
-  si= strfind("  ",key);
+  kk= strcase(0,strtrim(kk));
+  si= strfind("  ",kk);
   while(anyof(si(2,)!=-1)){   // replace double spaces
-    key= streplace(key,si," ");
-    si= strfind("  ",key);
+    kk= streplace(kk,si," ");
+    si= strfind("  ",kk);
   }
 
-  if (is_obj(kv,noop(key),1)<0)
+  if (is_obj(kv,noop(kk),1)<0)
     if (quiet)
       return [];
     else
       error,"key not found";
-  v= kv(noop(key));
+  v= kv(noop(kk));
 
   if (is_void(typestrct))
     return v(val);
