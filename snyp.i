@@ -1,6 +1,34 @@
 require, "yut.i";
 require, "json.i";
 
+
+/*---------------------------------------------------------*/
+// warp_args to oxy: keyworda only
+// args("argname") returns VOID if "argname" not in calling seq
+func q (args)
+{
+   local k2;
+   k2= anyof(args(-)=="k2")? args("k2"): "k2";
+   return save(k1=args("k1"),k2);
+}
+wrap_args, q;
+
+// warp_args to oxy: positional(first) + keyworda
+func q (args)
+{
+   local k2;
+   k2= anyof(args(-)=="k2")? args("k2"): "k2";
+   o= save();
+   for (i=1,o=save();i<=args(0);i++)  // positional
+     save,o,args(-,i),args(i);
+   k= args(-);
+   for (i=1;i<=numberof(k);i++)       // keywords
+     save,o,k(i),args(k(i));
+   save,o,k2;                         // override, if k2 not in callseq
+   return o;
+}
+wrap_args, q;
+
 /*---------------------------------------------------------*/
 // save/restore mechanics
 a= 1; b= 2;             // l1
@@ -12,11 +40,12 @@ scratch= save(scratch, tmp);
                         //   SET ITS ITS MEMBERS KEYS AND VALUES AS THOSE OF X with
                         //   current values, new[>l3] -- or old[<l3] if they were not reset
 }
-restore, scratch;       // switch scratch and tmp to l1 state
+restore, scratch;       // switch scratch and tmp to l1 state: x(a)==10; x(b)==20; tmp==orig
 
 /*---------------------------------------------------------*/
-// pass keyword default values in oxobj and allow override with keyword
-func tst(o, k=) {
+// pass keyword default values in oxobj O and allow override with keyword
+func tst (o, k=)
+{
   k= !is_void(k)? k: o(k);
   tmp= save(k);
   restore,o;              // ! everything not a keyword better be declared local !
@@ -28,8 +57,8 @@ func tst(o, k=) {
 /* functor (?) function with stashed data*/
 scratch= save(scratch, tmp);
 tmp= save(eval_);
-func funclos (base,void,key=)
-/* DOCUMENT funclos (base,key=)
+func funclos (base, void, key=)
+/* DOCUMENT funclos (base, key=)
    f= funclos();
    save, f.function, key=pi;  //  modify initialization keyword
    f(2);                      //  6.28319
@@ -39,24 +68,23 @@ func funclos (base,void,key=)
 
   if (is_void(key))
     key= random(3);
-
-  save,ob,key
-
-  return closure(ob,eval_); // eval_ is an obj member, see closure/restore below
+  save, ob, key             // TWO types of "closure" objects
+                            // (*1) closure(func, data) OR (*2) closure(obj, memb)
+  return closure(ob,eval_); // (*2->) eval_ is an OB obj member, see closure/restore below
 }
 func  eval_ (x, &f)
 {
   f= sum(use(key)*x);
   return f;
 }
-funclos= closure(funclos, restore(tmp));
+funclos= closure(funclos, restore(tmp)); //(<-*1)
 restore, scratch;
 
 /*---------------------------------------------------------*/
 /* regular oxy class */
 scratch= save(scratch, tmp);
-tmp= save(meth1,meth2);
-func regobj (base,void,dat=)
+tmp= save(meth1, meth2);
+func regobj (base, void, dat=)
 /* DOCUMENT regobj (base,dat=)
 */
 {
@@ -78,8 +106,43 @@ func  meth2 (void)
 {
   return avg(use(dat));
 }
-regobj= closure(regobj, restore(tmp));
+regobj= closure(regobj, restore(tmp));  // closure of the form (function, data);
+                                        // where data is an object - which becomes "base"
 restore, scratch;
+
+/*---------------------------------------------------------*/
+// wrap_args constructor
+scratch= save(scratch, tmp);
+tmp= save(m1, m2);
+func ob (args)
+/* DOCUMENT ob= new(k1= [,k2= ])
+     K1=
+   SEE ALSO:
+ */
+{
+
+  local k2;
+  if (anyof(args(-)=="k2")) k2 = args("k2");
+  else k2= "default";
+
+  q= save(k1=args("k1"), k2, [], args(1));
+  return q;
+}
+wrap_args, ob;
+func m1 (x)
+{
+   write,"m1";
+   write,"use(k1):",use(k1);
+   info,x;
+}
+func m2 (x)
+{
+   write,"m2";
+   write,"use(k2):",use(k2);
+   info,x;
+}
+ob= closure(ob, restore(tmp));
+restore,scratch;
 
 /*---------------------------------------------------------*/
 
@@ -97,7 +160,6 @@ wrap_args, tmp;
 wrapped_closure = save(tmp, closure_data="Hello, world!");
 wrapped_closure = closure(wrapped_closure, tmp);
 restore, scratch;
-
 
 /*---------------------------------------------------------*/
 
@@ -443,6 +505,30 @@ func  eval_ (x, &f, key=)
 }
 funclos= closure(funclos, restore(tmp));
 restore, scratch;
+
+scratch = save(scratch, tmp);
+tmp= save(ob_new, ob_m1, ob_m2);
+extern ob; // foc DOC
+func ob_new(args)
+/* DOCUMENT ob= ob_new(k1= [,k2= ])
+     K1=
+   SEE ALSO:
+ */
+{
+  local k2;
+  local ob_m1, ob_m2;
+  restore, use, ob_m1, ob_m2;
+
+  if (anyof(args(-)=="k2")) k2 = args("k2");
+  else k2= "default";
+
+  return save(k1=args("k1"), \
+              k2, \
+              ob_m1, \
+              ob_m2);
+}
+wrap_args, ob_new;
+
 
 /* -------------------------- hu? -------------------------- */
 #if 0
