@@ -2911,28 +2911,44 @@ func restore_rec(args)
 }
 wrap_args, restore_rec;
 
-func oxeq (o1, o2)
+func oxeq (o1, o2, strict)
+/* DOCUMENT oxeq (o1, o2[, strict])
+   checks that all member name and values are identical
+        STRICT= 2, check types, dimensions, and value
+        STRICT= 1, check types, (rank) and dimensions
+        STRICT= void or 0, DEFAULT checks types and rank
+   ORDER may be different
+   SEE ALSO:
+ */
 {
+  strict= is_void(strict)? 0: strict;
   // id. # of members ?
-  l= is_obj(o1)? o1(*)==o2(*): allof(o1)==allof(o2);
-  if (l && is_obj(o1)) {
-    for (i=1; i<=o1(*); i++) {
-      // id. member names ?
-      if (o1(*,i)==o2(*,i)) {
-        o1i= o1(noop(i));
-        l= oxeq(o1(noop(i)),o2(noop(i)));
-      } else
-        return 0;
-    }
+  if(is_obj(o1)) {
+    n= o1(*);
+    o1nm= o1(*,);
+    o2nm= o2(*,);
+    l= n==o2(*) && sum(o1(*,)==o2nm(-,))==n;
+    i= 0;
+    while (l==1 && i++<n)
+      l&= oxeq(o1(noop(i)),o2(o1nm(i)),strict);
+  } else {
+    l= structof(o1)==structof(o2);     // type check
+    d1= dimsof(o1); d2= dimsof(o2);
+    l&= allof(d1(1)==d2(1));           // rank check
+    if (l && strict==1)
+      l&= allof(d1==d2);               // dimesion check
+    if (l && strict==2)
+      l&= allof(o1==o2);               // value check
   }
   return l;
 }
 
 func is_group (o)
-    /* DOCUMENT l= is_group(o);
-       check if all members are anonymous
-       SEE ALSO:
-    */
+/* DOCUMENT l= is_group(o);
+   check if all members are anonymous
+   is_group(save(string(0),a,string(0),b,string(0),c,string(0),d,string(0),e))
+   SEE ALSO:
+*/
 {
   return is_obj(o)>0 && !is_stream(o) && allof(o(*,)==string(0));
 }
