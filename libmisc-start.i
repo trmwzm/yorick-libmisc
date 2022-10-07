@@ -1,18 +1,20 @@
-// append environment variables of the form $YORICK_LIB_[X]=/path/to
-// as /path/to/lib:/path/to/contrib
-tmp= save(tmp,t,m,w,i,s,ss,u,cmdl,verb);
+// append environment variables listed in YORICK_ENV_LIBS
+// which might be in  YORICK_LIB_[X]=/path/to form ;p
+// as /path/to/lib:/path/to/contrib to yorick load path
+tmp= save(tmp,s,sl,m,nm,i,ss,u,cmdl,verb);
 
 cmdl= get_argv();
 verb= noneof(cmdl == "-q");
- 
-t= rdfile(popen("env",0));
-m= strgrepm("^YORICK_LIB_",t);
-if (anyof(m)) {
-  w= where(m);
-  for (i=1;i<=numberof(w);i++) {
-    s= strtok(t(w(i)),"=");
-    if (strlen(s(2))) {
-      u= s(2);
+
+s= get_env("YORICK_ENV_LIBS");
+if (s!=string(0)) {
+  sl= strpart(s,strword(s,":",20));
+  m= sl!=string(0);
+  nm= m(sum);
+  for (i=1;i<=nm;i++) {
+    s= get_env(sl(i));
+    if (strlen(s)) {
+      u= s;
       do {
         ss= strtok(u,":");
         set_path, get_path()+":"+ss(1);
@@ -23,6 +25,8 @@ if (anyof(m)) {
     }
   }
 }
+close,fenv;
+
 restore,tmp;
 
 // remove blacklisted i-start (autoload) files
