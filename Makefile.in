@@ -58,7 +58,8 @@ PKG_I_START= ${srcdir}/libmisc-start.i
 PKG_I_EXTRA=
 
 PKG_BIN=${srcdir}/yoo \
-        ${srcdir}/shbang
+        ${srcdir}/shbang \
+        ${srcdir}/ynvoke
 
 RELEASE_FILES = AUTHORS LICENSE Makefile NEWS README.md \
 	configure ${PKG_I} ${PKG_I_START} ${PKG_BIN}

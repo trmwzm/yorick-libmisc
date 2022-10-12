@@ -1,0 +1,33 @@
+#!/usr/bin/env shbang
+//!yorick -q -i
+
+batch, 1;
+
+// 1:yorick exec, 2:-q, 3:-i, 4: yinvoke, 5: args
+ar= get_argv();
+nar= numberof(ar);
+nop= 4;
+if (nar==nop)
+  write,"yinvoke [-i req.i] funcname arg1 arg2=v2 arg3 ...";
+
+if (nar>nop) {
+  if (ar(nop+1)=="-i") {
+    if (nar==nop+1)
+      error,"expecting include filename.";
+    require,ar(nop+2);
+    nop= nop+2;
+  }
+  ar= ar(nop+1:);
+  nar-= nop;
+  s= "return "+ar(1)+"(";
+  if (nar>1)
+    s+= strpart(sum(ar(2:)+", "),:-2);
+  s+= ");";
+  val= exec(s);
+  if (is_integer(val) && val>0)
+    error;
+  if (sizeof(val)<2e3)
+    print,val;
+}
+
+quit;
