@@ -10,10 +10,13 @@ nop= 4;
 if (nar==nop)
   write,\
     "yinvoke [-i req.i] funcname arg1 arg2=v2 arg3 ...\n",  \
-    "   example:> ynvoke -i yut.i exp 1.0 \n", \
+    "   examples:> ynvoke -i yut.i exp 1.0 \n", \
+    "            > ynvoke -i yut.i strplt \\\"hello\\_world\\\"\n", \
+    "            > ynvoke save nm=\\\"hello\\_world\\\"\n", \
     "OR\n", \
     "yinvoke [-i req.i] statmnt_1 statmnt_2 ... return\ x\n", \
-    "   example:> ynvoke -i yut.i a=save\\(\\) b=save\\(\\) return\\ oxeq\\(a,b\\)-1\n", \
+    "   examples:> ynvoke -i yut.i a=save\\(\\) b=save\\(\\) return\\ oxeq\\(a,b\\)-1\n", \
+    "            > ynvoke return\\ \\\"hello\\ world\\\"  \n", \
     "NOTE: in either forms, if val is scalar integer, used as error cond (>0 err).\n";
 
 if (nar>nop) {
