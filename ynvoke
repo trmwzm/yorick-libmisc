@@ -8,7 +8,13 @@ ar= get_argv();
 nar= numberof(ar);
 nop= 4;
 if (nar==nop)
-  write,"yinvoke [-i req.i] funcname arg1 arg2=v2 arg3 ...";
+  write,\
+    "yinvoke [-i req.i] funcname arg1 arg2=v2 arg3 ...\n",  \
+    "   example:> ynvoke -i yut.i exp 1.0 \n", \
+    "OR\n", \
+    "yinvoke [-i req.i] statmnt_1 statmnt_2 ... return\ x\n", \
+    "   example:> ynvoke -i yut.i a=save\\(\\) b=save\\(\\) return\\ oxeq\\(a,b\\)-1\n", \
+    "NOTE: in either forms, if val is scalar integer, used as error cond (>0 err).\n";
 
 if (nar>nop) {
   if (ar(nop+1)=="-i") {
@@ -18,13 +24,17 @@ if (nar>nop) {
     nop= nop+2;
   }
   ar= ar(nop+1:);
-  nar-= nop;
-  s= "return "+ar(1)+"(";
-  if (nar>1)
-    s+= strpart(sum(ar(2:)+", "),:-2);
-  s+= ");";
-  val= exec(s);
-  if (is_integer(val) && val>0)
+  if (anyof(strgrepm("return",ar))) {
+    val= exec(sum(ar+";"));
+  } else {
+    nar-= nop;
+    s= "return "+ar(1)+"(";
+    if (nar>1)
+      s+= strpart(sum(ar(2:)+", "),:-2);
+    s+= ");";
+    val= exec(s);
+  }
+  if (is_scalar(val) && is_integer(val) && val>0)
     error;
   if (sizeof(val)<2e3)
     print,val;

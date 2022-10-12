@@ -2927,7 +2927,14 @@ func oxeq (o1, o2, strict)
     n= o1(*);
     o1nm= o1(*,);
     o2nm= o2(*,);
-    l= n==o2(*) && sum(o1(*,)==o2nm(-,))==n;
+    n1= o1(*);
+    n2= o2(*);
+    l= n1==n2;
+    if (!l)
+      return 0;
+    else if (n1==0)
+      return 1;
+    l&= sum(o1(*,)==o2nm(-,))==n;
     i= 0;
     while (l==1 && i++<n)
       l&= oxeq(o1(noop(i)),o2(o1nm(i)),strict);
