@@ -2917,27 +2917,32 @@ func oxeq (o1, o2, strict)
         STRICT= 2, check types, dimensions, and value
         STRICT= 1, check types, (rank) and dimensions
         STRICT= void or 0, DEFAULT checks types and rank
-   ORDER may be different
+   ORDER may be different, BUT unnamed members MUST keep
+   order between themselves, object-to-object
    SEE ALSO:
  */
 {
   strict= is_void(strict)? 0: strict;
   // id. # of members ?
   if(is_obj(o1)) {
-    n= o1(*);
+    if (!is_obj(o2))
+      return 0;
     o1nm= o1(*,);
     o2nm= o2(*,);
     n1= o1(*);
     n2= o2(*);
     l= n1==n2;
+    n= n1;
     if (!l)
       return 0;
     else if (n1==0)
       return 1;
-    l&= sum(o1(*,)==o2nm(-,))==n;
+    l&= sum(o1nm==o2nm(-,))==n;
+    i1s= sort(o1nm+"");
+    i2s= sort(o2nm+"");
     i= 0;
     while (l==1 && i++<n)
-      l&= oxeq(o1(noop(i)),o2(o1nm(i)),strict);
+      l&= oxeq(o1(i1s(i)),o2(i2s(i)),strict);
   } else {
     l= structof(o1)==structof(o2);     // type check
     d1= dimsof(o1); d2= dimsof(o2);

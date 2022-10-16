@@ -1,14 +1,30 @@
 require, "yut.i";
 
-/* SIMPLISTIC workflow engine, generates a DAG where:
+/* TODO:
+   1. func converting given object into "null" template for typecheck
+   2. testing testing testing
+
+ */
+/* BASIC type checks for the data exchanged in pipelines,
+   not sure what will actually execute!... maybe [snake]make?
        1 - rules are nodes/vertices
        2 - types are edges, directions
-   from three sets:
-   1 - set of all types, this can be gathered from in-/output from {rules}
+   Build pipeline from three sets:
+   1 - set of all types, this can be gathered from in-/out-put from {rules}
    2 - set of all rules, name_of_rule + {inputs} + {outputs}
    3 - desired start/end types/products/dependencies
-   
-   NOTE:!no leading, or ending spaces in member names!
+
+   Types:
+   [hierachical] oxy objects and groups represent types whithin yorick...
+   Oxy restrictions and rules for types that may be checked:
+   1 - no leading, or ending, spaces in member names, no un-named member (*) below
+   2 - no function, streams, structs, _lists, ... as values, only basic kinds
+   3 - (*) a group of IDENITICAL "types" checks as a group of one element
+   4 - values are only numerical, strings, character, and objects
+   5 - void matches all types
+   6 - values not type matched, but types are, *and* dimension for arrays, UNLESS:
+   7 - it is an object of a type belonging to the  WRKFL_EXT_RA_TS type group
+   8 - ...
 
    With notation {} for oxy object:
    
@@ -39,8 +55,31 @@ require, "yut.i";
    data products:
 */
 
-func is_wrkfl_t (a, tmpl, quiet=)
-/* DOCUMENT is_wrkfl_t (a, [name,] [quiet=])
+scratch= save(o,oo);
+o= save(); {
+
+  oo= save(); {
+    oo, ext_type= "pdb";
+    oo, pdbname= "dir/name.pdb";
+  } save, o, pdb=oo;
+
+  oo= save(); {
+    oo, ext_type= "yorick-cfg";
+    oo, ycfgname= "dir/name.i";
+  } save, o, ycfg=oo;
+
+  oo= save(); {
+    oo, ext_type= "bin";
+    oo, type= "fcomplex";
+    oo, dims= "dimsof";
+    oo, binname= "dir/name.dat";
+  } save, o, bin=oo;
+}
+wrkfl_ext_ra_ts= o;
+restore, scratch;
+
+func is_wrkfl_t (a, tmpl)
+/* DOCUMENT is_wrkfl_t (a, [tmpl])
    return in {1,0} is quiet==1, else 1 or error
    without TMPL, runs high level checks of the workflow type:
    1 - if it is a group of elementary types, check all types are
@@ -53,9 +92,9 @@ func is_wrkfl_t (a, tmpl, quiet=)
    SEE ALSO:
  */
 {
-  err= is_void(quiet)? 0: quiet;
   na= a(*);
-  anm= a(*,);
+  if (na==1)   // void is all
+    return 1;
   if (is_group(a)) {  // without TMPL, check all id.; with, check
     i= 0;
     l= is_void(tmpl)? 1: is_group(tmpl); 
@@ -64,10 +103,14 @@ func is_wrkfl_t (a, tmpl, quiet=)
         l&= is_wrkfl_t(a(noop(i)),a(1),quiet=quiet);  // i==1 ;(
       else
         l&= is_wrkfl_t(a(noop(i)),tmpl(1),quiet=quiet);
-  } else {
+  } else if (is_obj(a)) {
+    if (is_wrkfl_dimra(a,tmpl))
+      return 1;
     // no non-named members
-    l= is_obj(a)>0 && !is_stream(a) && noneof(a(*,)==string(0));
-    l&= allof(a(*,)==strtrim(a(*,)));  // no leading or ending spaces
+    anm= a(*,);
+
+    l= is_obj(a)>0 && !is_stream(a) && noneof(anm==string(0));
+    l&= allof(anm==strtrim(anm));  // no leading or ending spaces
     l&= wrkfl_check_dims(a);    // arrays and group values dimension checks
     if (l && !is_void(tmpl))
       l&= oxeq(a,tmpl,0);
@@ -78,6 +121,19 @@ func is_wrkfl_t (a, tmpl, quiet=)
   }
   return l;
 }
+
+func is_wrkfl_dimra (a, tmpl)
+{
+  l= is_obj(a) && a(*)==2 && sum((a(*,)(-,)==["dims","data"])(*))==2;
+  if (l) {
+    if (nallof(dimsof(a(data))==a(dims)))
+      error,"dims and dimsof(data) unmatched.";
+    if (!is_void(tmpl) && is_wrkfl_dimra(tmpl))
+      l&= a(dims,1)==tmpl(dims,1);
+  }
+  return l;
+}
+
 
 func wrkfl_check_dims (a)
 /* DOCUMENT
@@ -91,8 +147,7 @@ func wrkfl_check_dims (a)
   n= a(*,);
   // object members
   mo= is_obj(a,n);  // object mask
-  io= anyof(mo);
-  sg= strgrepm("_dims$",strtrim(n));  // _dims s:e 
+  sg= strgrepm("_dims$",strtrim(n));  // _dims s:e
   m= sg(2,..) >= 0;  // _dims mask
   l= 1;
   if (anyof(m)) {
@@ -109,3 +164,42 @@ func wrkfl_check_dims (a)
   return l;
 }
  
+func to_wkfl_t (a)
+/* DOCUMENT t= to_wkfl_t (o)
+   T==[]: VOID return if not valid type
+
+   convert into template object. Testing > is_wrkfl_t(o,to_wkfl_t(o));
+   SEE ALSO:
+ */
+{
+  if (!is_wrkfl_t(a))
+    return [];
+  na= a(*);
+  if (na==1)   // void is all
+    return save();
+
+  if (is_group(a)) // group of type
+    return save(string(0),to_wkfl_t(a(1)));
+  else {
+    n= a(*,);
+    mo= is_obj(a,n);  // object mask
+    sg= strgrepm("_dims$",strtrim(n));  // _dims s:e
+    md= sg(2,..) >= 0;  // _dims mask
+
+    b= save();
+    for (i=1;i<=a(*);i++) {
+      if (mo(i))
+        save,b,n(i),to_wkfl_t(a(noop(i)));
+      else
+        save,b,n(i),to_wkfl_t(a(noop(i)));
+    }
+    l= 1;
+    if (anyof(m)) {
+      w= where(m);     // where _dims
+      nw= numberof(w);
+      sw= strpart(n(w),transpose([0,sg(1,w)]));  // array membname
+      i= 0;
+
+    }
+    return out;
+  }
