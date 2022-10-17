@@ -66,11 +66,13 @@ o= save(); {
   oo= save(); {
     oo, ext_type= "yorick-cfg";
     oo, ycfgname= "dir/name.i";
+    oo, objnm= ["obj1","obj2"]
   } save, o, ycfg=oo;
 
   oo= save(); {
     oo, ext_type= "bin";
-    oo, type= "fcomplex";
+    oo, type= double;
+    oo, fcomplex= 0;
     oo, dims= "dimsof";
     oo, binname= "dir/name.dat";
   } save, o, bin=oo;
@@ -92,8 +94,10 @@ func is_wrkfl_t (a, tmpl)
    SEE ALSO:
  */
 {
+  if (!is_obj(a) && !is_void(a))
+    return 0;
   na= a(*);
-  if (na==1)   // void is all
+  if (na==0)   // void is all
     return 1;
   if (is_group(a)) {  // without TMPL, check all id.; with, check
     i= 0;
@@ -104,66 +108,29 @@ func is_wrkfl_t (a, tmpl)
       else
         l&= is_wrkfl_t(a(noop(i)),tmpl(1),quiet=quiet);
   } else if (is_obj(a)) {
-    if (is_wrkfl_dimra(a,tmpl))
-      return 1;
-    // no non-named members
     anm= a(*,);
-
-    l= is_obj(a)>0 && !is_stream(a) && noneof(anm==string(0));
+    // no non-named members
+    l= noneof(anm==string(0));
+    // no pre-/post-spaces
     l&= allof(anm==strtrim(anm));  // no leading or ending spaces
-    l&= wrkfl_check_dims(a);    // arrays and group values dimension checks
-    if (l && !is_void(tmpl))
-      l&= oxeq(a,tmpl,0);
-    i= 0;
-    while (l==1 && i++<na)
-      if (is_obj(a(noop(i))))
-        l&= is_wrkfl_t(a(noop(i)),tmpl(anm(i)),quiet=quiet);
+    // find "_extern$" keys with obj value: not type checked
+    mo= is_obj(a,noop(anm));
+    me= strgrepm("_extern$",anm)(2,..) >= 0;
+    if (allof(mo & me))
+      return l;
+    if (anyof(mo & !me)) {
+      w= where(mo & !me);
+      i= 0; while (l==1 && i++<numberof(w))
+        l&= is_wrkfl_t(a(w(i)),tmpl(anm(w(i))));
+    }
+    if (nallof(mo)) {
+      w= where(!mo);
+      l&= oxeq(a(noop(w)),tmpl(anm(w)),1);  // check kind, rank, and dimensions
+    }
   }
   return l;
 }
 
-func is_wrkfl_dimra (a, tmpl)
-{
-  l= is_obj(a) && a(*)==2 && sum((a(*,)(-,)==["dims","data"])(*))==2;
-  if (l) {
-    if (nallof(dimsof(a(data))==a(dims)))
-      error,"dims and dimsof(data) unmatched.";
-    if (!is_void(tmpl) && is_wrkfl_dimra(tmpl))
-      l&= a(dims,1)==tmpl(dims,1);
-  }
-  return l;
-}
-
-
-func wrkfl_check_dims (a)
-/* DOCUMENT
-   checks that "[sth]_dims" members describes the dimensions
-   of the STH array value, or number of goup elements
-   
-   !! not recursive, used only as a worked for is_wrkfl_t
-   SEE ALSO:
- */
-{
-  n= a(*,);
-  // object members
-  mo= is_obj(a,n);  // object mask
-  sg= strgrepm("_dims$",strtrim(n));  // _dims s:e
-  m= sg(2,..) >= 0;  // _dims mask
-  l= 1;
-  if (anyof(m)) {
-    w= where(m);     // where _dims
-    nw= numberof(w);
-    sw= strpart(n(w),transpose([0,sg(1,w)]));  // array membname
-    i= 0;
-    while (l==1 && i++<nw)
-      if (io && mo(w(i)))
-        l&= is_scalar(a(w(i))) && is_obj(a,sw(i)) && a(w(i))==a(sw(i),*);
-      else
-        l&= allof(a(w(i))==dimsof(a(sw(i))));          
-  }
-  return l;
-}
- 
 func to_wkfl_t (a)
 /* DOCUMENT t= to_wkfl_t (o)
    T==[]: VOID return if not valid type
@@ -182,7 +149,7 @@ func to_wkfl_t (a)
     return save(string(0),to_wkfl_t(a(1)));
   else {
     n= a(*,);
-    mo= is_obj(a,n);  // object mask
+    mo= is_obj(a,noop(n));  // object mask
     sg= strgrepm("_dims$",strtrim(n));  // _dims s:e
     md= sg(2,..) >= 0;  // _dims mask
 
@@ -203,3 +170,4 @@ func to_wkfl_t (a)
     }
     return out;
   }
+}
