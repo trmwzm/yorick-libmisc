@@ -2511,7 +2511,7 @@ func loginclude (outfnmroot)
   c= current_include();
   lognm= strpart(outfnmroot,-1:)==".i"? outfnmroot: outfnmroot+".i";
   doc= "// "+["","current dir: "]+rdline(popen("uname -a;pwd;",0),2);
-  if (lognm!=c)
+  if (!is_void(c) && lognm!=c)
     write,open(lognm,"w"), \
       _(swrite(c,st,format="// included: %s, on: %s"),doc,"",text_lines(c)), \
       format="%s\n";

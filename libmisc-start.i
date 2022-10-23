@@ -37,4 +37,6 @@ for (i=1;i<=numberof(autoload_blacklist);i++)
   rename,autoload_blacklist(i),autoload_blacklist(i)+".bkp";
 restore, tmp;
 
+Y_ETC= Y_HOME+"etc/";
+
 pldefault, marks=0;
