@@ -1,6 +1,6 @@
 require, "dsp.i";
 require, "poly_fit.i";
-if (!is_void(mp_size)) mp_require, "mpool.i";;
+if (!is_void(mp_size)) mp_require, "mpool.i";
 
 func correl2d_fast(a, b, &work, srch=)
 /* DOCUMENT correl(a,b,srch=)
@@ -29,7 +29,7 @@ func correl2d_fast(a, b, &work, srch=)
   nd= da(1);
   dab= max(da,db);
   dt= array(nd, 1+nd);
-  for (i= ; i<=2 ; ++i)
+  for (i=1 ; i<=2 ; ++i)
     dt(1+i)= fft_good(dab(i+1));
   if (nd==3) dt(0)= da(4);
   at= array(complex, dt);
@@ -45,7 +45,8 @@ func correl2d_fast(a, b, &work, srch=)
   bt(,1:srch(2)-srch(2)/2-1,..)= 0;
   bt(,-srch(2)/2+1:,..)= 0;
 
-  if (is_void(work)) work= fft_setup(dimsof(at),[1,1]);
+  if (is_void(work))
+    work= fft_setup(dimsof(at),[1,1]);
   fft_inplace, at, [1,1], setup=work;
   fft_inplace, bt, [1,1], setup=work;
   at= conj(bt)*at;
@@ -59,9 +60,8 @@ func correl2d_fast(a, b, &work, srch=)
   if (typo==int||typo==long) {
     at= typo(double(at)+0.5);
     return typo(at)-(at<0);
-  }else{
+  else
     return typo(at);
-  }
 }
 
 

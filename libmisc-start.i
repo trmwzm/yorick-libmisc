@@ -19,7 +19,7 @@ if (s!=string(0)) {
         ss= strtok(u,":");
         set_path, get_path()+":"+ss(1);
         if (!batch() && verb)
-          write,ss(1),format="Adding "+s(1)+" to path: %s\n";
+          write,ss(1),format="Adding "+sl(i)+" path: %s\n";
         u= ss(2);
       } while (strlen(u));
     }
