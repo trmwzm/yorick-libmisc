@@ -331,6 +331,24 @@ func deref(ptr)
   return *ptr;
 }
 
+func file_first_alt (f, ..)
+/* DOCUMENT f= file_first_alt(f1 [, f2 [, f3...]])
+   F: first available file from alternatives: F1, F2...
+   void if not found.
+   SEE ALSO:
+ */
+{
+  if (is_void(f))
+    return [];
+  if (open(f,"r",1))
+    return f;
+  else
+    while (more_args())
+      if (open((f=next_arg()),"r",1))
+        return f;
+  return [];
+}
+
 /* ------------------------------------------------------------------------ */
 
 func check_file (fnm,.., quiet=, errmsg=)
