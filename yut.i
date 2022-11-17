@@ -335,16 +335,17 @@ func find_in_dir (din, nm, dir=, quiet=)
 /* DOCUMENT x= find_in_dir(din, nm, dir=, quiet=)
    X is the *FIRST* file-, or directory- (if DIR==1,) instance found
    in directory tree at DIN,  which matches NM.
-   X==0 is returned if a match is not found and QUIET==1.
+   Void X is returned if a match is not found and QUIET==1.
    Error is called if QUIET is not set to 1 and no match is found.
-   SEE ALSO:
+   pathfun.i has FIND_IN_PATH, for yorick file searches in get_path()
+   SEE ALSO: find_in_path
  */
 {
   local d;
   f= lsdir(din,d);
   if (structof(f)==long) {
     if (quiet)
-        return 0;
+        return [];
       else
         error,"Input directory: "+din+" not found.";
   } else {
@@ -376,7 +377,7 @@ func find_in_dir (din, nm, dir=, quiet=)
     }
   }
   if (quiet==1)
-    return 0;
+    return [];
   else
     error,(dir==1? "Directory: ": "File: ")+nm+" not found in "+din+".";
 }
@@ -465,6 +466,8 @@ func diradd (s1, s2)
    SEE ALSO:
 */
 {
+  if (is_void(s2) || s2==string(0) || s2=="")
+    return s1;
   return (strpart(s2,1:1)=="/"? s2: (strpart(s1,0:0)=="/"? s1+s2: s1+"/"+s2));
 }
 
