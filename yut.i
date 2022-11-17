@@ -463,11 +463,12 @@ func check_dir (fnm,..,quiet=)
 func diradd (s1, s2)
 /* DOCUMENT diradd(s1,s2) == s1+s2
    unless s2 is ABSOLUTE path in that case == s2
+   if S2 is void or string(0) or "". return s1 WITH "/" appended
    SEE ALSO:
 */
 {
   if (is_void(s2) || s2==string(0) || s2=="")
-    return s1;
+    return (strpart(s1,0:0)=="/"? s1: s1+"/");
   return (strpart(s2,1:1)=="/"? s2: (strpart(s1,0:0)=="/"? s1+s2: s1+"/"+s2));
 }
 
