@@ -332,6 +332,13 @@ func deref(ptr)
 }
 
 func find_in_dir (din, nm, dir=, quiet=)
+/* DOCUMENT x= find_in_dir(din, nm, dir=, quiet=)
+   X is the *FIRST* file-, or directory- (if DIR==1,) instance found
+   in directory tree at DIN,  which matches NM.
+   X==0 is returned if a match is not found and QUIET==1.
+   Error is called if QUIET is not set to 1 and no match is found.
+   SEE ALSO:
+ */
 {
   local d;
   f= lsdir(din,d);
@@ -371,7 +378,7 @@ func find_in_dir (din, nm, dir=, quiet=)
   if (quiet==1)
     return 0;
   else
-    error,(dir==1? "Directory: ": "File: ")+nm+" not found in "+dir+".";
+    error,(dir==1? "Directory: ": "File: ")+nm+" not found in "+din+".";
 }
 
 func file_first_alt (f, ..)
