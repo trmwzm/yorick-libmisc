@@ -341,40 +341,40 @@ func find_in_dir (din, nm, dir=, quiet=)
    SEE ALSO: find_in_path
  */
 {
+  // list dir and sub-dirs
   local d;
   f= lsdir(din,d);
-  if (structof(f)==long) {
+  nd= numberof(d);
+
+  // input dir check
+  if (structof(f)==long)
     if (quiet)
         return [];
       else
         error,"Input directory: "+din+" not found.";
-  } else {
-    nm= strtrim(nm);
-    if (dir==1) {
-      m= d==nm;
-      if (!is_void(d) && anyof(m))
-        return diradd(din,d(where(m)(1)))+"/";
-      else {
-        nd= numberof(d);
-        i= dd= 0;
-        while (i++<nd && dd==0)
-          dd= find_in_dir(diradd(din,d(i)),nm,dir=1,quiet=1);
-        if (is_string(dd))
-          return dd;
-      }
-    } else {
-      m= f==nm;
-      if (!is_void(f) && anyof(m))
-        return diradd(din,f(where(m)(1)));
-      else  {
-        nd= numberof(d);
-        i= dd= 0;
-        while (i++<nd && dd==0)
-          dd= find_in_dir(diradd(din,d(i)),nm,quiet=1);
-        if (is_string(dd))
-          return dd;
-      }
-    }
+  
+  // trim search item
+  nm= strtrim(nm);
+
+  // search
+  i= 0;
+  dd= [];
+  if (dir==1) {   // search for a directory
+    m= d==nm;
+    if (!is_void(d) && anyof(m))
+      return diradd(din,d(where(m)(1)))+"/";
+    while (i++<nd && is_void(dd))
+      dd= find_in_dir(diradd(din,d(i)),nm,dir=1,quiet=1);
+    if (is_string(dd))
+        return dd;
+  } else {        // search for a file
+    m= f==nm;
+    if (!is_void(f) && anyof(m))
+      return diradd(din,f(where(m)(1)));
+    while (i++<nd && is_void(dd))
+      dd= find_in_dir(diradd(din,d(i)),nm,quiet=1);
+    if (is_string(dd))
+      return dd;
   }
   if (quiet==1)
     return [];
