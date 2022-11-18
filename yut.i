@@ -331,20 +331,33 @@ func deref(ptr)
   return *ptr;
 }
 
-func find_in_dir (din, nm, dir=, quiet=)
-/* DOCUMENT x= find_in_dir(din, nm, dir=, quiet=)
-   X is the *FIRST* file-, or directory- (if DIR==1,) instance found
-   in directory tree at DIN,  which matches NM.
+func find_in_dir (din, nm, dir=, reg=, quiet=, take1=, hid=)
+/* DOCUMENT x= find_in_dir(din, nm, dir=, quiet=, take1=, hid=)
+   Exact match, or regex match if REG==1,file or directory search:
+   X is the list of (or first if TAKE1==1) file-,
+   or directory- (if DIR==1,) -instance found in directory tree rooted at DIN
+   which matches NM. Matchin is done with STRGREPM.
    Void X is returned if a match is not found and QUIET==1.
    Error is called if QUIET is not set to 1 and no match is found.
+   If HID==1, "hidden" directories are added to search path.
    pathfun.i has FIND_IN_PATH, for yorick file searches in get_path()
+   WARNING: slow when searching large directory trees!
    SEE ALSO: find_in_path
  */
 {
   // list dir and sub-dirs
   local d;
   f= lsdir(din,d);
+  nf= numberof(f);
   nd= numberof(d);
+  if (nd>0)
+    if (hid!=1) {
+      m= strpart(d,1:1)!=".";
+      if (anyof(m)) {
+        d= d(where(m));
+        nd= numberof(d);
+      }
+    }
 
   // input dir check
   if (structof(f)==long)
@@ -353,28 +366,27 @@ func find_in_dir (din, nm, dir=, quiet=)
       else
         error,"Input directory: "+din+" not found.";
   
-  // trim search item
-  nm= strtrim(nm);
-
   // search
   i= 0;
-  dd= [];
+  dd= ddd= [];
   if (dir==1) {   // search for a directory
-    m= d==nm;
-    if (!is_void(d) && anyof(m))
+    m= nd==0? [] :(reg==1? strgrepm(nm,d): nm==d);
+    if (nd>0 && anyof(m))
       return diradd(din,d(where(m)(1)))+"/";
-    while (i++<nd && is_void(dd))
-      dd= find_in_dir(diradd(din,d(i)),nm,dir=1,quiet=1);
-    if (is_string(dd))
-        return dd;
+    while (i++<nd && (is_void(dd) && take1==1))
+      ddd= _(ddd,(dd=find_in_dir(diradd(din,d(i)),nm,dir=1,reg=reg, \
+                                 quiet=1,take1=take1,hid=hid)));
+    if (!is_void(ddd))
+        return ddd;
   } else {        // search for a file
-    m= f==nm;
-    if (!is_void(f) && anyof(m))
+    m= nf==0? []: (reg==1? strgrepm(nm,f): nm==f);
+    if (nf>0 && anyof(m))
       return diradd(din,f(where(m)(1)));
-    while (i++<nd && is_void(dd))
-      dd= find_in_dir(diradd(din,d(i)),nm,quiet=1);
-    if (is_string(dd))
-      return dd;
+    while (i++<nd && (is_void(dd) && take1==1))
+      ddd= _(ddd,(dd=find_in_dir(diradd(din,d(i)),nm,reg=reg, \
+                                 quiet=1,take1=take1,hid=hid)));
+    if (!is_void(ddd))
+      return ddd;
   }
   if (quiet==1)
     return [];

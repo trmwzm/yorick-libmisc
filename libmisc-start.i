@@ -31,10 +31,18 @@ restore,tmp;
 
 // remove blacklisted i-start (autoload) files
 tmp= save(tmp,autoload_blacklist,i);
-autoload_blacklist= ["ylib-start.i"];
+autoload_blacklist= [ \    // ylib and Yeti
+    "ylib-start.i", \
+    "regex-start.i", \
+    "tiff-start.i", \
+    "yeti-start.i", \
+    "yhdf-start.i", \
+    "fftw-start.i"];
+
 autoload_blacklist= Y_HOME+"i-start/"+autoload_blacklist;
 for (i=1;i<=numberof(autoload_blacklist);i++)
-  rename,autoload_blacklist(i),autoload_blacklist(i)+".bkp";
+  if (open(autoload_blacklist(i),"r",1))
+    rename,autoload_blacklist(i),autoload_blacklist(i)+".bkp";
 restore, tmp;
 
 Y_ETC= Y_HOME+"etc/";
