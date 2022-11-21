@@ -171,3 +171,21 @@ func to_wkfl_t (a)
     return out;
   }
 }
+
+// task ruuner processes a task set sequentially. IO to disk is used for all(?) task in-/out-put
+// task set is a group of { task object | group of task object}
+// a task object is an oxy object with members ["run","dir",in","out"[,??]] - no non-named member
+// RUN is the yorick funcion, or closure, name (string) the task runner will call using "exec"
+//    - RUN function interface:
+//      func run (in) {
+//        // do stuff using inputs from files whose *names* are members (positional and names) of IN object
+//        // write stuff to files whit names are values in OUT object
+//      }
+//      in- and out- arguments which contain
+// IN is the object consisting of all input file names to RUN function
+// DIR directory name, must be unique, or void, in which case -> "run-name"+"task#"[+"_"+"subtask#"[+...]]
+//    - un-named==positional(?), named==keyword/val(better)
+//    - any IN member my be void
+//    - file names have a directory pointing to its origin==other task
+//    - directory names are: function-name+"_"+task number: for example "azcomp_03_02", id DIR is poir
+// OUT sane as IN, but for input
