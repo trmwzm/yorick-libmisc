@@ -31,13 +31,13 @@ restore,tmp;
 
 // remove blacklisted i-start (autoload) files
 tmp= save(tmp,autoload_blacklist,i);
-autoload_blacklist= [ \    // ylib and Yeti
+autoload_blacklist= [ \
     "ylib-start.i", \
     "regex-start.i", \
     "tiff-start.i", \
     "yeti-start.i", \
     "yhdf-start.i", \
-    "fftw-start.i"];
+    "fftw-start.i"];   // yeti and ylib
 
 autoload_blacklist= Y_HOME+"i-start/"+autoload_blacklist;
 for (i=1;i<=numberof(autoload_blacklist);i++)

@@ -371,29 +371,17 @@ func find_in_dir (din, nm, dir=, reg=, quiet=, take1=, hid=)
   // search
   i= 0;
   dd= ddd= [];
-  if (dir==1) {   // search for a directory
-    m= nd==0? [] :(reg==1? strgrepm(nm,d): nm==d);
-    if (nd>0 && anyof(m)) {
-      w= take1==1? where(m)(1): where(m);
-      ddd= diradd(din,d(w))+"/";
-      if (take1==1)
-        return ddd;
-    }
-    while (i++<nd && (take1!=1 || (is_void(dd) && take1==1)))
-      ddd= _(ddd,(dd=find_in_dir(diradd(din,d(i)),nm,dir=1,reg=reg, \
-                                 quiet=1,take1=take1,hid=hid)));
-  } else {        // search for a file
-    m= nf==0? []: (reg==1? strgrepm(nm,f): nm==f);
-    if (nf>0 && anyof(m)) {
-      w= take1==1? where(m)(1): where(m);
-      ddd= diradd(din,f(w));
-      if (take1==1)
-        return ddd;
-    }
-    while (i++<nd && (take1!=1 || (is_void(dd) && take1==1)))
-      ddd= _(ddd,(dd=find_in_dir(diradd(din,d(i)),nm,reg=reg, \
-                                 quiet=1,take1=take1,hid=hid)));
+  x= dir==1? d: f;
+  m= nf==0? []: (reg==1? strgrepm(nm,x): nm==x);
+  if (nf>0 && anyof(m)) {
+    w= take1==1? where(m)(1): where(m);
+    ddd= diradd(din,f(w));
+    if (take1==1)
+      return ddd;
   }
+  while (i++<nd && (take1!=1 || (is_void(dd) && take1==1)))
+    ddd= _(ddd,(dd=find_in_dir(diradd(din,d(i)),nm,dir=dir,reg=reg, \
+                               quiet=1,take1=take1,hid=hid)));
 
   if (!is_void(ddd))
     return ddd;
