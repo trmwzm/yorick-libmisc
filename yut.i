@@ -347,6 +347,8 @@ func find_in_dir (din, nm, dir=, reg=, quiet=, take1=, hid=)
 {
   // list dir and sub-dirs
   local d;
+  din= din=="" || din==string(0) || is_void(din)? "./": din;
+  din= diradd(din);
   f= lsdir(din,d);
   nf= numberof(f);
   nd= numberof(d);
@@ -371,23 +373,31 @@ func find_in_dir (din, nm, dir=, reg=, quiet=, take1=, hid=)
   dd= ddd= [];
   if (dir==1) {   // search for a directory
     m= nd==0? [] :(reg==1? strgrepm(nm,d): nm==d);
-    if (nd>0 && anyof(m))
-      return diradd(din,d(where(m)(1)))+"/";
-    while (i++<nd && (is_void(dd) && take1==1))
+    if (nd>0 && anyof(m)) {
+      w= take1==1? where(m)(1): where(m);
+      ddd= diradd(din,d(w))+"/";
+      if (take1==1)
+        return ddd;
+    }
+    while (i++<nd && (take1!=1 || (is_void(dd) && take1==1)))
       ddd= _(ddd,(dd=find_in_dir(diradd(din,d(i)),nm,dir=1,reg=reg, \
                                  quiet=1,take1=take1,hid=hid)));
-    if (!is_void(ddd))
-        return ddd;
   } else {        // search for a file
     m= nf==0? []: (reg==1? strgrepm(nm,f): nm==f);
-    if (nf>0 && anyof(m))
-      return diradd(din,f(where(m)(1)));
-    while (i++<nd && (is_void(dd) && take1==1))
+    if (nf>0 && anyof(m)) {
+      w= take1==1? where(m)(1): where(m);
+      ddd= diradd(din,f(w));
+      if (take1==1)
+        return ddd;
+    }
+    while (i++<nd && (take1!=1 || (is_void(dd) && take1==1)))
       ddd= _(ddd,(dd=find_in_dir(diradd(din,d(i)),nm,reg=reg, \
                                  quiet=1,take1=take1,hid=hid)));
-    if (!is_void(ddd))
-      return ddd;
   }
+
+  if (!is_void(ddd))
+    return ddd;
+
   if (quiet==1)
     return [];
   else
@@ -479,9 +489,10 @@ func diradd (s1, s2)
    SEE ALSO:
 */
 {
-  if (is_void(s2) || s2==string(0) || s2=="")
-    return (strpart(s1,0:0)=="/"? s1: s1+"/");
-  return (strpart(s2,1:1)=="/"? s2: (strpart(s1,0:0)=="/"? s1+s2: s1+"/"+s2));
+  s1= merge2(s1,s1+"/",strpart(s1,0:0)=="/");
+  if (is_void(s2))
+    return s1;
+  return merge2(s2,s1+s2,strpart(s2,1:1)=="/");
 }
 
 /*--------------------------------------------------------------------*/
