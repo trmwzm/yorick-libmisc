@@ -8,7 +8,7 @@ Y_EXE_PKGS=
 Y_EXE_HOME=
 Y_EXE_SITE=
 Y_HOME_PKG=
-Y_EXE_DIR:=$(shell dirname $(shell command -v yorick))
+Y_EXE_DIR:=$(shell dirname $(Y_EXE))
 
 # ------------------------------------------------ macros for this package
 
