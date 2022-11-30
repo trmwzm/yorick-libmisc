@@ -1,6 +1,9 @@
 // append environment variables listed in YORICK_ENV_LIBS
 // which might be in  YORICK_LIB_[X]=/path/to form ;p
 // as /path/to/lib:/path/to/contrib to yorick load path
+require,"pathfun.i";
+require,"yut.i";
+
 tmp= save(tmp,s,sl,m,nm,i,ss,u,cmdl,verb);
 
 cmdl= get_argv();
@@ -17,7 +20,10 @@ if (s!=string(0)) {
       u= s;
       do {
         ss= strtok(u,":");
-        set_path, get_path()+":"+ss(1);
+        l= get_path()+":"+ss(1);
+        l= discrete(pathsplit(l,delim=":"));
+        l= pathform(l,delim=":");
+        set_path,l;
         if (!batch() && verb)
           write,ss(1),format="Adding "+sl(i)+" path: %s\n";
         u= ss(2);
