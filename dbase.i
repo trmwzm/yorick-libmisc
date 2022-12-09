@@ -8,9 +8,11 @@ save, tmp, match, totext, fromtext;
 func dbase(base, .., read=)
 /* DOCUMENT > db= dbase(keyname1, keyname2, ...);
          or > database = dbase();
+         or > database = dbase(obj); // sameas > db= dbase(obj(*,));
+                                               > db, add, obj;
      create a database object DB with the given key names.  In the
-     second form, all scalar arrays in the *first* record will
-     become keys for the database.
+     second and third forms, all scalar arrays in the *first*
+     record will become keys for the database.
 
      Each record of the database is itself an object.  A record
      must contain one member whose name matches every key name;
@@ -103,11 +105,18 @@ func dbase(base, .., read=)
      > db, read, filename;
 */
 {
-  local keys, klist, records;
-  while (more_args()) grow, keys, next_arg();
+  local klist, records;
+  obj = base(:);  /* make copy of the dbase base class */
+  ar1= next_arg();
+  if (is_obj(ar1)) {
+    keys= ar1(*,);
+  } else {
+    keys= ar1;
+    while (more_args())
+      grow, keys, next_arg();
+  }
   if (!is_void(keys) && structof(keys)!=string)
     error, "keys= must be an array of key names";
-  obj = base(:);  /* make copy of the dbase base class */
   if (!is_void(read)) {
       save, obj, keys, klist, records;
       obj,read,read;
@@ -117,6 +126,8 @@ func dbase(base, .., read=)
   records = save();
   for (i=1 ; i<=numberof(keys) ; ++i) save, klist, keys(i), [];
   save, obj, keys, klist, records;
+  if (is_obj(ar1))
+    obj, add, ar1;
   return obj;
 }
 
