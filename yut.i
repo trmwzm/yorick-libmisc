@@ -2534,6 +2534,110 @@ func plots(x,y,z,type=,marker=,xr=,yr=,zr=,cage=)
     set3_object,plots,_lst(xyz,type,marker);}
 }
 
+/*----------------------------------------------------------*/
+
+/* pre-defined common color  names
+// fma; for(i=1;i<=clox(*);i++) plg,random(5),color=clox(noop(i));
+extern clox;
+/* DOCUMENT clox;
+   common color RGB in oxy-object, members:
+     White,Black,Blue,Red,Green,Cyan,Yellow,Magenta,Lightblue,
+     Darkgreen,Darkgreen2,Violett,Orange,Darkred,GreyBlue,GreyRed,
+     GreyGreen,GreyCyan,GreyOrange
+   SEE ALSO: clgnu
+ */
+clox= save();
+clox, White   = [255,255,255];
+clox, Black   = [0,0,0];
+clox, Blue    = [0,0,255];
+clox, Red     = [255,0,0];
+clox, Green   = [0,255,0];
+clox, Cyan    = [0,255,255];
+clox, Yellow  = [255,255,0];
+clox, Magenta = [255,0,255];
+clox, Lightblue = [150,200,255];
+clox, Darkgreen = [50,170,50];
+clox, Darkgreen2 = [50,140,50];
+clox, Violett = [250,50,250];
+clox, Orange  = [255,150,0];
+clox, Darkred = [170,30,0];
+clox, GreyBlue = [200,200,255];
+clox, GreyRed  = [255,150,150];
+clox, GreyGreen = [200,255,200];
+clox, GreyCyan = [200,255,255];
+clox, GreyOrange = [255,220,120];
+
+extern clgnu;
+/* DOCUMENT clgnu;
+   array of color indices for plg coinciding
+   with gnuplot colors: gnuplot#1 is clgnu(1) for plg ...
+   SEE ALSO:
+ */
+/* gnuplot colors */
+/* black, red, green, blue, magenta, cyan, yellow */
+clgnu = [-3, -5, -6, -7, -9, -8, -10];
+// fma; for(i=1;i<=numberof(clgnu);i++) plg,random(5),color=clgnu(i);
+
+func palette_shade (args)
+/* DOCUMENT palette_shade, GreyGreen [, npal=];
+   OR palette_shade, "GreyGreen" [, npal=];
+   Sets the palette to contain shades from color "color" to white.
+*/
+{
+   sk= args(-);              //key strings
+   nk= numberof(sk);
+   if (nk && anyof(strmatch(sk,"npal")))
+      npal= args("npal");
+   else
+      npal= 240;
+   if (nk>1)
+      error,"only MPAL= key allowed:> palette_shade, clrnm [, npal=];";
+
+   //positional arg processing
+   if (args(0)>1)
+      error,"palette_shade, clrnm, [npal=])";
+   color= args(0)==0? "Black": (args(0,1)==0? args(-,1): args(1));
+
+   cl= clox(noop(color));
+   mn = 50;
+   red   = span(min(cl(1),mn), 255, npal);
+   green = span(min(cl(2),mn), 255, npal);
+   blue  = span(min(cl(3),mn), 255, npal);
+
+   palette, red, green, blue;
+}
+wrap_args, palette_shade;
+
+func palette_cmy (npal=)
+/* DOCUMENT palette_cmy[, npal=];
+   Sets the palette to CMY, for phase or dem bitmaps
+   usage:
+   fma;pli,bytscl(height%200);palette_cmy,npal=240;
+*/
+{
+  npal= is_void(npal)? 200: npal;
+  np3= npal/3;
+  mn= char(0);
+
+  cr= char(span(mn, 255, np3)+0.5);
+  on= array(char(255),np3);
+
+  // teal to purple
+  red= cr;
+  green= on-cr;
+  blue= on;
+  // purple to yellow
+  red= _(red,on);
+  green= _(green,cr);
+  blue= _(blue,on-cr);
+  // yellow to teal
+  l= 3*np3<npal;
+  red= _(red,on-cr,(l? mn: []));
+  green= _(green,on,(l? on(1): []));
+  blue= _(blue,cr,(l? on(1): []));
+
+  palette, red, green, blue;
+}
 
 /* ------------------------------------------------------------------------ */
 

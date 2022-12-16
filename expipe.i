@@ -172,10 +172,16 @@ func to_wkfl_t (a)
   }
 }
 
-// task ruuner processes a task set sequentially. IO to disk is used for all(?) task in-/out-put
-// task set is a group of { task object | group of task object}
-// a task object is an oxy object with members ["run","dir",in","out"[,??]] - no non-named member
-// RUN is the yorick funcion, or closure, name (string) the task runner will call using "exec"
+// The task runner EXPIPE(set) executes a task set sequentially. All data are
+// passed between task in memory through container objects, or through disk IO.
+// A task set is an ordered set of named task object, each of then being either
+// a task object or set of task object.
+// A task object is an oxy object with members ["run","in","out"[, ...?]]
+// RUN is an object with a members {TYPE, SCRIPT, describe the type of exec
+// TYPE - "yorick" - use exec, also funcdef?
+//      - "shell"
+//      - "python"
+// yorick funcion, or closure, name (string) the task runner will call using "exec"
 //    - RUN function interface:
 //      func run (in) {
 //        // do stuff using inputs from files whose *names* are members (positional and names) of IN object
