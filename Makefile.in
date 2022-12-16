@@ -19,6 +19,7 @@ PKG_I=${srcdir}/ascii.i \
       ${srcdir}/convcorrel.i \
       ${srcdir}/dbase.i \
       ${srcdir}/dsp.i \
+      ${srcdir}/detect.i \
       ${srcdir}/fcomplex.i \
       ${srcdir}/memfmap.i \
       ${srcdir}/pocs.i \
