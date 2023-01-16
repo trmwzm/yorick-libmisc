@@ -2111,22 +2111,18 @@ func strcombine( str_array, delim)
  * SEE ALSO: strrepl, strsplit
  */
 {
-  NULL= [];
-
   catstr= "";
   nstr= numberof(str_array);
+  if (delim != "")
+    if (anyof(strgrepm(delim,str_array)))
+      error, "Error - delimiter occurs in string";
   for (j=1; j <= nstr; j++) {
-    if (delim != "") {
-      if (strpos(str_array(j), delim) >= 0)
-        error, "Error - delimiter occurs in string";
-    }
     if (j == 1) {
       catstr= str_array(j);
     } else {
       catstr= catstr + delim + str_array(j);
     }
   }
-
   return catstr;
 
 }
@@ -2989,7 +2985,7 @@ func assign (args)
 }
 wrap_args, assign;
   return l;
-}
+
 
 func oxgrar_dims_wrkr(o, &s, &d)
 {
