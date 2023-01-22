@@ -336,8 +336,8 @@ func find_in_dir (din, nm, dir=, reg=, quiet=, take1=, hid=)
    Exact match, or regex match if REG==1,file or directory search:
    X is the list of (or first if TAKE1==1) file-,
    or directory- (if DIR==1,) -instance found in directory tree rooted at DIN
-   which matches NM. Matchin is done with STRGREPM.
-   Void X is returned if a match is not found and QUIET==1.
+   which matches NM. Matching is done with Void.
+   STRGREPM X is returned if a match is not found and QUIET==1.
    Error is called if QUIET is not set to 1 and no match is found.
    If HID==1, "hidden" directories are added to search path.
    pathfun.i has FIND_IN_PATH, for yorick file searches in get_path()
@@ -1897,6 +1897,7 @@ func tile (dd,dtlo,center=)
 
 func equidx (y, x, n)
 /* DOCUMENT xx= equidx(y,x,n); // dimsof(x)==[1,n]
+   XX are the abcissas of N equidistent points in XY plane, along Y(X) curve.
    Y is either comformable with X, or has an additional *leading* dimension
    X coordinate to sample:
    m= 20;
@@ -2124,7 +2125,6 @@ func strcombine( str_array, delim)
     }
   }
   return catstr;
-
 }
 
 /* ------------------------------------------------------------------------- */
@@ -2984,8 +2984,174 @@ func assign (args)
     args, i+1, (i <= size ? ary(noop(i)) : []);
 }
 wrap_args, assign;
-  return l;
 
+/************************************************************************/
+
+func lssys (directory, &dirs, dir=)
+/* DOCUMENT lsltr(directory, &dirs)
+
+   returns a list of files sorted in order of date
+
+   SEE ALSO: strmatch, strpart, where
+*/
+{
+  if (is_void(directory)) directory= ".";
+  system, "ls -Lapc1 "+directory+"> /tmp/.dirContent";
+  files= rdfile("/tmp/.dirContent");
+  files= files(where(files!="./"));
+  files= files(where(files!="../"));
+  files= files(where(files!=string(nil)));
+  msk= strpart(files,0:0) == "/";
+  if (anyof(msk)) dirs= files(where(msk));
+  if (nallof(msk)) files= files(where(!msk));
+  if (!is_void(dirs)) dirs= strtok(dirs, "/")(1, );
+  system, "rm /tmp/.dirContent";
+  return files;
+}
+
+
+func save_rec(args)
+/* DOCUMENT save_rec, f, a, b, ...,  _suf=, _prf=;
+   simple klunky-kludgy PDB save with variable name obfuscation.
+   no introspection...
+   underscored keywords to lower chance of variable name clashes...
+   SEE ALSO: restore_rec
+*/
+{
+  sk= args(-); //key strings
+  nk= numberof(sk);
+  k1= ["_prf","_suf"];
+  if (nk!=0) {
+    if (anyof(strmatch(sk,k1(1))))
+      prf= args(k1(1));
+    else
+      prf= "";
+    if (anyof(strmatch(sk,k1(2))))
+      suf= args(k1(2));
+    else
+      suf= "";
+  }
+  prf= (is_string(prf)? prf: pr1(prf));
+  suf= (is_string(suf)? suf: pr1(suf));
+
+  for (i=1;i<=nk;i++) {
+    nm= sk(i);
+    if (noneof(strmatch(k1,nm)))
+      save, args(1), prf+nm+suf, args(nm);
+  }
+  i= 2;
+  while (i<=args(0))  {
+    ar= args(i);
+    if (is_string(ar)) {
+      i+= 1;
+      oi= args(i);
+      if (is_void(oi))
+        save, args(1), prf+ar+suf, OXY_VOID_VAL;
+      else if (is_func(oi)==0) // used to thow error
+        save, args(1), prf+ar+suf, oi;
+    } else
+      if (!is_void(ar) && is_func(ar)==0) // not sure
+        save, args(1), prf+args(-,i)+suf, ar;
+    i+= 1;
+  }
+}
+wrap_args, save_rec;
+
+func restore_rec(args)
+/* DOCUMENT restore_rec, f, a, b, ..., _suf=, _prf=;
+   simple klunky-kludgy PDB variable name obfuscation.
+   no introspection...
+   unerscored keywords to avoid variable name clashes...
+   SEE ALSO: save_rec
+*/
+{
+  sk= args(-); //key strings
+  nk= numberof(sk);
+  k1= ["_prf","_suf"];
+  if (nk!=0) {
+    if (anyof(strmatch(sk,k1(1))))
+      prf= args(k1(1));
+    else
+      prf= "";
+    if (anyof(strmatch(sk,k1(2))))
+      suf= args(k1(2));
+    else
+      suf= "";
+  }
+  prf= (is_string(prf)? prf: pr1(prf));
+  suf= (is_string(suf)? suf: pr1(suf));
+
+  local x;
+  i= 2;
+  while (i<=args(0))  {
+    ar= args(i);
+    if (is_string(ar)) {
+      i+= 1;
+      oi= args(i);
+      restore, args(1), prf+ar+suf, x;
+    } else
+      restore, args(1), prf+args(-,i)+suf, x;
+    if (is_scalar(x) && x==OXY_VOID_VAL) write,"void";
+    args, i, x;
+    i+= 1;
+  }
+}
+wrap_args, restore_rec;
+
+func is_group (o)
+/* DOCUMENT l= is_group(o);
+   check if all members are anonymous
+   is_group(save(string(0),a,string(0),b,string(0),c,string(0),d,string(0),e))
+   SEE ALSO:
+*/
+{
+  return is_obj(o)>0 && !is_stream(o) && allof(o(*,)==string(0));
+}
+
+func is_oxgrar (o, &s, &d)
+/* DOCUMENT is_oxgrar (o)
+   checks that all members are anonymous, and that members are
+   all of the same type, therefore transferable to a yorick array:
+   numerical, string, or pointer
+   SEE ALSO:
+*/
+{
+  if (is_obj(o)==0)
+    return 0;
+  if (!is_group(o))
+    return 0;
+  if (o(*)==0)
+    return 1;
+
+  o1= o(1);
+  if (is_obj(o1)) {
+    local s1, d1;
+    l= is_oxgrar(o1,s1,d1);
+    i= 1;
+    if (l)
+      while (i++<o(*)) {
+        if (!is_oxgrar(o(1*i),s,d) || s!=s1 || nallof(d==d1)) {
+          l= 0;
+          break;
+        }
+      }
+    return l;
+  }
+
+  s= structof(o1);
+  d= dimsof(o1);
+  l= is_numerical(o1) || is_string(o1) || is_pointer(o1);
+  i= 1;
+  if (l)
+    while (i++<o(*)) {
+      oi= o(1*i);
+      if (s!=structof(oi) || nallof(d==dimsof(oi))) {
+        l= 0;
+        break;
+      }
+    }
+  return l;
+}
 
 func oxgrar_dims_wrkr(o, &s, &d)
 {
@@ -3137,78 +3303,56 @@ func oxmerge (o, oo)
   return ou;
 }
 
-func oxtypeq (o1,o2,nodim=)
-/* DOCUMENT oxtypeq (o1,o2)
-   recursive oxy object type/dimesion checks
+func oxeq (o1, o2, strict)
+/* DOCUMENT oxeq (o1, o2[, strict])
+   checks that all member names and values are identical
+   STRICT= 2, check types, dimensions - including rank, and values
+   STRICT= 1, check types, (rank) and dimensions
+   STRICT= void OR 0, *DEFAULT* check types and ranks
+   ORDER may be different, BUT unnamed members MUST keep
+   order between themselves, object-to-object
+   NOTE: values identity checks are DUMB FIXME:
+   SEE ALSO:
 */
 {
-  s1= o1(*,);
-  s2= o2(*,);
-  ns1= numberof(s1);
-  ns2= numberof(s2);
-  if (ns1 != ns2)
-    return 0;
-  if (ns1) s1= s1(sort(s2));
-  if (ns2) s2= s2(sort(s2));
-  if (anyof(s1!=s2))
-    return 0;
-  else
-    tf= 1;
-
-  for (i=1; i<=o1(*); i++) {
-    o1i= s1(i)? o1(s1(i)): o1(noop(i));
-    o2i= s2(i)? o2(s2(i)): o2(noop(i));
-    if (is_obj(o1i))
-      tf*= oxtypeq(o1i,o2i);
+  strict= is_void(strict)? 0: strict;
+  // id. # of members ?
+  if(is_obj(o1)) {
+    if (o1(*)!=o2(*))
+      return 0;
+    n= o1(*);
+    s1= o1(*,);
+    s2= o2(*,);
+    w1= where(s1);      // where named
+    nnm= numberof(w1);  // how many named
+    w2= where(s2);
+    if (numberof(w2)!=nnm)
+      return 0;
+    wn2= where(!s2);
+    ss1= nnm? o2(*,s1(w1)): []; // O2 indices of O1 named members
+    if (nnm && anyof(ss1==0))   // id. # named members, all found or False
+      return 0;
     else
-      tf*= structof(o1i)==structof(o2i) &&\
-        (nodim==1 || allof(dimsof(o1i)==dimsof(o2i)));
-  }
-  return tf;
-}
+      l= 1;
 
-func oxyeq (o1,o2,nodim=)
-/* DOCUMENT oxyeq (o1,o2)
-   recursive oxy object identity
-*/
-{
-  s1= o1(*,);
-  s2= o2(*,);
-  ss2= sort(s2);
-  if (numberof(s1))
-    s1= s1(ss2);
-  if (numberof(s2))
-    s2= s2(ss2);
-  if (anyof(s1!=s2))
-    return 0
-    else
-      tf= 1;
-
-  for (i=1; i<=o1(*); i++) {
-    o1i= s1(i)? o1(s1(i)): o1(noop(i));
-    o2i= s2(i)? o2(s2(i)): o2(noop(i));
-    if (is_obj(o1i)) {
-      tf*= oxyeq(o1i,o2i);
-    } else {
-      if (is_numerical(o1i)) {
-        tt= allof(o1i==o2i);
-        if (tt==0) {
-          write,(s1(i)? s1(i): pr1(i)),format="warning: problem with %s - ";
-          write,2.0*avg(o1i-o2i)/avg(o1i+o2i),format="mean rel. diff.: %lg\n";
-        }
-      } else if (is_string(o1i)) {
-        tt= allof(o1i==o2i);
-        if (tt==0) {
-          write,(s1(i)? s1(i): pr1(i)),format="warning: problem with %s - ";
-          write,o1i,o2i,format="string comparison s1 vs. s2: %s != %s\n";
-        }
-      }
-      tf*= structof(o1i)==structof(o2i) &&               \
-        (nodim==1 || allof(dimsof(o1i)==dimsof(o2i))) && \
-        tt;
+    i= 0;                   // all members count
+    j= 0;                   // named members of O1 count
+    k= 0;                   // un-named membr of O1 count
+    while (l==1 && i++<n) {
+      o1i= o1(noop(i));
+      o2i= s1(i)? o2(ss1(++j)): o2(wn2(++k));
+      l&= oxeq(o1i,o2i,strict);
     }
+  } else {
+    l= structof(o1)==structof(o2);     // type check
+    d1= dimsof(o1); d2= dimsof(o2);
+    l&= d1(1)==d2(1);                  // rank check
+    if (l && strict==1)
+      l&= allof(d1==d2);               // dimesion check
+    if (l && strict==2)
+      l&= allof(o1==o2);               // value check
   }
-  return tf;
+  return l;
 }
 
 GRPOXSV= "_grp_";
@@ -3962,6 +4106,71 @@ func oxarr (args)
   return out;
 }
 wrap_args, oxarr;
+
+scratch= save(scratch, tmp);
+tmp= save(eval_);
+func funox (base, fun, prot=)
+/* DOCUMENT funox (fun, prot=)
+   transform any function into a closure function accepting
+   a single object argument which collects all original args.
+
+   f= funox(sumintpow);
+   f(save(string(0),30,string(0),3))==sumintpow(30,3)
+   a= random_n(20,20);
+   f= funclos(centroid);
+   f(save(string(0),a,"norm",2));
+*/
+{
+  ob= base(:);
+
+  if (is_func(fun)==0)
+    error,"missing FUN arg.";
+  s= !is_void(prot)? prot: info(fun)(1);
+  clos= 0;
+  if (strgrepm("closure",s)) {
+    s= fun.function_name==string(0)? \
+      info(fun.function)(1): \
+      info(fun.function(1))(1);
+    clos= 1;
+  }
+  if (strgrepm(s,"builtin"))
+    error,"cannot get calling seq.";
+  s2= strtok(s,"(");
+  fnm= strtok(s2(1)," ")(2);
+  s2= strpart(s2(2),:-1);
+  s2= strpart(s2,strword(s2,",",20));
+  s2= s2(where(s2));
+  mk= strgrepm("=$",s2);
+  wk= where(mk);
+  wp= where(!mk);
+  for (i=1,prot=save();i<=numberof(wp);i++)  // positional
+    save,prot,string(0),save(arg=[],nm=s2(wp(i)));
+  for (i=1;i<=numberof(wk);i++)           // keywords
+    save,prot,s2(wk(i)),[];
+
+  np= numberof(where(prot(*,)==string(0)));
+  save, ob, fnm, prot, np;
+
+  return closure(ob,eval_);
+}
+func  eval_ (o)
+{
+  use, fnm, prot, np;
+  npo= numberof(where(o(*,)==string(0)));
+  n= min(np,npo);
+  s= fnm+"(";
+  for (i=1;i<=n;i++)
+    s+= (i==1? "": ", ")+swrite(i,format="o(noop(%i))");
+  for (i=1;i<=prot(*);i++)
+    if (o(*,prot(*,i))>0)
+      s+= (i==1? "": ", ")+  \
+        swrite(prot(*,i),prot(*,i),format="%s=o(\"%s\")");
+  s+= ")";
+
+  return exec(s);
+}
+funox= closure(funox, restore(tmp)); //(<-*1)
+restore, scratch;
 
 func duplicateb(fstrmi,fstrmo,vars,nvars)
 /* DOCUMENT duplicateb(fstrmi,fstrmo,vars,nvars)
