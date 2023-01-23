@@ -2060,68 +2060,72 @@ func strplt(s,nospace=)
 
 /*---------------------------------------------------------------------------*/
 
-func strsplit( str, delim)
+func strsplit(stra, delim)
 /* DOCUMENT strsplit(str, delim)
- * Decompose string STR into an array of component strings separated by
- * character DELIM, and return an array of the component strings.
- * If DELIM is the null string, split string into its constituent one-character
- * strings.
+ * Decompose an  array, or scalar, string STRA into a group of, or single if scalar,
+ * array of component strings which are separated by string DELIM in original.
+ * IFF DELIM is not found anywhere in array, return original string array
  * (Reverses the action of STRCOMBINE)
  * SEE ALSO: strrepl, strcombine
  */
 {
-  NULL= [];
+  n= numberof(stra);
+  out= save();
 
-  if (delim == "") {
-    // Split string into individual character strings
-    nlen= strlen(str);
-    if (nlen == 0) return  str;
-    str2= array("",nlen);
-    for (j=1; j <= nlen; j++) str2(j)= strmid( str, j-1, 1);
-    return  str2;
-  }
-
-  str2= str;
-
-  str_array= NULL;
-  while ( ((i= strpos(str2,delim))) >= 0 ) {
-    if (i == 0) {
-      grow, str_array, "";
-    } else {
-      grow, str_array, strmid(str2,0,i);
+  if (anyof((m=strgrepm("^.*"+delim,stra)))) {
+    w= where(m);
+    be= strfind(delim,stra(w),n=50);
+    j= 0;
+    for (i=1;i<=n;i++) {
+      if (m(i)) {
+        j+= 1;
+        k= be(1:min(where(be(,j)<0))-1,j);
+        save,out,string(0),strpart(stra(w(j)),grow([0],k));
+      } else
+        save,out,string(0),stra(i);
     }
-    str2= strmid(str2,i+1,strlen(str2)-i-1);
-  }
+    if (n==1)
+      out= out(1);
+  } else
+    out= stra;
 
-  grow, str_array, str2;
-
-  return  str_array;
-
+  return out;
 }
 
 /* ------------------------------------------------------------------------ */
 
-func strcombine( str_array, delim)
-/* DOCUMENT strcombine(str_array,delim)
- * Concatenate an array of strings STR_ARRAY into a single string,
- * with each substring separated by character DELIM (which should not occur in
+func strcombine (stra, delim)
+/* DOCUMENT strcombine(stra,delim)
+ * Concatenate an array of strings STRA, or a gtoup of such arrays, into a
+ * single string, or an array of sting in 2nd case, where each original substring
+ * separated by character DELIM (which should not occur in
  * any of the strings.
  * If DELIM is the null string, simply all concatenate all the strings in
- * STR_ARRAY.
+ * STRA.
  * (Reverses the action of STRSPLIT)
  * SEE ALSO: strrepl, strsplit
  */
 {
+  if (is_group(stra)) {
+    n= stra(*);
+    out= array(string,n);
+    for (i=1;i<=n;i++)
+      out(i)= strcombine(stra(noop(i)),delim);
+    return out;
+  }
+
   catstr= "";
-  nstr= numberof(str_array);
-  if (delim != "")
-    if (anyof(strgrepm(delim,str_array)))
+  nstr= numberof(stra);
+  if (delim!="")
+    if (anyof(strgrepm(delim,stra)))
       error, "Error - delimiter occurs in string";
-  for (j=1; j <= nstr; j++) {
-    if (j == 1) {
-      catstr= str_array(j);
-    } else {
-      catstr= catstr + delim + str_array(j);
+  for (j=1;j<=nstr;j++) {
+    if (strlen(stra(j))>0) {
+      if (j==1) {
+        catstr= stra(j);
+      } else {
+        catstr= catstr+delim+stra(j);
+      }
     }
   }
   return catstr;
@@ -3668,6 +3672,106 @@ func oxwrite_wrkr (f, o, &onm, lvl)
   }
   return f;
 }
+
+func readox (fnm)
+/* DOCUMENT
+
+   SEE ALSO:
+ */
+{
+  // read file
+  if (check_file(fnm,quiet=1)==0)
+    error,"file not found: "+fnm;
+  l= rdfile(open(fnm,"r"));
+
+  // remove comments and empty lines
+  o= strsplit(l,"\\\\");
+  if (is_obj(o))
+    for (i=1;i<=o(*);i++)
+      l(i)= o(noop(i),1);
+  l= strtrim(l);
+  l= l(where(l));
+
+  // process line continuations
+  while (anyof((m=strgrepm("\\\\$",l)))) {
+    w= where(m);
+    l(w)= strpart(l(w),:-1);
+    l(w)+= l(w+1);
+    l= l(where(_(0,m(:-1))));
+  }
+
+  // only files with single restore, extract variable
+  mrs= strgrepm(".*restore,",l);
+  wrs= where(mrs);
+  if (numberof(wrs)!=1)
+    error,"Code must have a single restore.";
+  irst= wrs(1);
+  s= strtrim(strsplit(l(irst),","));
+  if (strpart(s(0),0:0)==";")
+    s(0)= strpart(s(0),1:-1);
+  if (s(1)!="restore")
+    error,"Unrecognized restore call.";
+  srst= s(2:);
+
+  // what's saved in restored object(s)
+  msve= strgrepm("=.*save",l);
+  wsve= where(msve);
+  if (numberof(wsve)==0)
+    error,"no objects defined in file.";
+  n= numberof(wsve);
+
+  // all object defined in file
+  o= strsplit(l(wsve),"=");
+  ll= array(string,n);
+  for (i=1;i<=n;i++)
+    ll(i)= o(noop(i),1);
+
+  // restored object content
+  sob= [];
+  for (i=1;i<=numberof(srst);i++) {
+    j= where(ll==srst(i))(1);
+    if (i==1)
+      isv= j;
+    s= strtrim(strsplit(o(noop(j),2),","))(2:);
+    if (strpart(s(0),0:0)==";")
+      s(0)= strpart(s(0),1:-1);
+    if (strpart(s(0),0:0)==")")
+      s(0)= strpart(s(0),1:-1);
+    else
+      error,"extecpting a parenthesis in: "+s(0);
+    sob=_(sob,s);
+  }
+
+  m= ll!=srst(1);
+  for (i=2;i<=numberof(srst);i++)
+    m&= ll!=srst(i);
+  for (i=1;i<=numberof(sob);i++)
+    m&= ll!=sob(i);
+
+  // extern object names, coma concatenate
+  if (noneof(m))
+    error,"no extern object found";
+  wxt= where(m);
+  nxt= numberof(wxt);
+  sxt= strcombine(ll(wxt),",");
+
+  // add original extern object name to saved ones
+  s= l(isv);
+  ss= strtok(s,",",numberof(sob)+5);
+  ss= ss(where(ss));
+  ss= _(ss(:-1),ll(wxt),ss(0));
+  l(isv)= strcombine(ss,",");
+
+  __tmp__= [];
+  st= "__tmp__= ";
+  l= _(l(:irst-1),(nxt>1? st+"save("+sxt+");": st+sxt+";" ),l(irst:));
+
+  write,open("~/tmp/q.i","w"),l,format="%s\n";
+  include,l,1;
+
+  return __tmp__;
+}
+
 func oxisfunc (o)
 {
   n= o(*);
