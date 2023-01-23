@@ -3673,7 +3673,7 @@ func oxwrite_wrkr (f, o, &onm, lvl)
   return f;
 }
 
-func readox (fnm)
+func oxread (fnm)
 /* DOCUMENT
 
    SEE ALSO:
@@ -3765,8 +3765,6 @@ func readox (fnm)
   __tmp__= [];
   st= "__tmp__= ";
   l= _(l(:irst-1),(nxt>1? st+"save("+sxt+");": st+sxt+";" ),l(irst:));
-
-  write,open("~/tmp/q.i","w"),l,format="%s\n";
   include,l,1;
 
   return __tmp__;
