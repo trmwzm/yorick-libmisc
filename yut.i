@@ -336,7 +336,7 @@ func find_in_dir (din, nm, dir=, reg=, quiet=, take1=, hid=)
    Exact match, or regex match if REG==1,file or directory search:
    X is the list of (or first if TAKE1==1) file-,
    or directory- (if DIR==1,) -instance found in directory tree rooted at DIN
-   which matches NM. Matching is done with Void.
+q   which matches NM. Matching is done with Void.
    STRGREPM X is returned if a match is not found and QUIET==1.
    Error is called if QUIET is not set to 1 and no match is found.
    If HID==1, "hidden" directories are added to search path.
@@ -2131,6 +2131,54 @@ func strcombine (stra, delim)
   return catstr;
 }
 
+func stripcode (l)
+/* DOCUMENT
+   remove comments and continuations from code for easier editing.
+   ony used in oxread -- which should only be used with oxwrite
+   SEE ALSO: oxread
+*/
+{
+  // remove comments and empty lines
+  o= strsplit(l,"\/\/");
+  if (is_obj(o))     /* this is also a comment */
+    for (i=1;i<=o(*);i++)
+      l(i)= o(noop(i),1);
+  else
+    l= o;
+  l= strtrim(l);
+  l= l(where(l));
+  l= l(where(!strgrepm("^\/\/",l)));
+  // other comments
+  sgip= strgrep("\/\\*",l);
+  sgim= strgrep("\\*\/",l);
+  o= save();
+  w= where(sgip(2,..)>=0);
+  for (i=1;i<=numberof(w);i++) {
+    wi= w(i);
+    j= sgip(..,wi);
+    if (sgim(2,wi)>=0) { // open close on same line
+      l(wi)= streplace(l(wi),[sgip(1,wi),sgim(2,wi)],"");
+    } else {
+      l(wi)= streplace(l(wi),[sgip(1,wi),strlen(l(wi))],"");
+      k= 0;
+      while (sgim(2,wi+(++k))<0)
+        l(wi+k)= string(0);
+      l(wi+k)= streplace(l(wi+k),[0,sgim(2,wi+k)],"");
+    }
+  }
+  l= strtrim(l);
+  l= l(where(l));
+
+  // process line continuations
+  while (anyof((m=strgrepm("\\\\$",l)))) {
+    w= where(m);
+    l(w)= strpart(l(w),:-1);
+    l(w)+= l(w+1);
+    l= l(where(_(0,m(:-1))));
+  }
+  return l;
+}
+
 /* ------------------------------------------------------------------------- */
 
 func nameofstream(f)
@@ -3673,63 +3721,104 @@ func oxwrite_wrkr (f, o, &onm, lvl)
   return f;
 }
 
-func oxread (fnm)
-/* DOCUMENT
+func oxread (fnm, &xtnm)
+/* DOCUMENT o= oxread(fnm[,xtnm]);
+   Include yorick code from file FNM. OXREAD id designed to be used only with
+   file whithin which one, or many, oxy objects are defined, and nothing else -
+   objects whose member values are array data types: strings, numerical,...
+   or void(?), OXREAD then return those objects.  There is *NO* attempt to
+   protect the caller from other yorick expressions which may be in FNM.
+   If a single object is defined in the file, it is returned as such,
+   otherwise, if several object are defined, then the returned object
+   contains all such objects with their "code" name as members.
+   XTNM is the name of the only (or of first if many) object in the code.
 
-   SEE ALSO:
+   SEE ALSO: oxwrite
  */
 {
-  // read file
-  if (check_file(fnm,quiet=1)==0)
-    error,"file not found: "+fnm;
-  l= rdfile(open(fnm,"r"));
+  // read file, unless recursive call with comment/continuation already removed
+  isra= 0
+  if (numberof(fnm)>1) {
+    isra= 1;
+    l= fnm;
+  } else {
+    if (check_file(fnm,quiet=1)==0)
+      error,"file not found: "+fnm;
+    l= rdfile(open(fnm,"r"));
+    l= stripcode(l);
+  }
+  nl= numberof(l);
 
-  // remove comments and empty lines
-  o= strsplit(l,"\\\\");
-  if (is_obj(o))
-    for (i=1;i<=o(*);i++)
-      l(i)= o(noop(i),1);
-  l= strtrim(l);
-  l= l(where(l));
+  // split files base on restore/save - blah= save(blah,...); ; ; ;restore, blah;
+  // to read concatenated oxwrite output files
+  mrs= strgrepm("^ *restore,",l);
+  wrs= where(mrs);
+  nrs= numberof(wrs);
+  // LRS array of all restored object names
+  o= strsplit(l(wrs),",");
+  if (is_obj(o)) {
+   lrs= [];
+   for (i=1;i<=nrs;i++)
+     lrs= _(lrs,o(noop(i),2:));
+  } else
+    lrs= o(2:);
+  lrs= strtrim(lrs);
+  for (i=1;i<=numberof(lrs);i++)   // chop end ";"
+    if (strpart(lrs(i),0:0)==";")
+      lrs(i)= strpart(lrs(i),:-1);
 
-  // process line continuations
-  while (anyof((m=strgrepm("\\\\$",l)))) {
-    w= where(m);
-    l(w)= strpart(l(w),:-1);
-    l(w)+= l(w+1);
-    l= l(where(_(0,m(:-1))));
+  // all objects defined in file
+  msv= strgrepm("=.*save",l);
+  wsv= where(msv);
+  if (numberof(wsv)==0)
+    error,"no objects defined in file.";
+  n= numberof(wsv);
+  // LSV array of all object names
+  o= strsplit(l(wsv),"=");
+  if (is_obj(o)) {
+    lsv= array(string,n);
+    for (i=1;i<=n;i++)
+      lsv(i)= o(noop(i),1);
+  } else
+    lsv= o(1);
+
+  // if multiple restore, break up file and process separately
+  xtnm= string(0);
+  if (nrs>0 && wrs(0)<nl) {
+    i= j= 1;
+    out= save();
+    while (i<nl && j<=nrs) {
+      k= wsv(where(lsv==lrs(j))(1));   // where save of restore
+      if (k>1 && i<k) {                // code before
+        oi= oxread(l(i:k-1),xtnm);
+        if (xtnm)
+          save,out,noop(xtnm),oi;
+      }
+      oi= oxread(l(k:wrs(j)),xtnm);
+      save,out,noop(xtnm),oi;
+      i= wrs(j)+1;
+
+      j+= 1;
+    }
+    return out;         // return object with orig member names
   }
 
-  // only files with single restore, extract variable
-  mrs= strgrepm(".*restore,",l);
-  wrs= where(mrs);
-  if (numberof(wrs)!=1)
-    error,"Code must have a single restore.";
-  irst= wrs(1);
-  s= strtrim(strsplit(l(irst),","));
-  if (strpart(s(0),0:0)==";")
-    s(0)= strpart(s(0),1:-1);
-  if (s(1)!="restore")
-    error,"Unrecognized restore call.";
-  srst= s(2:);
-
-  // what's saved in restored object(s)
-  msve= strgrepm("=.*save",l);
-  wsve= where(msve);
-  if (numberof(wsve)==0)
-    error,"no objects defined in file.";
-  n= numberof(wsve);
-
-  // all object defined in file
-  o= strsplit(l(wsve),"=");
-  ll= array(string,n);
-  for (i=1;i<=n;i++)
-    ll(i)= o(noop(i),1);
+  if (nrs>0) {
+    // what's saved in restored object(s)
+    irst= wrs(1);
+    s= strtrim(strsplit(l(irst),","));
+    if (strpart(s(0),0:0)==";")
+      s(0)= strpart(s(0),1:-1);
+    if (s(1)!="restore")
+      error,"Unrecognized restore call.";
+    srst= s(2:);
+  } else
+    srst= [];
 
   // restored object content
   sob= [];
   for (i=1;i<=numberof(srst);i++) {
-    j= where(ll==srst(i))(1);
+    j= where(lsv==srst(i))(1);
     if (i==1)
       isv= j;
     s= strtrim(strsplit(o(noop(j),2),","))(2:);
@@ -3742,30 +3831,46 @@ func oxread (fnm)
     sob=_(sob,s);
   }
 
-  m= ll!=srst(1);
-  for (i=2;i<=numberof(srst);i++)
-    m&= ll!=srst(i);
+  // prune restored and saved out of all defined, left with extern
+  m= array(1,numberof(lsv));
+  for (i=1;i<=numberof(srst);i++)
+    m&= lsv!=srst(i);
   for (i=1;i<=numberof(sob);i++)
-    m&= ll!=sob(i);
+    m&= lsv!=sob(i);
 
   // extern object names, coma concatenate
   if (noneof(m))
     error,"no extern object found";
   wxt= where(m);
   nxt= numberof(wxt);
-  sxt= strcombine(ll(wxt),",");
+  sxt= lsv(wxt);
+  xtnm= sxt(1);
+  sxtc= strcombine(sxt,",");
+
+  // local single object
+  __tmp__= [];
+  stmp= "__tmp__";
 
   // add original extern object name to saved ones
-  s= l(isv);
-  ss= strtok(s,",",numberof(sob)+5);
-  ss= ss(where(ss));
-  ss= _(ss(:-1),ll(wxt),ss(0));
-  l(isv)= strcombine(ss,",");
+  if (nrs>0) {
+    s= l(isv);
+    ss= strtok(s,",",numberof(sob)+5);
+    ss= ss(where(ss));
+    ss= _(ss(:-1),lsv(wxt),ss(0));
+    l(isv)= strcombine(ss,",");
+    // assemble
+    l= _(l(:irst-1),(nxt>1? stmp+"= save("+sxtc+");": stmp+"= "+sxtc+";" ),l(irst:));
+  } else {
+    l0= "scratch= save(scratch,"+sxtc+");";
+    l1= nxt>1? stmp+"= save("+sxtc+");": stmp+"= "+sxtc+";";
+    l2= "restore, scratch;";
+    l= _(l0,l,l1,l2);
+  }
 
-  __tmp__= [];
-  st= "__tmp__= ";
-  l= _(l(:irst-1),(nxt>1? st+"save("+sxt+");": st+sxt+";" ),l(irst:));
+  // do some work
   include,l,1;
+
+  l;
 
   return __tmp__;
 }
