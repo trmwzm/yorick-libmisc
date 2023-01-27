@@ -2138,16 +2138,20 @@ func stripcode (l)
    SEE ALSO: oxread
 */
 {
-  // remove comments and empty lines
-  o= strsplit(l,"\/\/");
-  if (is_obj(o))     /* this is also a comment */
-    for (i=1;i<=o(*);i++)
-      l(i)= o(noop(i),1);
-  else
-    l= o;
+  // remove double backlash comments and empty lines
+  // .. beginning of line
+  m= !strgrepm("^[ \t]*\/\/",l);
+  if (anyof(m))
+    l= l(where(m));
+  // .. @end of line,
+  m= strgrepm("(.+)(\/\/[^\/;]*$)+",l);
+  if (anyof(m)) {
+    ss= l(where(m));
+    l(where(m))= strpart(ss,strgrep("(.+)(\/\/[^\/;]*$)+",ss,sub=1));
+  }
   l= strtrim(l);
   l= l(where(l));
-  l= l(where(!strgrepm("^\/\/",l)));
+
   // other comments
   sgip= strgrep("\/\\*",l);
   sgim= strgrep("\\*\/",l);
@@ -3757,11 +3761,11 @@ func oxread (fnm, &xtnm)
   // LRS array of all restored object names
   o= strsplit(l(wrs),",");
   if (is_obj(o)) {
-   lrs= [];
-   for (i=1;i<=nrs;i++)
-     lrs= _(lrs,o(noop(i),2:));
+    lrs= array(string,o(*));
+      for (i=1;i<=nrs;i++)
+        lrs= _(lrs,o(noop(i),2));    // only accept restore sub. call with single arg.
   } else
-    lrs= o(2:);
+    lrs= o(2);
   lrs= strtrim(lrs);
   for (i=1;i<=numberof(lrs);i++)   // chop end ";"
     if (strpart(lrs(i),0:0)==";")
@@ -3783,58 +3787,33 @@ func oxread (fnm, &xtnm)
     lsv= o(1);
 
   // if multiple restore, break up file and process separately
-  xtnm= string(0);
-  if (nrs>0 && wrs(0)<nl) {
-    i= j= 1;
+  if (nrs>1) {
     out= save();
-    while (i<nl && j<=nrs) {
-      k= wsv(where(lsv==lrs(j))(1));   // where save of restore
-      if (k>1 && i<k) {                // code before
-        oi= oxread(l(i:k-1),xtnm);
-        if (xtnm)
-          save,out,noop(xtnm),oi;
-      }
-      oi= oxread(l(k:wrs(j)),xtnm);
-      save,out,noop(xtnm),oi;
-      i= wrs(j)+1;
-
-      j+= 1;
+    j= 1;
+    for (i=1;i<=nrs;i++) {
+      xtnm= string(0);
+      oi= oxread(l(j:wrs(i)),xtnm);
+      if (xtnm)
+        save,out,noop(xtnm),oi;
+      j+= wrs(i);
     }
     return out;         // return object with orig member names
   }
 
-  if (nrs>0) {
-    // what's saved in restored object(s)
-    irst= wrs(1);
-    s= strtrim(strsplit(l(irst),","));
-    if (strpart(s(0),0:0)==";")
-      s(0)= strpart(s(0),1:-1);
-    if (s(1)!="restore")
-      error,"Unrecognized restore call.";
-    srst= s(2:);
-  } else
-    srst= [];
-
   // restored object content
-  sob= [];
-  for (i=1;i<=numberof(srst);i++) {
-    j= where(lsv==srst(i))(1);
-    if (i==1)
-      isv= j;
-    s= strtrim(strsplit(o(noop(j),2),","))(2:);
-    if (strpart(s(0),0:0)==";")
-      s(0)= strpart(s(0),1:-1);
-    if (strpart(s(0),0:0)==")")
-      s(0)= strpart(s(0),1:-1);
-    else
-      error,"extecpting a parenthesis in: "+s(0);
-    sob=_(sob,s);
-  }
+  isv= where(lsv==lrs)(1);
+  sob= strtrim(strsplit(o(noop(isv),2),","))(2:);
+  if (strpart(sob(0),0:0)==";")
+    sob(0)= strpart(sob(0),1:-1);
+  if (strpart(sob(0),0:0)==")")
+    sob(0)= strpart(sob(0),1:-1);
+  else
+    error,"extecpting a parenthesis in: "+sob(0);
 
   // prune restored and saved out of all defined, left with extern
   m= array(1,numberof(lsv));
-  for (i=1;i<=numberof(srst);i++)
-    m&= lsv!=srst(i);
+  for (i=1;i<=numberof(lrs);i++)
+    m&= lsv!=lrs(i);
   for (i=1;i<=numberof(sob);i++)
     m&= lsv!=sob(i);
 
@@ -3859,6 +3838,7 @@ func oxread (fnm, &xtnm)
     ss= _(ss(:-1),lsv(wxt),ss(0));
     l(isv)= strcombine(ss,",");
     // assemble
+    irst= wrs(1);
     l= _(l(:irst-1),(nxt>1? stmp+"= save("+sxtc+");": stmp+"= "+sxtc+";" ),l(irst:));
   } else {
     l0= "scratch= save(scratch,"+sxtc+");";
@@ -3867,10 +3847,8 @@ func oxread (fnm, &xtnm)
     l= _(l0,l,l1,l2);
   }
 
-  // do some work
+  // do the real  work
   include,l,1;
-
-  l;
 
   return __tmp__;
 }
