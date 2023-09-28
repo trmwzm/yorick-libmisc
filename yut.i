@@ -3359,12 +3359,22 @@ func oxmerge (o, oo)
   return ou;
 }
 
+func oxtypeq (o1, o2, nodim=)
+/* DOCUMENT oxtypeq (o1,o2[,nodim=1])
+   recursive oxy object types and dimesion(+rank) checks ONLY
+   NODIM==1 checks type and rank only
+*/
+{
+  return oxeq(o1,o2,(nodim==1? 0: 1));
+}
+
+
 func oxeq (o1, o2, strict)
 /* DOCUMENT oxeq (o1, o2[, strict])
    checks that all member names and values are identical
-   STRICT= 2, check types, dimensions - including rank, and values
-   STRICT= 1, check types, (rank) and dimensions
-   STRICT= void OR 0, *DEFAULT* check types and ranks
+   STRICT= 2, check *types*, *dimensions* - including *rank*, and *values*
+   STRICT= 1, check *types*, (*rank*) and *dimensions*
+   STRICT= void OR 0, *DEFAULT* check *types* and *ranks*
    ORDER may be different, BUT unnamed members MUST keep
    order between themselves, object-to-object
    NOTE: values identity checks are DUMB FIXME:
