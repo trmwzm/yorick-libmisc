@@ -494,10 +494,11 @@ func strtimestamp (dum)
 
 /* -------------------------------------------------------------------*/
 
-func waitff(fls,tlim,dt=)
-/* DOCUMENT waitff (fls,tlim,dt=)
+func waitff (fls, tlim, &t, dt=)
+/* DOCUMENT waitff (fls,tlim,&t,dt=)
    wait for files FLS, with max TLIM (secs), check at interval DT (secs, default 5)
    returns time in secs.
+   CALLED as a subroutine will raise error, else return 0 for success, >0 for error
    SEE ALSO:
 */
 {
@@ -511,14 +512,20 @@ func waitff(fls,tlim,dt=)
     pause, dt*1000;
     t+= 1;
   }
-  if (t>=tlim)
-    error,"alloted time elapsed: "+pr1(tlim)+"hr, missing one of: "+([fls]+" ")(*)(sum);
-  return t-2;
+  t= max(1,t-2);
+  if (t+2>=tlim) {
+    if (am_subroutine())
+      error,"alloted time elapsed: "+pr1(tlim)+"hr, missing one of: "+ \
+        ([fls]+" ")(*)(sum);
+    else
+      return t;
+  }
+  return 0
 }
 
 /* ------------------------------------------------------------------------ */
 
-func runwaitsafe (cmd,v=,tlim=,dt=)
+func runwaitsafe (cmd,&t,v=,tlim=,dt=)
 /* DOCUMENT runwaitsafe (cmd,v=,tlim=)
 
    SEE ALSO:
@@ -533,9 +540,14 @@ func runwaitsafe (cmd,v=,tlim=,dt=)
   if (v==1)
     write,cmd2,stmp;
   sysafe,cmd2;
-  t= waitff(stmp,tlim,dt=dt);
+  if (waitff(stmp,tlim,t,dt=dt)>0) {
+    if (am_subroutine())
+      error;
+    else
+      return t;
+  }
   remove,stmp;
-  return t;
+  return 0;
 }
 
 /* ------------------------------------------------------------------------ */
