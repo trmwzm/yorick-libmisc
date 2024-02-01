@@ -506,21 +506,30 @@ func waitff (fls, tlim, &t, dt=)
   dt= is_void(dt)? 5: dt;
   l= 0;  // all files E
   tlim= is_void(tlim)? 60: tlim;
-  while (!l && t<tlim) {
+  while (!l && t<=tlim) {                  // loop while wait for l!=0, until linit
     for (l=1,i=1;i<=numberof(fls);i++)
       l&= !is_void(open(fls(i),"r",1));
     pause, dt*1000;
-    t+= 1;
+    t+= dt;
   }
-  t= max(1,t-2);
-  if (t+2>=tlim) {
-    if (am_subroutine())
-      error,"alloted time elapsed: "+pr1(tlim)+"hr, missing one of: "+ \
-        ([fls]+" ")(*)(sum);
+  t= max(1,t-1);
+  if (t>=tlim) {                           // ran out of time
+    if (l!=0) {                            // file found
+      return 0;
+    } else {
+      if (am_subroutine())
+        error,"alloted time elapsed: "+pr1(tlim)+"hr, missing one of: "+ \
+          ([fls]+" ")(*)(sum);
+      else
+        return t;
+    }
+  } else {
+    if (l!=0)
+      return 0;
     else
-      return t;
+      error,"Something's wrong file(s) not found before time limit !!? ";
   }
-  return 0
+  return 1;
 }
 
 /* ------------------------------------------------------------------------ */
