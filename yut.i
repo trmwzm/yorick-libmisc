@@ -4040,7 +4040,7 @@ func oxlua_pr (a,fmt)
   } else
     return sa;
 }
-func oxnml(args)
+func oxnml_f90(args)
 /* DOCUMENT s= oxnml(o[,fmt]); // s: array(string)
    o= oxnml(s); .. *not yet* ..
    FMT: format integer or decimal, SEE totxt.
@@ -4096,7 +4096,7 @@ func oxnml(args)
     return s;
   }
 }
-wrap_args,oxnml;
+wrap_args,oxnml_f90;
 
 func oxmap (f,oo,..)
 /* DOCUMENT ob=  oxmap (f,oi1,oi2,oi3,..);
