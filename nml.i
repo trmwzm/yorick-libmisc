@@ -76,9 +76,9 @@ func oxnml(args)
     if (numberof(ws)!=numberof(we))
       error,"NML syntax error: unmatched & and /.";
     n= numberof(ws);
-    k_chmap= strtrtable(37,32); // % to underscore
     nml= strtrim(strcase(0,strpart(ll(ws),2:)),3);
-    v_chmap= strtrtable(39,32); // single to double quotes
+    v_chmap= strtrtable(34,32);             // double quote to space
+    v_chmap= strtrtable(39,32,v_chmap);     // single quote to space
     for (i=1,o=save();i<=n;i++)
       if (we(i)-1>ws(i)+1)
         save,o,nml(i),oxnml_wrkr(ll(ws(i)+1:we(i)-1));
@@ -124,8 +124,7 @@ func oxnml_wrkr (ll)
       oi= o;
       k= strcase(0,kv(2));
     }
-    // k= strtranslate(kv(1),k_chmap);
-    v= strtranslate(kv(2),v_chmap);
+    v= strtrim(strtranslate(kv(2),v_chmap),3);
     sep= (strgrepm(",",v)? ",": (strgrepm(" ",v)? " ": string(0)));
     if (sep) {
       m= (strchar(v)(:-1)==strchar(sep)(1))(sum); // numbreof commas
