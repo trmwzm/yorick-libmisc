@@ -62,14 +62,22 @@ func oxnml(args)
     if (numberof(ll)==1 && check_file(ll(1),quiet=1))
       ll= text_lines(ll(1));
     ll= strtrim(ll,3);
+    // dealing with repeats
+    sg= strgrep("^[A-Za-z0-9_= /&\\\"]*!",ll);
+    mec= sg(2,..)>=0;
+    if (anyof(mec)) {
+      w= where(mec);
+      sg(2,w)-= 1;
+      ll(w)= strpart(ll(w),sg(,w));
+    }
     ll= ll(where(ll!=string(0)));
     ws= where(strpart(ll,1:1)=="&");
     we= where(strlen(ll)==1 & strpart(ll,1:1)=="/");
     if (numberof(ws)!=numberof(we))
       error,"NML syntax error: unmatched & and /.";
     n= numberof(ws);
-    k_chmap= strtrtable(37,32); // % to space
-    nml= strcase(0,strpart(ll(ws),2:));
+    k_chmap= strtrtable(37,32); // % to underscore
+    nml= strtrim(strcase(0,strpart(ll(ws),2:)),3);
     v_chmap= strtrtable(39,32); // single to double quotes
     for (i=1,o=save();i<=n;i++)
       if (we(i)-1>ws(i)+1)
@@ -103,28 +111,67 @@ func oxnml_wrkr (ll)
     kv= strtrim(strtok(l(i),"="),3);
     if (kv(2)==string(0))
       error,"EQUAL (=) not found.";
-    k= strtranslate(kv(1),k_chmap);
+    sg= strgrep("%",kv(1));
+    if (sg(2)>=0) {
+      ks= [strpart(kv(1),1:sg(2)-1), \
+           strpart(kv(1),sg(2)+1:)];
+      ks= strcase(0,ks);
+      if (is_obj(o,ks(1),1)<0)
+        save,o,ks(1),save();
+      oi= o(ks(1));
+      k= ks(2);
+    } else {
+      oi= o;
+      k= strcase(0,kv(2));
+    }
+    // k= strtranslate(kv(1),k_chmap);
     v= strtranslate(kv(2),v_chmap);
-    if (strgrepm(",",v)) {
-      m= (strchar(v)(:-1)==char(44))(sum); // numbreof commas
-      v= strpart(v,strword(v,",",m+1));
+    sep= (strgrepm(",",v)? ",": (strgrepm(" ",v)? " ": string(0)));
+    if (sep) {
+      m= (strchar(v)(:-1)==strchar(sep)(1))(sum); // numbreof commas
+      v= strpart(v,strword(v,sep,m+1));
       v= v(where(v!=string(0)));
       v= strtrim(v,3);
-      vnum= tonum(v);  // *** TODO *** : deal with - "3423, 2323, 2*0"
+      v= oxnml_wrkr_rpt(v);
+      vnum= tonum(v);
       isn= vnum(1)>-1e99;
       isi= strgrepm("[.edED]",v(1))==0;
       v= (isn? (isi? long(vnum): vnum): v);
     } else {
       v= strtrim(v,3);
+      v= oxnml_wrkr_rpt(v);
       vnum= tonum(v);
       isi= strgrepm("[.edED]",v)==0;
       v= (vnum>-1e99? (isi? long(vnum): vnum): v);
     }
-    save,o,noop(k),v;
+    save,oi,noop(k),v;
   }
   return o;
 }
 
+func oxnml_wrkr_rpt (v)
+{
+  // dealing with repeats
+  sg= strgrep("[0-9]+\\*",v);
+  m= sg(2,..)>=0;
+  if (anyof(m)) {
+    w= where(m);
+    rpt= long(tonum(strpart(strpart(v(w),sg(,w)),:-1)));
+    o= (w(1)>1? save([],v(1:w(1)-1)): save());
+    for (j=1;j<=numberof(w);j++)
+      save,o,[],array(strpart(v(w(j)),sg(2,w(j))+1:),rpt(j));
+    if (w(0)<numberof(v))
+      save,o,[],v(w(0)+1:);
+    vv= array(string(0),numberof(v)-numberof(rpt)+sum(rpt));
+    for (j=1,i=1;j<=o(*);j++) {
+      n= numberof(o(noop(j)));
+      vv(i:i+n-1)= o(noop(j));
+      i= i+n;
+    }
+    v= vv;
+  }
+  return v;
+}
 // &BINIO
 //  T%FNM="out_feb23/antsch.dat                        ",
 //  T%TNM="real(dp)            ",
