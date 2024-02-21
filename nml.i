@@ -79,6 +79,8 @@ func oxnml(args)
     nml= strtrim(strcase(0,strpart(ll(ws),2:)),3);
     v_chmap= strtrtable(34,32);             // double quote to space
     v_chmap= strtrtable(39,32,v_chmap);     // single quote to space
+    v_zmap= strtrtable(40,32);              // left ( to space
+    v_zmap= strtrtable(41,32,v_zmap);       // right ) to space
     for (i=1,o=save();i<=n;i++)
       if (we(i)-1>ws(i)+1)
         save,o,nml(i),oxnml_wrkr(ll(ws(i)+1:we(i)-1));
@@ -142,6 +144,16 @@ func oxnml_wrkr (ll)
       vnum= tonum(v);
       isi= strgrepm("[.edED]",v)==0;
       v= (vnum>-1e99? (isi? long(vnum): vnum): v);
+    }
+    // complex
+    if (is_string(v)) {
+      m= strgrepm("^\\(|\\)",v);
+      if (allof(m)) {
+        if (numberof(v)%2==1)
+          error,"expecting even Re and Im # of values.";
+        v= tonum(strtrim(strtranslate(v,v_zmap),3));
+        v= v(1::2)+1i*v(2::2);
+      }
     }
     save,oi,noop(k),v;
   }
