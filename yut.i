@@ -367,7 +367,7 @@ q   which matches NM. Matching is done with Void.
         return [];
       else
         error,"Input directory: "+din+" not found.";
-  
+
   // search
   i= 0;
   dd= ddd= [];
@@ -447,14 +447,14 @@ func check_dir (fnm,..,quiet=)
 {
   list= _lst(fnm(1));
   nf= 1;
-  while (nf<numberof(fnm)) 
+  while (nf<numberof(fnm))
     list= _cat(list,fnm(1+nf++));
 
   while (more_args()) {
     fnm= next_arg();
     list= _cat( list, fnm(1));
     nfi= 1;
-    while (nfi<numberof(fnm)) 
+    while (nfi<numberof(fnm))
       list= _cat(list,fnm(1+nfi++));
     nf+= nfi
       }
@@ -3310,6 +3310,67 @@ func arr_oxgr (o, &ier, row=)
   }
 
   return ier==1? o: out;
+}
+
+func strtox (o, ni, &no, sep=)
+/* DOCUMENT strtox (o, ni, sep=)
+   recursive OXY save using array of keys or keys joined into single string
+   by separator.
+   // usage:
+   q= save();
+   save,strtox(q,"hi",nm),noop(nm),1;
+   save,strtox(q,"foo%bar",nm),noop(nm),2;
+   save,strtox(q,"foo%bar",nm),noop(nm),3;  // overwrite OK
+   save,strtox(q,"foo%baz%bar",nm),noop(nm),4;
+   save,strtox(q,"foo%boz",nm),noop(nm),5;
+   SEE ALSO: toxstr
+*/
+{
+  if (!is_obj(o))
+    error;
+  sep= (is_void(sep)? "%": sep);
+  if (numberof(ni)>1)
+    ni= (ni(:-1)+sep)(sum)+ni(0);
+  no= ni;   // if the name string is not sep., id. > save,oo,noop(ni),val;
+  oo= o;
+  sg= strtok(ni,sep);
+  if (sg(2)) {        // name is separable, [create]/change save destination
+    no= sg(2);
+    if (is_obj(o,sg(1),1)<0)
+      save,o,sg(1),save();
+    oo= o(sg(1));
+    if (!is_obj(oo))
+      error,"cannot save in previously written not-an-object member: "+pr1(sg(1));
+    if (strgrepm(sep,sg(2))) {
+      oo= strtox(oo,sg(2),no);
+    } else {
+      oo= o(sg(1));
+      no= sg(2);
+    }
+  }
+  return oo;
+}
+
+func toxstr (o, &s, sep=)
+/* DOCUMENT
+*/
+{
+  extern oo;
+  sep= (is_void(sep)? "%": sep);
+  oo= (is_void(s)? save(): oo);
+  s0= (is_void(s)? "": s);
+  for (i=1; i<=o(*); i++) {
+    oi= o(noop(i));
+    si= o(*,i);
+    s= (s0==""? si: s0+sep+si)
+    if (is_obj(oi))
+      oo= toxstr(oi,s,sep=sep);
+    else {
+      save,oo,noop(s),oi;
+      s= [];
+    }
+  }
+  return oo;
 }
 
 func oxcopy (o)
