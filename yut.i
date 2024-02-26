@@ -3352,7 +3352,8 @@ func strtox (o, ni, &no, sep=)
 }
 
 func toxstr (o, &s, sep=)
-/* DOCUMENT
+/* DOCUMENT toxstr (o, sep=)
+   flatten an oxy by appending keys using a separator (% for a fortran namelist)
 */
 {
   extern oo;
