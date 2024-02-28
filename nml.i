@@ -1,6 +1,7 @@
 require, "yut.i";
 
-scratch= save(scratch, nml2ox, ox2nml, read_wrkr, read_wrkr_rpt, write_wrkr, nmlval);
+scratch= save(scratch, nml2ox, ox2nml, read_wrkr, read_wrkr_rpt, write_wrkr, \
+              nmlval, unquoted);
 
 func nml2ox (ll)
 {
@@ -120,18 +121,21 @@ func nmlval (v)
   // trim
   v= strtrim(v,3);
 
-  // try if commas are separator
-  lc= strgrepm(",",v);
-  delim= (lc? ",": " ");
+  // delim detection
+  c= strchar(v);
+  mqt= use_method(unquoted,c);
+  ss= strchar(strchar(v)*mqt);
+  s= ss(where(ss));
+  delim= (s && allof(strgrepm(",",s))? ",": " ");   // ? all or none ?  ... or some
   if (!delim)
     error,"could not detect delimitator.";
 
   /* make mask that is 1 for delim, -1 for eos */
-  c= strchar(v);
   mask= (c==strchar(delim)(1))-(c=='\0');
-  mask*= text_unquoted(c);  // 0 where text, in beteen o
+  mask*= mqt;  // 0 where text, in beteen o
 
-  c(where(mask))= '\0';
+  if (anyof(mask))
+    c(where(mask))= '\0';
   s= strchar(c);
   list = where((strpart(s,1:1)=="\"") & (strpart(s,0:0)=="\""));
   if (numberof(list))
@@ -209,6 +213,25 @@ func write_wrkr (o)
 
 }
 
+func unquoted(c)
+{
+  quotes= (c == '"' | c == ''' );
+  list= where(quotes);
+  if (numberof(list) < 2)
+    return char(!quotes);
+  /*  note that if numberof(list) is odd, we know the quoting is incorrect */
+  /* mark open quotes as 1, character following close quotes as -1 */
+  list= list(2::2);  // where close quote
+  quotes(list) = 0;  /* close quote itself is part of the quote */
+  if (list(0) == numberof(c)-1) {
+    if (numberof(list) < 2)
+      return char(!quotes(psum));
+    list = list(1:-1);
+  }
+  --quotes(list+1);  /* if was open quote, don't open, else close */
+  return char(!quotes(psum));
+}
+
 local nmlox;
 /* DOCUMENT nmlox (ll)
    NMLOX: read a fortran namelist file, return an OXY representation
@@ -216,7 +239,7 @@ local nmlox;
 
    SEE ALSO: oxnml
  */
-nmlox= save(nml2ox, read_wrkr, read_wrkr_rpt, nmlval);
+nmlox= save(nml2ox, read_wrkr, read_wrkr_rpt, nmlval, unquoted);
 nmlox= closure(nmlox, nml2ox);
 
 local oxnml;
