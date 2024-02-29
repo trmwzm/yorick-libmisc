@@ -3,6 +3,8 @@ require, "xplot.i";
 
 OXY_VOID_VAL= "oxy_void";
 
+_idlctables="~/dev/yorick/yorick-libmisc/etc/idlcolors.tbl";
+
 func eval(code, tmp=, debug=)
 /* DOCUMENT eval, code;
    -or- eval(code);
