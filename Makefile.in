@@ -16,41 +16,42 @@ PKG_NAME=yorick-libmisc
 
 # include files for this package
 PKG_I=${srcdir}/ascii.i \
-      ${srcdir}/convcorrel.i \
-      ${srcdir}/dbase.i \
-      ${srcdir}/dsp.i \
-      ${srcdir}/detect.i \
-      ${srcdir}/fcomplex.i \
-      ${srcdir}/memfmap.i \
-      ${srcdir}/pocs.i \
-      ${srcdir}/rdf.i \
-      ${srcdir}/rotation.i \
-      ${srcdir}/density.i \
-      ${srcdir}/shellargs.i \
-      ${srcdir}/yut.i \
       ${srcdir}/bicub.i \
+      ${srcdir}/convcorrel.i \
       ${srcdir}/coreg.i \
+      ${srcdir}/dbase.i \
+      ${srcdir}/density.i \
+      ${srcdir}/detect.i \
       ${srcdir}/digfun.i \
+      ${srcdir}/dsp.i \
+      ${srcdir}/fcomplex.i \
       ${srcdir}/fitpoly.i \
       ${srcdir}/fpanels.i \
+      ${srcdir}/gaupro.i \
+      ${srcdir}/histop.i \
       ${srcdir}/imbinavrg.i \
       ${srcdir}/inpolygon.i \
+      ${srcdir}/json.i \
+      ${srcdir}/levmar_tools.i \
       ${srcdir}/lmfit.i \
-      ${srcdir}/poly_fit.i \
-      ${srcdir}/rdf-refac.i \
-      ${srcdir}/rwflat.i \
-      ${srcdir}/time.i \
-      ${srcdir}/gaupro.i \
-      ${srcdir}/nninterp2.i \
-      ${srcdir}/histop.i \
+      ${srcdir}/memfmap.i \
       ${srcdir}/moveop.i \
+      ${srcdir}/nml.i \
+      ${srcdir}/nninterp2.i \
+      ${srcdir}/plcm.i \
+      ${srcdir}/pocs.i \
+      ${srcdir}/poly_fit.i \
       ${srcdir}/prstruct.i \
       ${srcdir}/rdcols.i \
-      ${srcdir}/plcm.i \
-      ${srcdir}/levmar_tools.i \
+      ${srcdir}/rdf-refac.i \
+      ${srcdir}/rdf.i \
+      ${srcdir}/rotation.i \
+      ${srcdir}/rwflat.i \
       ${srcdir}/scm.i \
-      ${srcdir}/json.i \
-      ${srcdir}/vec2d.i
+      ${srcdir}/shellargs.i \
+      ${srcdir}/time.i \
+      ${srcdir}/vec2d.i \
+      ${srcdir}/yut.i
 
 # autoload file for this package, if any
 PKG_I_START= ${srcdir}/libmisc-start.i

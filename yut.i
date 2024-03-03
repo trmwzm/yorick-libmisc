@@ -333,6 +333,61 @@ func deref(ptr)
   return *ptr;
 }
 
+func sizeallof (obj)
+/* DOCUMENT sizeallof(obj)
+     Returns size in bytes of object OBJ.  Similar to sizeof (which see)
+     function but also works for lists, arrays of pointers, structures
+     or oxy objects.
+
+   SEE ALSO: sizeof, is_list, is_array, is_obj.
+ */
+{
+  size = sizeof(obj);
+  id = identof(obj);
+  if (id > Y_COMPLEX) {
+    if (id <= Y_STRUCT) {
+      if (id == Y_STRING) {
+        size += numberof(obj) + sum(strlen(obj));
+      } else if (id == Y_POINTER) {
+        n = numberof(obj);
+        for (i = 1; i <= n; ++i) {
+          size += sizeallof(*obj(i));
+        }
+      } else if (id == Y_STRUCT) {
+        /* For each member name, get the size of the member.  TMP is a
+           single element structure of the same type for fast checking the
+           type of each member. */
+        tmp = array(structof(obj));
+        str = sum(print(structof(obj)));
+        sub = [1,2];
+        reg = "^ *[A-Z_a-z][0-9A-Z_a-z]* +([A-Z_a-z][0-9A-Z_a-z]*)[^;]*;(.*)";
+        str = strpart(str, strgrep("^struct +([^ ]+) +{(.*)", str, sub=sub));
+        for (;;) {
+          str = str(2);
+          str = strpart(str, strgrep(reg, str, sub=sub));
+          name = str(1);
+          if (! name) {
+            break;
+          }
+          if (identof(get_member(tmp, name)) > Y_COMPLEX) {
+            size += sizeallof(get_member(obj, name));
+          }
+        }
+      }
+    } else if (is_obj(obj)) {
+      for (i=1; i<=obj(*); i++) {
+        size += sizeallof(obj(noop(i)));
+      }
+    } else if (is_list(obj)) {
+      while (obj) {
+        size += sizeallof(_car(obj));
+        obj = _cdr(obj);
+      }
+    }
+  }
+  return size;
+}
+
 func find_in_dir (din, nm, dir=, reg=, quiet=, take1=, hid=)
 /* DOCUMENT x= find_in_dir(din, nm, dir=, quiet=, take1=, hid=)
    Exact match, or regex match if REG==1,file or directory search:
