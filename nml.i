@@ -32,6 +32,8 @@ func nml2ox (ll)
   // namelist names, chop leading "&", trim, lowercase
   nml= strtrim(strcase(0,strpart(ll(ws),2:)),3);
   // char maps for complex values
+  v_zmap= strtrmap(40,32);
+  v_zmap= strtrmap(41,32,v_zmap);
   // namelists loop
   for (i=1,o=save();i<=n;i++)
     if (we(i)-1>=ws(i)+1)
@@ -41,10 +43,16 @@ func nml2ox (ll)
   return o;
 }
 
-func ox2nml (o)
+func ox2nml (o, fmt=)
 {
   if (!is_obj(o))
     error,"expecting an oxy object.";
+  // TOTEXT format
+  if (is_void(fmt))
+    fmt=-0.12;
+  if (is_integer(a))
+    fmt= abs(fmt); //  no hex
+
   on= o(*);
   ns0= 100;
   s0= array(string,ns0);
@@ -163,12 +171,12 @@ func nmlval (v)
   }
   // complex
   if (is_string(v)) {
-    m= strgrepm("^\\(|\\)",v);
+    m= strgrepm("^\\( *[0-9.edED+-]+ *[ ,] *[0-9.edED+-]+ *\\)",v);
     if (allof(m)) {
-      if (numberof(v)%2==1)
-        error,"expecting even Re and Im # of values.";
-      v= tonum(strtrim(strtranslate(v,v_zmap),3));
-      v= v(1::2)+1i*v(2::2);
+      if (numberof(v)%2==0) {
+        v= tonum(strtrim(strtranslate(v,v_zmap),3));
+        v= v(1::2)+1i*v(2::2);
+      }
     }
   }
   return v;
@@ -232,23 +240,24 @@ func unquoted(c)
   return char(!quotes(psum));
 }
 
-local nmlox;
-/* DOCUMENT nmlox (ll)
-   NMLOX: read a fortran namelist file, return an OXY representation
+local oxnml;
+/* DOCUMENT o= oxnml (ll)
+   OXNML: read a fortran namelist file, return an OXY representation
    LL: file name, or array of strings from TEXT_LINES(file_name) for ex.
+
+   SEE ALSO: nmlox
+ */
+oxnml= save(nml2ox, read_wrkr, read_wrkr_rpt, nmlval, unquoted);
+oxnml= closure(oxnml, nml2ox);
+
+local nmlox;
+/* DOCUMENT l= nmlox (o, fmt=)
+   NMLOX: print an oxy object fortran as a fortran namelist file.
+   FMT: optional format to use in TOTXT call (> help,totxt)
 
    SEE ALSO: oxnml
  */
-nmlox= save(nml2ox, read_wrkr, read_wrkr_rpt, nmlval, unquoted);
-nmlox= closure(nmlox, nml2ox);
-
-local oxnml;
-
-/* DOCUMENT
-
-   SEE ALSO:
- */
-oxnml=  save(ox2nml, write_wrkr);
-oxnml= closure(oxnml, ox2nml);
+nmlox=  save(ox2nml, write_wrkr);
+nmlox= closure(nmlox, ox2nml);
 
 restore, scratch;

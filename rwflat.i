@@ -1,5 +1,6 @@
 require, "fcomplex.i";
 require, "yut.i";
+require, "nml.i";
 
 /* -------------------------------------------------------------------------*/
 
@@ -127,3 +128,51 @@ func readFlat(f, typ, dims, offset, name=, sl=,pc=,i86=,sun=,sgi64=)
   }
 
 }
+
+func readbinnml (ll)
+{
+  bt= oxnml(ll);
+  bt(binio,t,fnm);
+  bt(binio,t,tnm);
+  bt(binio,t,knd);
+  bt(binio,t,tsz);
+  bt(binio,t,rk);
+  bt(binio,t,shp);
+  bt(binio,t,sz);
+}
+
+func writebinnml (a)
+{
+
+}
+#if 0
+  type binnml_t
+     character (len=len_fnm) :: fnm            ! filename
+     character (len=len_tnm) :: tnm            ! typename
+     integer :: knd                            ! kind()  ! ~~~ sizeof ???
+     integer :: tsz                            ! type size (byte) (storage_size)
+     integer :: rk                             ! array rank
+     integer :: shp(4)                         ! shape; if shp(i)==0 -> rank < i
+     integer :: sz                             ! array size (byte) (sizeof)
+  end type binnml_t
+
+save,o,char,"character(b1)";
+save,o,short,"integer(i2)";
+save,o,int,"integer(i4)";
+save,o,long,"integer(i8)";
+save,o,float,"real(sp)";
+save,o,double,"real(dp)";
+save,o,fcomplex,"complex(sp)";
+save,o,complex,"complex(dp)";
+
+&BINIO
+ T%FNM="jkb.dat                                                                                                                         ",
+ T%TNM="integer(i4)         ",
+ T%KND=4          ,
+ T%TSZ=32         ,
+ T%RK=2          ,
+ T%SHP=10         ,20         , 2*0          ,
+ T%SZ=200        ,
+ /
+
+#endif
