@@ -126,53 +126,105 @@ func readFlat(f, typ, dims, offset, name=, sl=,pc=,i86=,sun=,sgi64=)
 
     return x;
   }
-
 }
 
 func readbinnml (ll)
+/* DOCUMENT x= readbinnml(ll);
+   read array data in binary format, as described in namelist formated metadata
+   in filename LL.  LL can also be an array of lines extracted from that file,
+   but in this case directory information is lost.
+   IF the binary filename in the metadata is an absolute file path, then it is
+   read as-is, otherwise the metadata binary filename is taken to be relative
+   to the directory of the metadata.
+
+   SEE ALSO: writebinnml
+ */
 {
+  // handle the FNM case
+  if (numberof(ll)==1 && check_file(ll(1),quiet=1)) {
+    fnm= ll(1);
+    ll= text_lines(ll(1));
+  } else
+    fnm= "./";   // data assumed dir local
+  // read binio nml
   bt= oxnml(ll);
-  bt(binio,t,fnm);
-  bt(binio,t,tnm);
-  bt(binio,t,knd);
-  bt(binio,t,tsz);
-  bt(binio,t,rk);
-  bt(binio,t,shp);
-  bt(binio,t,sz);
+  local tnm, rk, shp;
+  ftmp= bt(binio,t,fnm);
+  if (strpart(ftmp,1:1)=="/" && check_dir(dirname(ftmp)))
+    bfnm= ftmp;
+  else
+    bfnm= dirname(fnm)+"/"+ftmp;
+  tnm= bt(binio,t,tnm);
+  tsz= bt(binio,t,tsz);
+  typ= [];
+  if (tnm=="character")
+    if (tsz==8)
+      typ= char;
+  if (tnm=="integer")
+    if (tsz==16)
+      typ= short;
+    else if (tsz==32)
+      typ= int;
+    else if (tsz==64)
+      typ= long;
+  if (tnm=="real")
+    if (tsz==32)
+      typ= float;
+    else if (tsz==64)
+      typ= double;
+  if (tnm=="complex")
+    if (tsz==32)
+      typ= fcomplex;
+    else if (tsz==64)
+      typ= complex;
+  if (is_void(typ))
+    error,"unknown type";
+  rk= bt(binio,t,rk);
+  shp= bt(binio,t,shp);
+  return readFlat(bfnm,typ,_(rk,shp(1:rk)));
 }
 
-func writebinnml (a)
+func writebinnml (a, fnm)
+/* DOCUMENT writebinnml (a, fnm)
+   write array A in "raw/local" binary filename FNM, and write its associated metadata
+   as a fortran-formatted namelist in file FNM+".nml"
+   SEE ALSO: readbinnml
+ */
 {
+  typ= structof(a);
+  tsz= sizeof(typ)*8;
+  da= dimsof(a);
+  rk= da(1);
+  shp= da(2:);
+  for (i=1,sz=1;i<=rk;i++)
+    sz*= shp(i);
+  dnm= dirname(fnm);
+  if (typ==char)
+    tnm= "character";
+  else if (typ==short)
+    tnm= "integer";
+  else if (typ==int)
+    tnm= "integer";
+  else if (typ==long)
+    tnm= "integer";
+  else if (typ=float)
+    tnm= "real";
+  else if (typ==double)
+    tnm= "real";
+  else if (typ==fcomplex)
+    tnm= "complex";
+  else if (typ==complex)
+    tnm= "complex";
+  else
+    error,"unknown type struct.";
 
+  writeFlat,a,fnm;
+  o= save();
+  o= save("binio",save("t",save()));
+  ot= o(binio,t);
+  save,ot,fnm=basename(fnm);
+  save,ot,tnm,tsz,rk,shp,sz;
+
+  ll= nmlox(o);
+  return write(open(fnm+".nml","w"),ll,format="%s\n");
 }
-#if 0
-  type binnml_t
-     character (len=len_fnm) :: fnm            ! filename
-     character (len=len_tnm) :: tnm            ! typename
-     integer :: knd                            ! kind()  ! ~~~ sizeof ???
-     integer :: tsz                            ! type size (byte) (storage_size)
-     integer :: rk                             ! array rank
-     integer :: shp(4)                         ! shape; if shp(i)==0 -> rank < i
-     integer :: sz                             ! array size (byte) (sizeof)
-  end type binnml_t
-
-save,o,char,"character(b1)";
-save,o,short,"integer(i2)";
-save,o,int,"integer(i4)";
-save,o,long,"integer(i8)";
-save,o,float,"real(sp)";
-save,o,double,"real(dp)";
-save,o,fcomplex,"complex(sp)";
-save,o,complex,"complex(dp)";
-
-&BINIO
- T%FNM="jkb.dat                                                                                                                         ",
- T%TNM="integer(i4)         ",
- T%KND=4          ,
- T%TSZ=32         ,
- T%RK=2          ,
- T%SHP=10         ,20         , 2*0          ,
- T%SZ=200        ,
- /
-
-#endif

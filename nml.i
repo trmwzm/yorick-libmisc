@@ -34,8 +34,6 @@ func nml2ox (ll)
   // char maps for complex values
   parent_tr= strtrtable(40,32);                  // parenthesis
   parent_tr= strtrtable(41,32,parent_tr);
-  brack_tr= strtrtable(91,32);
-  brack_tr= strtrtable(93,32,brack_tr);         // square brackets
   // namelists loop
   for (i=1,o=save();i<=n;i++)
     if (we(i)-1>=ws(i)+1)
@@ -96,7 +94,6 @@ func ox2nml (o, fmt=)
 
 func read_wrkr (ll)
 {
-  extern brack_tr;
   // number of lines in namelist
   n= numberof(ll);
   // comma continuation
@@ -123,8 +120,9 @@ func read_wrkr (ll)
       error,"EQUAL (=) not found.";
     // key - could be type/composite
     k= strcase(0,kv(1));
-    v= strtranslate(kv(2),brack_tr);
-    v= use_method(nmlval,v);          // where it happens
+    // eval values
+    v= use_method(nmlval,kv(2));          // where it happens
+
     local nm;
     save,strtox(o,k,nm),noop(nm),v;
   }
@@ -145,8 +143,9 @@ func nmlval (v)
   ss= strchar(strchar(v)*mqt);
   w= where(ss);
   if (numberof(w)==0)
-    return string(0);
-  s= ss(where(ss));
+    s= ss;
+  else
+    s= ss(where(ss));
   delim= (s(1) && allof(strgrepm(",",s))? ",": " ");   // ? all or none ?  ... or some
   if (!delim)
     error,"could not detect delimitator.";
