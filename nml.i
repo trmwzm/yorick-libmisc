@@ -14,7 +14,7 @@ func nml2ox (ll)
   // remove lead-/trail-ing blanks
   ll= strtrim(ll,3);
   // dealing with comments (not well: does not accept !!! in quoted values)
-  sg= strgrep("^[A-Za-z0-9_= /&\\\"]*!",ll);
+  sg= strgrep("^[A-Za-z0-9_=, /&\\\"]*!",ll);
   mec= sg(2,..)>=0;
   if (anyof(mec)) {
     w= where(mec);
@@ -32,8 +32,10 @@ func nml2ox (ll)
   // namelist names, chop leading "&", trim, lowercase
   nml= strtrim(strcase(0,strpart(ll(ws),2:)),3);
   // char maps for complex values
-  v_zmap= strtrmap(40,32);
-  v_zmap= strtrmap(41,32,v_zmap);
+  parent_tr= strtrtable(40,32);                  // parenthesis
+  parent_tr= strtrtable(41,32,parent_tr);
+  brack_tr= strtrtable(91,32);
+  brack_tr= strtrtable(93,32,brack_tr);         // square brackets
   // namelists loop
   for (i=1,o=save();i<=n;i++)
     if (we(i)-1>=ws(i)+1)
@@ -52,6 +54,9 @@ func ox2nml (o, fmt=)
     fmt=-0.12;
   if (is_integer(a))
     fmt= abs(fmt); //  no hex
+
+  brack_tr= strtrtable(91,32);
+  brack_tr= strtrtable(93,32,brack_tr);         // square brackets
 
   on= o(*);
   ns0= 100;
@@ -76,6 +81,7 @@ func ox2nml (o, fmt=)
         w= where(mn);
         sa(w)= "\"\"";
       }
+      sa= strtrim(strtranslate(sa,brack_tr),3);
       if (is>ns)
         {s= _(s,s0); ns+= ns0;}
       s(is++)= "  "+k+"= "+strpart((sa+", ")(*)(sum),1:-2);
@@ -90,7 +96,7 @@ func ox2nml (o, fmt=)
 
 func read_wrkr (ll)
 {
-  extern v_zmap;
+  extern brack_tr;
   // number of lines in namelist
   n= numberof(ll);
   // comma continuation
@@ -113,11 +119,12 @@ func read_wrkr (ll)
       l(i)= strpart(l(i),:-1);
     // extract key/val
     kv= strtrim(strtok(l(i),"="),3);
-    if (kv(2)==string(0))
+    if (kv(2)==string(0) && strpart(l(i),0:0)!="=")
       error,"EQUAL (=) not found.";
     // key - could be type/composite
     k= strcase(0,kv(1));
-    v= use_method(nmlval,kv(2));
+    v= strtranslate(kv(2),brack_tr);
+    v= use_method(nmlval,v);          // where it happens
     local nm;
     save,strtox(o,k,nm),noop(nm),v;
   }
@@ -126,15 +133,21 @@ func read_wrkr (ll)
 
 func nmlval (v)
 {
+  extern parent_tr;
   // trim
   v= strtrim(v,3);
 
+  if (v==string(0))
+    return v;
   // delim detection
   c= strchar(v);
   mqt= use_method(unquoted,c);
   ss= strchar(strchar(v)*mqt);
+  w= where(ss);
+  if (numberof(w)==0)
+    return string(0);
   s= ss(where(ss));
-  delim= (s && allof(strgrepm(",",s))? ",": " ");   // ? all or none ?  ... or some
+  delim= (s(1) && allof(strgrepm(",",s))? ",": " ");   // ? all or none ?  ... or some
   if (!delim)
     error,"could not detect delimitator.";
 
@@ -151,6 +164,8 @@ func nmlval (v)
   list = where((strpart(s,1:1)=="\'") & (strpart(s,0:0)=="\'"));
   if (numberof(list))
     s(list) = strpart(s(list),2:-1);
+  if (is_scalar(s) && s==string(0))
+    return s;
   s= strtrim(s(where(s)),3);
   s= s(where(s!=delim));
 
@@ -171,10 +186,10 @@ func nmlval (v)
   }
   // complex
   if (is_string(v)) {
-    m= strgrepm("^\\( *[0-9.edED+-]+ *[ ,] *[0-9.edED+-]+ *\\)",v);
+    m= strgrepm("^\\( *[0-9.edED+-]+|[0-9.edED+-]+ *\\)$",v);
     if (allof(m)) {
       if (numberof(v)%2==0) {
-        v= tonum(strtrim(strtranslate(v,v_zmap),3));
+        v= tonum(strtrim(strtranslate(v,parent_tr),3));
         v= v(1::2)+1i*v(2::2);
       }
     }
