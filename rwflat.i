@@ -128,16 +128,17 @@ func readFlat(f, typ, dims, offset, name=, sl=,pc=,i86=,sun=,sgi64=)
   }
 }
 
-func readbinnml (ll)
-/* DOCUMENT x= readbinnml(ll);
+func readbnml (ll, &onml)
+/* DOCUMENT x= readbnml(ll, &onml);
    read array data in binary format, as described in namelist formated metadata
-   in filename LL.  LL can also be an array of lines extracted from that file,
+   in filename LL (*.bnml).  LL can also be an array of lines from that file,
    but in this case directory information is lost.
    IF the binary filename in the metadata is an absolute file path, then it is
    read as-is, otherwise the metadata binary filename is taken to be relative
    to the directory of the metadata.
+   ONML: optional oxy group from namelist metadata
 
-   SEE ALSO: writebinnml
+   SEE ALSO: writebnml
  */
 {
   // handle the FNM case
@@ -147,15 +148,15 @@ func readbinnml (ll)
   } else
     fnm= "./";   // data assumed dir local
   // read binio nml
-  bt= oxnml(ll);
+  onml= oxnml(ll);
   local tnm, rk, shp;
-  ftmp= bt(binio,t,fnm);
+  ftmp= onml(binio,fnm);
   if (strpart(ftmp,1:1)=="/" && check_dir(dirname(ftmp)))
     bfnm= ftmp;
   else
     bfnm= dirname(fnm)+"/"+ftmp;
-  tnm= bt(binio,t,tnm);
-  tsz= bt(binio,t,tsz);
+  tnm= onml(binio,tnm);
+  tsz= onml(binio,tsz);
   typ= [];
   if (tnm=="character")
     if (tsz==8)
@@ -179,25 +180,32 @@ func readbinnml (ll)
       typ= complex;
   if (is_void(typ))
     error,"unknown type";
-  rk= bt(binio,t,rk);
-  shp= bt(binio,t,shp);
+  rk= onml(binio,rk);
+  shp= onml(binio,shp);
   return readFlat(bfnm,typ,_(rk,shp(1:rk)));
 }
 
-func writebinnml (a, fnm)
-/* DOCUMENT writebinnml (a, fnm)
+func writebnml (a, fnm)
+/* DOCUMENT writebnml (a, fnm)
    write array A in "raw/local" binary filename FNM, and write its associated metadata
-   as a fortran-formatted namelist in file FNM+".nml"
-   SEE ALSO: readbinnml
+   as a fortran-formatted namelist in file FNM+".bnml"
+   SEE ALSO: readbnml
  */
 {
   typ= structof(a);
   tsz= sizeof(typ)*8;
   da= dimsof(a);
   rk= da(1);
+  if (rk>4)
+    error,"max rank is 4.";
   shp= da(2:);
+
   for (i=1,sz=1;i<=rk;i++)
     sz*= shp(i);
+
+  if (rk<4)
+    shp= _(shp,array(0,4-rk));
+
   dnm= dirname(fnm);
   if (typ==char)
     tnm= "character";
@@ -220,11 +228,11 @@ func writebinnml (a, fnm)
 
   writeFlat,a,fnm;
   o= save();
-  o= save("binio",save("t",save()));
-  ot= o(binio,t);
+  o= save("binio",save());
+  ot= o(binio);
   save,ot,fnm=basename(fnm);
   save,ot,tnm,tsz,rk,shp,sz;
 
   ll= nmlox(o);
-  return write(open(fnm+".nml","w"),ll,format="%s\n");
+  return write(open(fnm+".bnml","w"),ll,format="%s\n");
 }

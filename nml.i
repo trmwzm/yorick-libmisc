@@ -14,7 +14,7 @@ func nml2ox (ll)
   // remove lead-/trail-ing blanks
   ll= strtrim(ll,3);
   // dealing with comments (not well: does not accept !!! in quoted values)
-  sg= strgrep("^[A-Za-z0-9_=, /&\\\"]*!",ll);
+  sg= strgrep("^[-A-Za-z0-9_=*.%, /&\\\"]*!",use_method(unquoted,ll));
   mec= sg(2,..)>=0;
   if (anyof(mec)) {
     w= where(mec);
@@ -237,21 +237,29 @@ func write_wrkr (o)
 
 func unquoted(c)
 {
-  quotes= (c == '"' | c == ''' );
-  list= where(quotes);
-  if (numberof(list) < 2)
-    return char(!quotes);
-  /*  note that if numberof(list) is odd, we know the quoting is incorrect */
-  /* mark open quotes as 1, character following close quotes as -1 */
-  list= list(2::2);  // where close quote
-  quotes(list) = 0;  /* close quote itself is part of the quote */
-  if (list(0) == numberof(c)-1) {
-    if (numberof(list) < 2)
-      return char(!quotes(psum));
-    list = list(1:-1);
+  isstr= is_string(c);
+  if (isstr)
+    c= strchar(c);
+  mq= (c == '"' | c == ''' );
+  w= where(mq);
+  if (numberof(w) < 2)
+    if (isstr)
+      return strchar(c);
+    else
+      return char(!mq);
+  // note that if numberof(w) is odd, we know the quoting is incorrect
+  // mark open mq as 1, character following close mq as -1
+  w= w(2::2);  // where close quote
+  mq(w) = 0;   // close quote itself is part of the quote
+  --mq(w+1);  // if was open quote, don't open, else close
+  m= char(!mq(psum));
+  if (isstr) {
+    cc= c*m;
+    cc(where(m=='\0')) = char(32);
+    return strchar(cc);
+  } else {
+    return m
   }
-  --quotes(list+1);  /* if was open quote, don't open, else close */
-  return char(!quotes(psum));
 }
 
 local oxnml;
