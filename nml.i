@@ -1,4 +1,5 @@
 require, "yut.i";
+require, "rwflat.i";
 
 scratch= save(scratch, nml2ox, ox2nml, read_wrkr, read_wrkr_rpt, write_wrkr, \
               nmlval, unquoted);
@@ -22,6 +23,7 @@ func nml2ox (ll)
     ll(w)= strpart(ll(w),sg(,w));
   }
   // eliminate empty lines
+  // *** FIXME *** might want to be able to deal with LL="&dat;x=2;\"
   ll= ll(where(ll!=string(0)));
   // where do namelists start (&) and end (/)
   ws= where(strpart(ll,1:1)=="&");
@@ -283,3 +285,21 @@ nmlox=  save(ox2nml, write_wrkr);
 nmlox= closure(nmlox, ox2nml);
 
 restore, scratch;
+
+func oxbnml_read (o)
+{
+  for (i=1;i<=o(*);i++) {
+    oi= o(noop(i));
+    oinm= o(*,i);
+    if (is_obj(oi)) {
+      save,o,noop(oinm),oxbnm_read(oi);
+    } else {
+      s= strpart(oinm,-4:0);
+      if (s=="_bnml") {
+        if (is_string(oi))
+          save,o,strpart(oinm,1:-5),readbnml(oi);
+      }
+    }
+  }
+  return o;
+}
