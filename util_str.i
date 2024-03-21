@@ -307,3 +307,9 @@ func starts_with (str, ref)
     return;
   return strpart(str, :strlen(ref)) == ref;
 }
+
+func pathjoin(list)
+{
+  list(:-1)= append_if_needed(list(:-1),"/");
+  return sum(list);
+}

@@ -540,6 +540,31 @@ func diradd (s1, s2)
   return merge2(s2,s1+s2,strpart(s2,1:1)=="/");
 }
 
+func pathjoin (list)
+/* DOCUMENT p= pathjoin(list);
+   UNIX
+   join path elements in string array LIST after
+   appending /, if not present, to each part.
+   The last array element is taken to be a
+   directory if ending in "/", or a file name
+   if not
+
+   SEE ALSO: pathsplit
+ */
+{
+  m= list!="" & list!=string(0);
+  if (anyof(m))
+    list= list(where(m));
+  else
+    return string(0);
+  if (numberof(list)==1)
+    return list(1);
+  l= list(0);
+  list= list(:-1);
+  list= merge2(list,list+"/",strpart(list,0:0)=="/");
+  return sum(list)+l;
+}
+
 /*--------------------------------------------------------------------*/
 
 func strtimestamp (dum)

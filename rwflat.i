@@ -187,7 +187,9 @@ func readbnml (ll, &onml)
 
 func writebnml (a, fnm)
 /* DOCUMENT writebnml (a, fnm)
-   write array A in "raw/local" binary filename FNM, and write its associated metadata
+   write array A in "raw/local" binary filename FNM[.DAT],
+   -- .DAT added if not present --
+   and write its associated metadata
    as a fortran-formatted namelist in file FNM+".bnml"
    SEE ALSO: readbnml
  */
@@ -226,13 +228,22 @@ func writebnml (a, fnm)
   else
     error,"unknown type struct.";
 
-  writeFlat,a,fnm;
+  dnm= dirname(fnm);
+  bnm= basename(fnm);
+  if (strpart(bnm,-3:)==".dat")
+    bnm= strpart(bnm,:-4);
+  if (strpart(bnm,-4:)==".bnml")
+    bnm= strpart(bnm,:-5);
+
+  f= pathjoin([dnm,bnm+".dat"]);
+  writeFlat,a,f;
   o= save();
   o= save("binio",save());
   ot= o(binio);
-  save,ot,fnm=basename(fnm);
+  save,ot,fnm=basename(f);
   save,ot,tnm,tsz,rk,shp,sz;
 
+  f= pathjoin([dnm,bnm+".bnml"]);
   ll= nmlox(o);
-  return write(open(fnm+".bnml","w"),ll,format="%s\n");
+  return write(open(f,"w"),ll,format="%s\n");
 }
