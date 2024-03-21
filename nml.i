@@ -48,10 +48,9 @@ func nml2ox (ll, readbin=)
       save,o,nml(i),use_method(read_wrkr,ll(ws(i)+1:we(i)-1));
     else
       save,o,nml(i),save();  // namelist is empty
-  if (nmlfnm)
-    save,o,"nml_filename",nmlfnm;
+  // import saved binary data from leaves: sth_bnml=[filename.bnml]
   if (readbin==1)
-    oxbnml_read,o,dirname(nmlfnm);
+    use_method,oxbnml_read,o,dirname(nmlfnm);
   return o;
 }
 
@@ -281,7 +280,8 @@ func oxbnml_read (o, dnm)
     oi= o(noop(i));
     oinm= o(*,i);
     if (is_obj(oi)) {
-      save,o,noop(oinm),oxbnml_read(oi,dnm);
+      use_method,oxbnml_read,oi,dnm;
+      save,o,noop(oinm),oi;
     } else {
       s= strpart(oinm,-4:0);
       if (s=="_bnml") {
