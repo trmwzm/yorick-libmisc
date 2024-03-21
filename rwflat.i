@@ -247,3 +247,21 @@ func writebnml (a, fnm)
   ll= nmlox(o);
   return write(open(f,"w"),ll,format="%s\n");
 }
+
+func oxbnml_read (o)
+{
+  for (i=1;i<=o(*);i++) {
+    oi= o(noop(i));
+    oinm= o(*,i);
+    if (is_obj(oi)) {
+      save,o,noop(oinm),oxbnm_read(oi);
+    } else {
+      s= strpart(oinm,-4:0);
+      if (s=="_bnml") {
+        if (is_string(oi))
+          save,o,strpart(oinm,1:-5),readbnml(oi);
+      }
+    }
+  }
+  return o;
+}
