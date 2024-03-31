@@ -61,7 +61,7 @@ PKG_I_EXTRA=
 
 PKG_BIN=${srcdir}/yoo \
         ${srcdir}/shbang \
-        ${srcdir}/ynvoke
+        ${srcdir}/yx
 
 RELEASE_FILES = AUTHORS LICENSE Makefile NEWS README.md \
 	configure ${PKG_I} ${PKG_I_START} ${PKG_BIN}

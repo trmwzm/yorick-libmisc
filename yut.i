@@ -1,5 +1,4 @@
 require, "fcomplex.i";
-require, "xplot.i";
 
 OXY_VOID_VAL= "oxy_void";
 

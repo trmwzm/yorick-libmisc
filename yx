@@ -3,24 +3,26 @@
 
 batch, 1;
 
-// 1:yorick exec, 2:-q, 3:-i, 4: yinvoke, 5: args
+// 1:yorick exec, 2:-q, 3:-i, 4: yx, 5: args
 ar= get_argv();
 nar= numberof(ar);
 nop= 4;
 if (nar==nop)
   write,\
-    "yinvoke [-i req.i] funcname arg1 arg2=v2 arg3 ...\n",  \
-    "   examples:> ynvoke -i yut.i exp 1.0 \n", \
-    "            > ynvoke -i yut.i strplt \\\"hello\\_world\\\"\n", \
-    "            > ynvoke save nm=\\\"hello\\_world\\\"\n", \
+    "yx [-i req.i] funcname arg1 arg2=v2 arg3 ...\n",  \
+    "   examples:> yx -i yut.i exp 1.0 \n", \
+    "            > yx -i yut.i strplt \\\"hello\\_world\\\"\n", \
+    "            > yx save nm=\\\"hello\\_world\\\"\n", \
     "OR\n", \
-    "yinvoke [-i req.i] statmnt_1 statmnt_2 ... return\ x\n", \
-    "   examples:> ynvoke -i yut.i a=save\\(\\) b=save\\(\\) return\\ oxeq\\(a,b\\)-1\n", \
-    "            > ynvoke return\\ \\\"hello\\ world\\\"  \n", \
+    "yx [-i req.i] [-i req2.i] statmnt_1 statmnt_2 ... return\ x\n", \
+    "   examples:> yx -i yut.i a=save\\(\\) b=save\\(\\) return\\ oxeq\\(a,b\\)-1\n", \
+    "            > yx a=exp\\(1.0\\) return\\ \\a^2\n", \
+    "            OR >  yx \'a=exp(1.0)\' \'return a^2\'\n", \
+    "            > yx return\\ \\\"hello\\ world\\\"  \n", \
     "NOTE: in either forms, if val is scalar integer, used as error cond (>0 err).\n";
 
 if (nar>nop) {
-  if (ar(nop+1)=="-i") {
+  while (ar(nop+1)=="-i") {
     if (nar==nop+1)
       error,"expecting include filename.";
     require,ar(nop+2);
