@@ -7,6 +7,7 @@ batch, 1;
 ar= get_argv();
 nar= numberof(ar);
 nop= 4;
+h= 0
 if (nar==nop)
   write,\
     "yx [-i req.i] funcname arg1 arg2=v2 arg3 ...\n",  \
@@ -22,6 +23,12 @@ if (nar==nop)
     "NOTE: in either forms, if val is scalar integer, used as error cond (>0 err).\n";
 
 if (nar>nop) {
+  m= ar=="-v";
+  if (anyof(m)) {
+    ar= ar(where(!m));
+    nar-= 1;
+    h= 1;
+  }
   while (ar(nop+1)=="-i") {
     if (nar==nop+1)
       error,"expecting include filename.";
@@ -30,15 +37,17 @@ if (nar>nop) {
   }
   ar= ar(nop+1:);
   if (anyof(strgrepm("return",ar))) {
-    val= exec(sum(ar+";"));
+    s= ar;
   } else {
     nar-= nop;
     s= "return "+ar(1)+"(";
     if (nar>1)
       s+= strpart(sum(ar(2:)+", "),:-2);
     s+= ");";
-    val= exec(s);
   }
+  if (h)
+    write,s,format="%s\n";
+  val= exec(s);
   if (is_scalar(val) && is_integer(val) && val>0)
     error;
   if (sizeof(val)<2e3)
