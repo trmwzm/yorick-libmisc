@@ -2,29 +2,29 @@ scratch= save(scratch, tmp);
 tmp= save(data, push, pop, unshift, shift, first, last,
            count, help);
 
-func deque (base, data)
+func deque (base, data, ..)
   /* DOCUMENT dq= deque();
-              dq= deque(grp_obj);
+              dq= deque(grp_obj); OR
+              dq= deque(grp_obj1,grp_obj2); // left to righ append to data
+
      Creates a double-ended queue ("deque") object DQ.
      In the form 'dq= deque()' DQ is an empty deque.
-     In the second form dq= deque(grp_obj); GRP_OBJ must be a group object that
+     In the 2nd/3rd form(s) dq= deque(grp_obj); GRP_OBJ must be a group object that
      serves as the initial data to store within the deque (as its "data" member).
 
      The stack is an group object DATA. TOP/BEGIN is first, BOTTOM/END is last
      member, DATA(1) and DATA(0), resp.
-     The deque object is comprised of a single data member DATA and seven
-     methods: PUSH, POP, UNSHIFT, SHIFT, FIRST, LAST, COUNT, HELP
+     The deque object is comprised of a single data member DATA and six
+     methods: PUSH, POP, UNSHIFT, SHIFT, FIRST, LAST, COUNT
 
-     HELP:
-     dq, help;
-     Display documentation.
-
-     DATA:
+     DATA : group object member
      g= dq(data);
      G is the DQ data member, an oxy group. Deque items are stored in that object.
      Items are added/removed by deque methods and are stored  anonymously.
 
-     PUSH:
+     PUSH: function/method
+     PUSH/POP: *last*-in, *first*-out
+     (stack of coins)
      dq, push, item1, item2, item3, ...;
      ndq= dq(push, item1, item2, item3, ...);
      Pushes one or more items onto the **end** of the DQ -- appending to DQ(DATA).
@@ -74,6 +74,8 @@ func deque (base, data)
 {
   obj= base(:);
   data= is_void(data)? save(): data;
+  while(more_args())
+    save, data, [], next_arg();
   save, obj, data;
   return obj;
 }
@@ -93,11 +95,10 @@ func pop (nil) {
 func unshift (val, ..) {
   use, data;
   count= data(*);
-  save, data, string(0), val;
+  oad= save([],val);
   while(more_args())
-    save, data, string(0), next_arg();
-  nd= data(*);
-  data= data(_(indgen(count+1:nd),indgen(count)));
+    save, oad, string(0), next_arg();
+  save,data,[],oad(::-1);
   return data(*);
 }
 func shift (nil) {
