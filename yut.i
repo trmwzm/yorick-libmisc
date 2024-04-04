@@ -125,6 +125,44 @@ func __swap(&a, &b) /* interpreted version */
 /* replace non-builtin function by interpreted one */
 if (is_func(swap) != 2) swap=  __swap;
 
+func default (&var, val)
+/* DOCUMENT default, &variable, value
+   VARIABLE: variable to be set to a default value, if void. It will be
+      updated in place.
+   VALUE: The default value.
+  SEE ALSO: requirekw
+*/
+{
+  if (is_void(var))
+    var = val;
+}
+
+func requirekw (args)
+/* DOCUMENT requirekw, key1, key2, key3
+
+  SEE ALSO: default
+*/
+{
+  arg_count = args(0);
+  for (i=1; i<=arg_count; i++)
+    if (is_string(args(-,i)) && is_void(args(i)))
+      error, "Missing required keyword: "+args(-,i);
+}
+errs2caller, requirekw;
+wrap_args, requirekw;
+
+func popen_rdfile (cmd)
+/* DOCUMENT popen_rdfile(cmd)
+  This opens a pipe to the command given and reads its output, returning it as
+  an array of lines. (It combines popen and rdfile into a single function,
+  thus the name.)
+*/
+{  
+  f= popen(cmd, 0);
+  lines= rdfile(f);
+  close, f;
+  return lines;
+}
 
 /*---------------------------------------------------------------------------*/
 

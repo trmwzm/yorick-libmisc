@@ -18,6 +18,7 @@ PKG_NAME=yorick-libmisc
 PKG_I=${srcdir}/ascii.i \
       ${srcdir}/bicub.i \
       ${srcdir}/convcorrel.i \
+      ${srcdir}/copy_plot.i \
       ${srcdir}/coreg.i \
       ${srcdir}/dbase.i \
       ${srcdir}/density.i \
@@ -51,6 +52,7 @@ PKG_I=${srcdir}/ascii.i \
       ${srcdir}/shellargs.i \
       ${srcdir}/time.i \
       ${srcdir}/vec2d.i \
+      ${srcdir}/window.i \
       ${srcdir}/yut.i
 
 # autoload file for this package, if any
@@ -63,8 +65,10 @@ PKG_BIN=${srcdir}/yoo \
         ${srcdir}/shbang \
         ${srcdir}/yx
 
+PKG_G= ${srcdir}/etc/landscape11x85.gs
+
 RELEASE_FILES = AUTHORS LICENSE Makefile NEWS README.md \
-	configure ${PKG_I} ${PKG_I_START} ${PKG_BIN}
+	configure ${PKG_I} ${PKG_I_START} ${PKG_BIN} ${PKG_G}
 RELEASE_NAME = $(PKG_NAME)-$(RELEASE_VERSION).tar.bz2
 
 # --------------------------------------- standard macros for all packages
@@ -105,6 +109,12 @@ install:
 	    echo "Installing $$file in $(Y_EXE_DIR)"; \
 	    $(YNSTALL) "$$file" $(Y_EXE_DIR); \
 	  done; \
+	fi; \
+	if test -n "$(PKG_G)"; then \
+	  for file in $(PKG_G); do \
+	    echo "Installing $$file in Y_HOME/g"; \
+	    $(YNSTALL) "$$file" $(DEST_Y_HOME)/g; \
+	  done; \
 	fi
 
 
@@ -133,6 +143,16 @@ uninstall:
 	  for file in $(PKG_BIN); do \
 	    echo "Uninstalling $$file from $(Y_EXE_DIR)"; \
 	    $(RM)  $(Y_EXE_DIR)"/$$file"; \
+	  done; \
+	fi; \
+	if test -n "$(PKG_G)"; then \
+	  for file in $(PKG_G); do \
+	    base=`basename "$$file"`; \
+	    full="$(DEST_Y_HOME)/g/$$base"; \
+	    if test -f "$$full"; then \
+	      echo "Uninstalling $$base from Y_HOME/g"; \
+	      $(RM) "$$full"; \
+	    fi; \
 	  done; \
 	fi
 
