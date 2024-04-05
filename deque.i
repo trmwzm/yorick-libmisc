@@ -138,7 +138,7 @@ help= closure(help, deque);
 deque= closure(deque, restore(tmp));
 restore, scratch;
 
-#if 1
+#if 0
 d= deque();
 d,push,1,2,3,4;
 d,push,5;
