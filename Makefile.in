@@ -65,7 +65,8 @@ PKG_BIN=${srcdir}/yoo \
         ${srcdir}/shbang \
         ${srcdir}/yx
 
-PKG_G= ${srcdir}/etc/landscape11x85.gs
+PKG_G= ${srcdir}/etc/landscape11x85.gs \
+       ${srcdir}/etc/idlcolors.tbl
 
 RELEASE_FILES = AUTHORS LICENSE Makefile NEWS README.md \
 	configure ${PKG_I} ${PKG_I_START} ${PKG_BIN} ${PKG_G}

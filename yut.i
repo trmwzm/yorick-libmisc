@@ -2,7 +2,7 @@ require, "fcomplex.i";
 
 OXY_VOID_VAL= "oxy_void";
 
-_idlctables="~/dev/yorick/yorick-libmisc/etc/idlcolors.tbl";
+_idlctables= Y_SITE+"g/idlcolors.tbl";
 
 func eval(code, tmp=, debug=)
 /* DOCUMENT eval, code;
