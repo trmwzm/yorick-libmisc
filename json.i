@@ -191,8 +191,11 @@ func oxjsn_pr (a,fmt)
     w= where(a==string(0));
     if (numberof(w))
       sa(w)= "null";
-  } else
-    sa= totxt(a,fmt);
+  } else {
+    print_format,2000;
+    sa= totxt(a,fmt)(1);
+    print_format,-1;
+  }
 
   if (da(1)>0) {
     n= numberof(a);
