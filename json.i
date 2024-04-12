@@ -485,18 +485,19 @@ func jsbox_write (o, szmx=, rootdir=, onm=, append=, update=, fcomplex=, ocall=)
   szmx= is_void(szmx)? 200: szmx;
   oo= save();
   rootdir= is_void(rootdir)? ".": rootdir;
-  onm= is_void(onm)? "": onm;
+  onm= is_void(onm)? ".": onm;
 
   ig= is_group(o);
 
   if (strpart(rootdir,0:0)=="/")
     rootdir= strpart(rootdir,:-1);
+
   if (strpart(onm,0:0)=="/")
     onm= strpart(onm,:-1);
 
   if (!is_obj(o))
     return ((is_numerical(o) && sizeof(o)>szmx && ocall!=string(0))?
-            use_method(jsbox_out,rootdir+"/"+ocall, o,          \
+            use_method(jsbox_out,[rootdir,ocall], o,                     \
                        append=append,update=update,fcomplex=fcomplex): o);
   
   for (i=1; i<=o(*); i++) {
@@ -508,9 +509,10 @@ func jsbox_write (o, szmx=, rootdir=, onm=, append=, update=, fcomplex=, ocall=)
       save, oo, noop(oinm), use_method(jsbox_write, oi, szmx=szmx,rootdir=rootdir,onm=onm+"/"+oinm, \
                                        append=append,update=update,fcomplex=fcomplex);
     else
-      save, oo, noop(oinm),                                             \
-        ((is_numerical(oi) && sizeof(oi)>szmx)? use_method(jsbox_out,rootdir+onm+"/"+oinm, oi, \
-                append=append,update=update,fcomplex=fcomplex): oi);
+      save, oo, noop(oinm), \
+        ((is_numerical(oi) && sizeof(oi)>szmx)? \
+         use_method(jsbox_out,[rootdir,onm+"/"+oinm], oi,append=append,update=update,fcomplex=fcomplex): \
+         oi);
   }
   return oo;
 }
@@ -525,10 +527,11 @@ func jsbox_out (fnm, x, append=, update=, fcomplex=)
 //  T%SHP=26880      ,70         , 2*0          ,
 //  T%SZ=1881600    ,
 {
-  mkdirp, dirname(fnm);
+  nmf= pathjoin(fnm);
+  mkdirp, dirname(nmf);
  
-  fd= fnm+".dat";
-  fj= fnm+".jsb";
+  fd= nmf+".dat";
+  fj= nmf+".jsb";
  
   if (append==1)
     f= open(fd,"ab");
@@ -549,7 +552,7 @@ func jsbox_out (fnm, x, append=, update=, fcomplex=)
 
   dx= dimsof(x);
   
-  oj= save(fnm= fd, \
+  oj= save(fnm= basename(fd), \
            tnm= (fcomplex? "fcomplex": typeof(x)), \
            tsz= sizeof(structof(x)), \
            rk= dx(1), \
@@ -562,6 +565,9 @@ func jsbox_out (fnm, x, append=, update=, fcomplex=)
     save, oj, shp=_(oj(shp,:-1),fsz/(oj(tsz)*p));
 
   write, open(fj,"w"), jsnox(noop(oj)), format="%s\n";
+  if (numberof(fnm)>1)
+    save, oj, fnm=pathjoin(fnm(2:))+".jsb";
+  oj= save(fnm=oj(fnm));
   oj= save(json_raw_obj=oj);
 
   return oj;
@@ -591,9 +597,9 @@ func oxjsb_read (o, rootdir=, onm=, memapsz=)
         oi= oi2;
       }
       if (oi(*)==1 && is_obj(oi,json_raw_obj,1)>=0)
-        save, oo, noop(oinm), use_method(oxjsb_in, oi(json_raw_obj), memapsz=memapsz);
+        save, oo, noop(oinm), use_method(oxjsb_in, oi(json_raw_obj),rootdir=rootdir,memapsz=memapsz);
       else
-        save, oo, noop(oinm), use_method(oxjsb_read, oi, rootdir=rootdir,onm=onm+("/"+oinm), \
+        save, oo, noop(oinm), use_method(oxjsb_read,oi,rootdir=rootdir,onm=onm+("/"+oinm), \
                                          memapsz=memapsz);
     } else
       save, oo, noop(oinm), oi;
@@ -601,7 +607,7 @@ func oxjsb_read (o, rootdir=, onm=, memapsz=)
   return oo;
 }
 
-func oxjsb_in (o, memapsz=)
+func oxjsb_in (o, memapsz=, rootdir=)
 // fnm = array(string)
 // tnm = array(string)
 // tsz = array(long)
@@ -610,22 +616,23 @@ func oxjsb_in (o, memapsz=)
 // bige = array(string)
 {
   // open file
-  f= open(o(fnm),"rb");
+  oin= oxjsn(text_lines(pathjoin([rootdir,o(fnm)])));
+  f= open(pathjoin([rootdir,dirname(o(fnm)),oin(fnm)]),"rb");
   fsz= sizeof(f);
 
   // define type
   tmap= save(float=float, double=double, complex=complex, fcomplex=complex,\
              char=char, short=short, int=int,long=long);
-  t= tmap(o(tnm));
+  t= tmap(oin(tnm));
 
   // special type/mods: complex and fcomplex 
-  if (o(tnm)=="fcomplex") 
+  if (oin(tnm)=="fcomplex")
     use_method(oxjsb_add_fcomplex,f);
-  else if (o(tnm)=="complex")
+  else if (oin(tnm)=="complex")
     save, f, complex;
 
   // dims
-  xdims= _(o(rk),o(shp));
+  xdims= _(oin(rk),oin(shp));
 
   // mem map if requested ... always named "x"
   if (!is_void(memapsz) && fsz>memapsz) {
@@ -709,16 +716,21 @@ oxjsb= save(oxjsb_read, oxjsb_in, oxjsb_add_fcomplex);
 oxjsb= closure(oxjsb, oxjsb_read);
 restore, scratch;
 
-func oxjsn_bin (fnmin)
+func oxjsnb (fnmin)
+/* DOCUMENT o= oxjsnb(fnmin);
+
+   SEE ALSO:
+ */
 {
-  return oxjsb(oxjsn(text_lines(fnmin)));
+  rootdir= dirname(fnmin);
+  return oxjsb(oxjsn(text_lines(fnmin)),rootdir=rootdir);
 }
 
-func jsnox_bin (o, fnmout, szmx=)
-/* DOCUMENT jsnox_bin (o, fnmout, szmx=)
+func jsnbox (o, fnmout, szmx=)
+/* DOCUMENT > jsnbox,o,fnmout [,szmx=];
    USAGE:
    o= save(pi,obj=save(a=save(b=random(200))));
-   jsnox_bin,oo,"test_json/jk.json"
+   jsnbox,o,"~/tmp/test_json/jk.json"
    SEE ALSO:
  */
 {
@@ -744,10 +756,11 @@ for (i=1;i<=numberof(l);i++) {
 
 // // dict special VAL cases
 
-
 #endif
 
-#if 1
+
+
+#if 0
 ssep= "- - - - - - - - - - - - - - - - - - - - - - - - - - -";
 write,jsnox(noop(pi)),format="%s vs. 3.141592653590e+00 \n";
 write,jsnox(pi),format="%s vs. {\"pi\": 3.141592653590e+00}\n";
