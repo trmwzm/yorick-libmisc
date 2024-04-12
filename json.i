@@ -709,6 +709,22 @@ oxjsb= save(oxjsb_read, oxjsb_in, oxjsb_add_fcomplex);
 oxjsb= closure(oxjsb, oxjsb_read);
 restore, scratch;
 
+func oxjsn_bin (fnmin)
+{
+  return oxjsb(oxjsn(text_lines(fnmin)));
+}
+
+func jsnox_bin (o, fnmout, szmx=)
+/* DOCUMENT jsnox_bin (o, fnmout, szmx=)
+   USAGE:
+   o= save(pi,obj=save(a=save(b=random(200))));
+   jsnox_bin,oo,"test_json/jk.json"
+   SEE ALSO:
+ */
+{
+  s= jsnox(jsbox(o,rootdir=dirname(fnmout),szmx=szmx));
+  write,open(fnmout,"w"),s,format="%s";
+}
 
 #if 0
 
