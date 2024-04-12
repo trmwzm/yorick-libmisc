@@ -420,7 +420,7 @@ func dump (fnmout, json=, szmx=)
   o= use_method(todox,);
 
   if (json==1) {
-    s= oxjsn(oxjsb(o,rootdir=dirname(fnmout),szmx=szmx));
+    s= jsnox(jsbox(o,rootdir=dirname(fnmout),szmx=szmx));
     write,open(fnmout,"w"),s,format="%s";
   } else
     oxsave, (f=createb(fnmout)), o;
@@ -431,7 +431,7 @@ func load (fnmin, json=)
   write,format="Reading jkobj: %s\n",fnmin;
 
   if (json==1)
-    oo= jsbox(jsnox(text_lines(fnmin)));
+    oo= oxjsb(oxjsn(text_lines(fnmin)));
   else
     oo= oxrestore((f=openb(fnmin)));
   save, use(), [], use_method(fromdox, oo);  // got that wrong, at first ...
@@ -450,7 +450,7 @@ restore, scratch;
 
 /* --------------------  use_kwdflt  --------------------- */
 o= save(a=pi,e=exp(1),c=sqrt(2));
-func t(o, a=, e=) {use_kdef,o,a,e,c; a; e;c;}
+func t(o, a=, e=) {use_kwdflt,o,a,e,c; a; e;c;}
 c= 1;
 t,o;
 //   3.14159
@@ -490,7 +490,7 @@ func funclos (base, key)
 {
   ob= base(:);
 
-  ob, key= is_void(key)? random(3): key;
+  ob, key= (is_void(key)? random(3): key);
 
   return closure(ob, eval_); // eval_ is an obj member, see closure/restore below
 }

@@ -1,9 +1,9 @@
 require, "yut.i";
 require, "ieee.i";
 
-scratch= save(scratch, jsn2ox, jsnox_scan, jsnox_match, jsnox_cut, jsnox_split, jsnox_parse, \
-              ox2jsn, oxjsn_wrkr, oxjsn_scan, oxjsn_pr, ojd, str2str, oxjsb_write, oxjsb_out, \
-              oxjsb_wrap, jsbox_in, jsbox_read, jsbox_add_fcomplex);
+scratch= save(scratch, jsn2ox, oxjsn_scan, oxjsn_match, oxjsn_cut, oxjsn_split, oxjsn_parse, \
+              ox2jsn, jsnox_wrkr, jsnox_scan, jsnox_pr, ojd, str2str, jsbox_write, jsbox_out, \
+              jsbox_wrap, oxjsb_in, oxjsb_read, oxjsb_add_fcomplex);
 /* NOTES:
    1. empty array value "[]" ought to map to yorick void [] (?)
    2. empty object value "{}" ought to map to yorick empty object save() (?)
@@ -72,7 +72,8 @@ func ox2jsn (args)
     {s+= "\{"+"\n"; nt+= 1;}
   if (is_obj(ob) && !is_void(onm))
     {s+= "\{"+"\n"; nt+= 1;}
-  use_method,oxjsn_wrkr,s,ob,onm,nt;
+
+  use_method,jsnox_wrkr,s,ob,onm,nt;
   if (!is_obj(ob) && !is_void(onm))
     s+= "\n\}\n";
   if (is_obj(ob) && !is_void(onm))
@@ -131,10 +132,10 @@ func jsn2ox(s)
   // out
   os= save(s,sl,mbc,mbs,mcm,mcl);  // order matters!
 
-  return use_method(jsnox_parse,os);
+  return use_method(oxjsn_parse,os);
 }
 
-func oxjsn_wrkr (&s, ob, onm, &nt)       // JSON -> OX
+func jsnox_wrkr (&s, ob, onm, &nt)       // JSON -> OX
 {
   extern fmt,tablen,quotestring;
   slast= strpart(s,0:0);
@@ -149,7 +150,7 @@ func oxjsn_wrkr (&s, ob, onm, &nt)       // JSON -> OX
   }
   // only for user input not an object
   if (!is_obj(ob)) {
-    s+= (onm? t+"\""+onm+"\": ": "")+use_method(oxjsn_pr,ob,fmt);
+    s+= (onm? t+"\""+onm+"\": ": "")+use_method(jsnox_pr,ob,fmt);
     return;
   }
   s+= (onm? t+"\""+onm+"\":\n": "");
@@ -163,7 +164,7 @@ func oxjsn_wrkr (&s, ob, onm, &nt)       // JSON -> OX
   for (i=1;i<=on;i++) {
     oi= ob(noop(i));
     oni= ob(*,i);
-    use_method,oxjsn_wrkr,s,oi,oni,nt;
+    use_method,jsnox_wrkr,s,oi,oni,nt;
     s+= (i==on? "": ",\n");
   }
   nt-= 1;
@@ -175,7 +176,7 @@ func oxjsn_wrkr (&s, ob, onm, &nt)       // JSON -> OX
     s+= (s0== "{"? "": t)+"\}";
 }
 
-func oxjsn_pr (a,fmt)
+func jsnox_pr (a,fmt)
 {
   extern quotestring;
   if (is_void(fmt))
@@ -193,7 +194,9 @@ func oxjsn_pr (a,fmt)
       sa(w)= "null";
   } else {
     print_format,2000;
-    sa= totxt(a,fmt)(1);
+    sa= totxt(a,fmt);
+    if (!is_numerical(a))
+      sa= "\""+sa(1)+"\"";
     print_format,-1;
   }
 
@@ -228,7 +231,7 @@ func oxjsn_pr (a,fmt)
     return sa;
 }
 
-func jsnox_scan (os, i, cnm)
+func oxjsn_scan (os, i, cnm)
 {
   if (!is_obj(os))
     error,"expecting object.";
@@ -244,7 +247,7 @@ func jsnox_scan (os, i, cnm)
   return max(i,1);
 }
 
-func jsnox_match (os, i)       // JSON -> OX
+func oxjsn_match (os, i)       // JSON -> OX
 {
   if (!is_obj(os))
     error,"expecting object.";
@@ -267,7 +270,7 @@ func jsnox_match (os, i)       // JSON -> OX
   return min(os(sl),i-2);
 }
 
-func jsnox_cut (os,i,j)
+func oxjsn_cut (os,i,j)
 {
   if (!is_obj(os))
     error,"expecting object.";
@@ -283,7 +286,7 @@ func jsnox_cut (os,i,j)
               mcl= os(mcl,i:j));
 }
 
-func jsnox_split (os, &isar)
+func oxjsn_split (os, &isar)
 // splits CONTENT of bracket
 // ISAR== 0: object, or val                   : object with named members
 //        1: arrays of strings or numbers     : arrays of string or numbers
@@ -324,33 +327,33 @@ func jsnox_split (os, &isar)
   do {
     if (isar==0) {
       i= k;
-      l= use_method(jsnox_scan,os,i,"mcl");
+      l= use_method(oxjsn_scan,os,i,"mcl");
       if (anyof(strpart(os(s),l+1:l+1)==["[","{"])) {
-        j= use_method(jsnox_match,os,l+1);
+        j= use_method(oxjsn_match,os,l+1);
       } else {
-        j= use_method(jsnox_scan,os,l,"mcm")-1;
+        j= use_method(oxjsn_scan,os,l,"mcm")-1;
       }
     } else if (isar==1) {
       i= k;
-      j= use_method(jsnox_scan,os,i,"mcm")-1;
+      j= use_method(oxjsn_scan,os,i,"mcm")-1;
     } else if (isar>1) {   // array of objects(2) or arrays(3)
       if (strpart(os(s),k:k)==",")
         k= k+1;
       if ((ch=strpart(os(s),k:k))!=(isar==2? "{": "[")) // <<<<<<<<<<< BUG!!
         error,"Expecting brakcet and got: "+ch;
       i= k+1;
-      j= use_method(jsnox_match,os,k)-1;
+      j= use_method(oxjsn_match,os,k)-1;
     } else
       error,"unrecognized sequence.";
     // char following last closed bracket
     k= j+2;
     if (isar==0)
-      save, o, strpart(os(s),i:l-1), use_method(jsnox_cut,os,l+1,j);
+      save, o, strpart(os(s),i:l-1), use_method(oxjsn_cut,os,l+1,j);
     else if (isar==1)
-      save, o, string(0), use_method(jsnox_cut,os,i,j)(s);
+      save, o, string(0), use_method(oxjsn_cut,os,i,j)(s);
     else
       if (j>i+1)
-        save, o, string(0), use_method(jsnox_cut,os,i,j);
+        save, o, string(0), use_method(oxjsn_cut,os,i,j);
       else
         save, o, string(0), os(s);
   } while (k<os(sl));
@@ -368,7 +371,7 @@ func jsnox_split (os, &isar)
   return o;
 }
 
-func jsnox_parse (os)
+func oxjsn_parse (os)
 // takes a bracket and returns its content in object o
 // ISAR== 0: object, or val                   : object with named members
 //        1: arrays of strings or numbers     : arrays of string or numbers
@@ -384,24 +387,24 @@ func jsnox_parse (os)
   local isar;
 
   // deal with peeling outer {}
-  i= min(use_method(jsnox_scan,os,1,"mbc"),use_method(jsnox_scan,os,1,"mbs"));
+  i= min(use_method(oxjsn_scan,os,1,"mbc"),use_method(oxjsn_scan,os,1,"mbs"));
   ss= strpart(os(s),1:i);
   if (anyof(strtrim(ss)==["{","["])) {
-    j= use_method(jsnox_match,os,i);
+    j= use_method(oxjsn_match,os,i);
     if (j==strlen(os(s)))
       if (j<=(i+1))
-        return use_method(jsnox_parse,os(s));
+        return use_method(oxjsn_parse,os(s));
       else
-        os= use_method(jsnox_cut,os,i+1,j-1);
+        os= use_method(oxjsn_cut,os,i+1,j-1);
   }
   ss= i= [];
 
-  oi= use_method(jsnox_split,os,isar);
+  oi= use_method(oxjsn_split,os,isar);
   if (isar==0) {                    // 0: object
     o= save();
     for (i=1;i<=oi(*);i++) {
       mbn= streplace(oi(*,i),strgrep("\"",oi(*,i),n=4),"");
-      save,o,noop(mbn),use_method(jsnox_parse,oi(noop(i)));
+      save,o,noop(mbn),use_method(oxjsn_parse,oi(noop(i)));
     }
   } else if (isar==4 || isar==1) {  // 1: arrays of strings OR numbers
     o= oi;
@@ -428,7 +431,7 @@ func jsnox_parse (os)
   } else if (isar==2 || isar==3) {   // 2/3: arrays of obects/arrays OR 4:string or number
     o= save();
     for (i=1;i<=oi(*);i++)
-      save,o,string(0),use_method(jsnox_parse,oi(noop(i)));
+      save,o,string(0),use_method(oxjsn_parse,oi(noop(i)));
   }
   return o;
 }
@@ -457,7 +460,7 @@ func str2str (s)
   }
 }
 
-func oxjsb_wrap (args)
+func jsbox_wrap (args)
 {
   if (args(*)!=1)
     error,"arg required.";
@@ -466,7 +469,7 @@ func oxjsb_wrap (args)
   for (i=1;i<=numberof(kk);i++)
     if (noneof(kk(i)==k))
       error,"unknown keyword: "+kk(i);
-  return use_method(oxjsb_write, args(1), \
+  return use_method(jsbox_write, args(1), \
                     szmx= args("szmx"), \
                     rootdir= args("rootdir"), \
                     onm= args("onm"), \
@@ -475,9 +478,9 @@ func oxjsb_wrap (args)
                     fcomplex= args("fcomplex"), \
                     ocall= args(*,1));
 }
-wrap_args, oxjsb_wrap;
+wrap_args, jsbox_wrap;
 
-func oxjsb_write (o, szmx=, rootdir=, onm=, append=, update=, fcomplex=, ocall=)
+func jsbox_write (o, szmx=, rootdir=, onm=, append=, update=, fcomplex=, ocall=)
 {
   szmx= is_void(szmx)? 200: szmx;
   oo= save();
@@ -493,7 +496,7 @@ func oxjsb_write (o, szmx=, rootdir=, onm=, append=, update=, fcomplex=, ocall=)
 
   if (!is_obj(o))
     return ((is_numerical(o) && sizeof(o)>szmx && ocall!=string(0))?
-            use_method(oxjsb_out,rootdir+"/"+ocall, o,          \
+            use_method(jsbox_out,rootdir+"/"+ocall, o,          \
                        append=append,update=update,fcomplex=fcomplex): o);
   
   for (i=1; i<=o(*); i++) {
@@ -502,17 +505,17 @@ func oxjsb_write (o, szmx=, rootdir=, onm=, append=, update=, fcomplex=, ocall=)
     if (ig)
       oinm+= swrite(i,format="grp_%04d");
     if (is_obj(oi))
-      save, oo, noop(oinm), use_method(oxjsb_write, oi, szmx=szmx,rootdir=rootdir,onm=onm+"/"+oinm, \
+      save, oo, noop(oinm), use_method(jsbox_write, oi, szmx=szmx,rootdir=rootdir,onm=onm+"/"+oinm, \
                                        append=append,update=update,fcomplex=fcomplex);
     else
       save, oo, noop(oinm),                                             \
-        ((is_numerical(oi) && sizeof(oi)>szmx)? use_method(oxjsb_out,rootdir+onm+"/"+oinm, oi, \
+        ((is_numerical(oi) && sizeof(oi)>szmx)? use_method(jsbox_out,rootdir+onm+"/"+oinm, oi, \
                 append=append,update=update,fcomplex=fcomplex): oi);
   }
   return oo;
 }
 
-func oxjsb_out (fnm, x, append=, update=, fcomplex=)
+func jsbox_out (fnm, x, append=, update=, fcomplex=)
 // &BINIO
 //  T%FNM="out.dat",
 //  T%TNM="real(sp)            ",
@@ -535,7 +538,7 @@ func oxjsb_out (fnm, x, append=, update=, fcomplex=)
     f= open(fd,"wb");
 
   if (fcomplex==1)
-    use_method(jsbox_add_fcomplex,f);
+    use_method(oxjsb_add_fcomplex,f);
 
   if (structof(x)==complex)
     save, f, complex;
@@ -558,13 +561,13 @@ func oxjsb_out (fnm, x, append=, update=, fcomplex=)
   if (append==1)
     save, oj, shp=_(oj(shp,:-1),fsz/(oj(tsz)*p));
 
-  write, open(fj,"w"), oxjsn(noop(oj)), format="%s\n";
+  write, open(fj,"w"), jsnox(noop(oj)), format="%s\n";
   oj= save(json_raw_obj=oj);
 
   return oj;
 }
 
-func jsbox_read (o, rootdir=, onm=, memapsz=)
+func oxjsb_read (o, rootdir=, onm=, memapsz=)
 {
   oo= save();
   rootdir= is_void(rootdir)? ".": rootdir;
@@ -578,7 +581,7 @@ func jsbox_read (o, rootdir=, onm=, memapsz=)
     oi= o(noop(i));
     oinm= o(*,i);
     if (o(*)==1 && is_obj(o,json_raw_obj,1)>=0)
-      return use_method(jsbox_in, rootdir+onm+"/"+oinm, oi, memapsz=memapsz);
+      return use_method(oxjsb_in, rootdir+onm+"/"+oinm, oi, memapsz=memapsz);
     if (is_obj(oi)) {
       if (oi(*)==0)
         return oi;
@@ -588,9 +591,9 @@ func jsbox_read (o, rootdir=, onm=, memapsz=)
         oi= oi2;
       }
       if (oi(*)==1 && is_obj(oi,json_raw_obj,1)>=0)
-        save, oo, noop(oinm), use_method(jsbox_in, oi(json_raw_obj), memapsz=memapsz);
+        save, oo, noop(oinm), use_method(oxjsb_in, oi(json_raw_obj), memapsz=memapsz);
       else
-        save, oo, noop(oinm), use_method(jsbox_read, oi, rootdir=rootdir,onm=onm+("/"+oinm), \
+        save, oo, noop(oinm), use_method(oxjsb_read, oi, rootdir=rootdir,onm=onm+("/"+oinm), \
                                          memapsz=memapsz);
     } else
       save, oo, noop(oinm), oi;
@@ -598,7 +601,7 @@ func jsbox_read (o, rootdir=, onm=, memapsz=)
   return oo;
 }
 
-func jsbox_in (o, memapsz=)
+func oxjsb_in (o, memapsz=)
 // fnm = array(string)
 // tnm = array(string)
 // tsz = array(long)
@@ -617,7 +620,7 @@ func jsbox_in (o, memapsz=)
 
   // special type/mods: complex and fcomplex 
   if (o(tnm)=="fcomplex") 
-    use_method(jsbox_add_fcomplex,f);
+    use_method(oxjsb_add_fcomplex,f);
   else if (o(tnm)=="complex")
     save, f, complex;
 
@@ -639,15 +642,15 @@ func jsbox_in (o, memapsz=)
   return x;
 }
 
-func jsbox_add_fcomplex (&f)
+func oxjsb_add_fcomplex (&f)
 {
   pri= get_primitives(f);
   install_struct, f, "double", pri(13), pri(14), pri(15), pri(19:25);
   save, f, complex;
 }
 
-local oxjsn;
-/* DOCUMENT s= ox2jsn(o, fmt=);        // S: array(string)
+local jsnox;
+/* DOCUMENT s= jsnox(o, fmt=);        // S: array(string)
    ox2jsn: json (Javascript Object Notation) parsing to/from yorick save object (restricted:
    no anonymous members, except to store as *named* values arrays of sub-objects)
    JSON is a collection of name/values, or member/member-name, (also named:  object,
@@ -655,12 +658,12 @@ local oxjsn;
    ordered list of values (also named: array, vector, list, or sequence.)
    FMT: format integer or decimal, SEE totxt.
 */
-oxjsn = save(ox2jsn, oxjsn_wrkr, oxjsn_scan, oxjsn_pr);
-oxjsn = closure(oxjsn, ox2jsn);
+jsnox = save(ox2jsn, jsnox_wrkr, jsnox_scan, jsnox_pr);
+jsnox = closure(jsnox, ox2jsn);
 
-local jsnox;
-/* DOCUMENT o= jsn2ox(s); // o: oxy object
-   ox2jsn: json (javascript object notation) to/from yorick save object (restricted:
+local oxjsn;
+/* DOCUMENT o= oxjsn(s); // o: oxy object
+   oxjsn: json (javascript object notation) to/from yorick save object (restricted:
    no anonymous members, except to store as *named* values arrays of sub-objects)
    JSON is a collection of name/values, or member/member-name, (also named:  object,
    record, struct, dictionary, hash table, keyed list, or associative array). Values may be
@@ -672,29 +675,38 @@ local jsnox;
    WARNING: multidimensional arrays are JSON arrays of arrays and area
             *NOT (YET?)* re-casted to yorick arrays(..) but stay as groups of rank-1 arrays...
 */
-jsnox = save(jsn2ox, jsnox_scan, jsnox_match, jsnox_cut, jsnox_split, jsnox_parse, ojd, str2str);
-jsnox = closure(jsnox, jsn2ox);
+oxjsn = save(jsn2ox, oxjsn_scan, oxjsn_match, oxjsn_cut, oxjsn_split, oxjsn_parse, ojd, str2str);
+oxjsn = closure(oxjsn, jsn2ox);
 
-local oxjsb;
-/* DOCUMENT p= oxjsb(o, szmx=, rootdir=, onm=, append=, update=, fcomplex=);
+local jsbox;
+/* DOCUMENT p= jsbox(o, szmx=, rootdir=, onm=, append=, update=, fcomplex=);
    traverse an oxy data-only tree and write out numerical values/arrays larger
    than SZMX bytes.
    -- usage --
-   oo= oxjsb(save(a=save(b=random(200))));
+   oo= jsbox(save(a=save(b=random(200))));
+   o= oxjsb(oo)
    b= random(200);
-   o= jsbox(oxjsb(b));                    // o==b
-   SEE ALSO:
+   o= oxjsb(jsbox(b));                    // o==b
+   SEE ALSO: oxjsb
  */
-oxjsb = save(oxjsb_write, oxjsb_out, jsbox_add_fcomplex, oxjsb_wrap);
-oxjsb = closure(oxjsb, oxjsb_wrap);
+jsbox = save(jsbox_write, jsbox_out, oxjsb_add_fcomplex, jsbox_wrap);
+jsbox = closure(jsbox, jsbox_wrap);
 
-local jsbox;
-/* DOCUMENT 
-   
-   SEE ALSO:
+local oxjsb;
+/* DOCUMENT  p= oxjsb(o, szmx=, rootdir=, onm=, append=, update=, fcomplex=);
+   traverse an oxy data-only tree and write out numerical values/arrays larger
+   than SZMX bytes.
+   ROOTDIR=: optional head of directory tree miroring OXY structure
+   -- usage --
+   oo= jsbox(save(a=save(b=random(200))),rootdir="jsbjk/");
+   o= oxjsb(oo,rootdir="jsbjk/");
+   //
+   b= random(200);
+   o= oxjsb(jsbox(b));                    // o==b
+   SEE ALSO: jsbox
  */
-jsbox= save(jsbox_read, jsbox_in, jsbox_add_fcomplex);
-jsbox= closure(jsbox, jsbox_read);
+oxjsb= save(oxjsb_read, oxjsb_in, oxjsb_add_fcomplex);
+oxjsb= closure(oxjsb, oxjsb_read);
 restore, scratch;
 
 
@@ -708,8 +720,8 @@ ojd= save();
 for (i=1;i<=numberof(l);i++) {
   write,format="parsing file: %s\n",l(i);
   s= text_lines(dir+l(i));
-  o= jsnox(s);
-  ss= oxjsn(o);
+  o= oxjsn(s);
+  ss= jsnox(o);
   save,ojd,strpart(l(i),:-5),save(s,o,ss);
 }
 
@@ -719,33 +731,33 @@ for (i=1;i<=numberof(l);i++) {
 
 #endif
 
-#if 0
+#if 1
 ssep= "- - - - - - - - - - - - - - - - - - - - - - - - - - -";
-write,oxjsn(noop(pi)),format="%s vs. 3.141592653590e+00 \n";
-write,oxjsn(pi),format="%s vs. {\"pi\": 3.141592653590e+00}\n";
+write,jsnox(noop(pi)),format="%s vs. 3.141592653590e+00 \n";
+write,jsnox(pi),format="%s vs. {\"pi\": 3.141592653590e+00}\n";
 write,ssep,format="%s\n";
 hi= "hi";
-write,oxjsn(noop(hi)),format="%s vs. \"hi\"\n";
-write,oxjsn(hi),format="%s vs. {\"hi\": \"hi\"}\n";
+write,jsnox(noop(hi)),format="%s vs. \"hi\"\n";
+write,jsnox(hi),format="%s vs. {\"hi\": \"hi\"}\n";
 write,ssep,format="%s\n";
 pp=[pi,pi];
-write,oxjsn(noop(pp)),format="%s vs. [3.141592653590e+00,3.141592653590e+00] \n";
-write,oxjsn(pp),format="%s vs. {\"pp\": [3.141592653590e+00,3.141592653590e+00]}\n";
+write,jsnox(noop(pp)),format="%s vs. [3.141592653590e+00,3.141592653590e+00] \n";
+write,jsnox(pp),format="%s vs. {\"pp\": [3.141592653590e+00,3.141592653590e+00]}\n";
 write,ssep,format="%s\n";
 
 pp=[hi,hi];
-write,oxjsn(noop(pp)),format="%s[\"hi\",\"hi\"] \n";
-write,oxjsn(pp),format="%s{\"pp\": [\"hi\",\"hi\"]}\n";
+write,jsnox(noop(pp)),format="%s[\"hi\",\"hi\"] \n";
+write,jsnox(pp),format="%s{\"pp\": [\"hi\",\"hi\"]}\n";
 write,ssep,format="%s\n";
 
 pp= save(s="hi");
-write,oxjsn(noop(pp)),format="%s{\"s\": \"hi\"} \n";
-write,oxjsn(pp),format="%s{\"pp\": {\"s\": \"hi\"}}\n";
+write,jsnox(noop(pp)),format="%s{\"s\": \"hi\"} \n";
+write,jsnox(pp),format="%s{\"pp\": {\"s\": \"hi\"}}\n";
 write,ssep,format="%s\n";
 
 pp= save(string(0),save(s="hi"));
-write,oxjsn(noop(pp)),format="%s[{\"s\": \"hi\"}] \n";
-write,oxjsn(pp),format="%s{\"pp\": [{\"s\": \"hi\"}]}\n";
+write,jsnox(noop(pp)),format="%s[{\"s\": \"hi\"}] \n";
+write,jsnox(pp),format="%s{\"pp\": [{\"s\": \"hi\"}]}\n";
 write,ssep,format="%s\n";
 
 scratch= save(scratch,d,q,days,months);
@@ -780,7 +792,7 @@ cfg= save(); {
   } cfg, grid=save(string(0),q);
 }
 restore, scratch;
-write,oxjsn(cfg),format="%s\n";
+write,jsnox(cfg),format="%s\n";
 write,ssep,format="%s\n";
 
 scratch= save(scratch,tmp,tmp2,tmp3);
@@ -811,7 +823,7 @@ tmp, mmi_from_pgm= tmp2;
 tmp, distance= 104.211;
 cfg, properties= tmp;
 restore, scratch;
-write,oxjsn(cfg),format="%s\n";
+write,jsnox(cfg),format="%s\n";
 write,ssep,format="%s\n";
 
 #endif
@@ -846,5 +858,5 @@ tmp, distance= 104.211;
 cfg, properties= tmp;
 cfg, morestuff= "after";
 restore, scratch;
-s= oxjsn(cfg);
+s= jsnox(cfg);
 #endif

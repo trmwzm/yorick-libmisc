@@ -190,7 +190,7 @@ func dump (fnmout, json=, szmx=, pdb=)
   o= use_method(todox,);
 
   if (json==1) {
-    s= oxjsn(oxjsb(o,rootdir=fnmout,szmx=szmx));
+    s= jsnox(jsbox(o,rootdir=fnmout,szmx=szmx));
     write,(f=open(fnmout+"jsb.json","w")),s,format="%s";
   }
   if (pdb==1)
@@ -213,7 +213,7 @@ func load (fnmin, json=, pdb=)
     if (is_void(json) && is_void(pdb))
       error,"specify flavor: pdb or json";
     if (json==1)
-      oo= jsbox(jsnox(text_lines(fnmin+"jsb.json")));
+      oo= oxjsb(oxjsn(text_lines(fnmin+"jsb.json")));
     if (pdb==1)
       oo= oxrestore((f=openb(fnmin+"bin.opdb")));
   } else if (is_obj(fnmin))

@@ -286,7 +286,7 @@ func dump (fnmout, json=, szmx=)
   o= use_method(todox,);
 
   if (json==1) {
-    s= oxjsn(oxjsb(o,rootdir=dirname(fnmout),szmx=szmx));
+    s= jsnox(jsbox(o,rootdir=dirname(fnmout),szmx=szmx));
     write,open(fnmout,"w"),s,format="%s";
   } else
     oxsave, (f=createb(fnmout)), o;
@@ -296,7 +296,7 @@ func load (fnmin, json=)
 {
   write,format="Reading dbase: %s\n",fnmin;
   if (json==1)
-    oo= jsbox(jsnox(text_lines(fnmin)));
+    oo= oxjsb(oxjsn(text_lines(fnmin)));
   else
     oo= oxrestore((f=openb(fnmin)));
   save, use(), [], use_method(fromdox, oo);  // got that wrong, at first ...
