@@ -328,10 +328,12 @@ func oxjsn_split (os, &isar)
     if (isar==0) {
       i= k;
       l= use_method(oxjsn_scan,os,i,"mcl");
-      if (anyof(strpart(os(s),l+1:l+1)==["[","{"])) {
-        j= use_method(oxjsn_match,os,l+1);
-      } else {
-        j= use_method(oxjsn_scan,os,l,"mcm")-1;
+      if (l<=os(sl)) {
+        if (anyof(strpart(os(s),l+1:l+1)==["[","{"])) {
+          j= use_method(oxjsn_match,os,l+1);
+        } else {
+          j= use_method(oxjsn_scan,os,l,"mcm")-1;
+        }
       }
     } else if (isar==1) {
       i= k;
@@ -510,10 +512,12 @@ func jsbox_write (o, szmx=, rootdir=, onm=, append=, update=, fcomplex=, ocall=)
                                        rootdir=rootdir,onm=pathjoin(onm,oinm), \
                                        append=append,update=update,fcomplex=fcomplex);
     else {
-      save, oo, noop(oinm), \
-        ((is_numerical(oi) && sizeof(oi)>szmx)? \
-         use_method(jsbox_out,pathjoin(rootdir,onm,oinm), oi,append=append,update=update,fcomplex=fcomplex): \
-         oi);
+      if (is_numerical(oi) && sizeof(oi)>szmx)
+        mvl= use_method(jsbox_out,pathjoin(rootdir,onm,oinm), oi,append=append, \
+                       update=update,fcomplex=fcomplex);
+      else
+        mvl= oi;
+      save, oo, noop(oinm), mvl;
     }
   }
   return oo;
@@ -560,13 +564,7 @@ func jsbox_out (fnm, x, append=, update=, fcomplex=)
 
   write, open(fj,"w"), jsnox(noop(oj)), format="%s\n";
 
-  if (numberof(fnm)>1)
-    save, oj, fnm=pathjoin(fnm(2:))+".json";
-
-  oj= save(fnm=oj(fnm));
-  oj= save(json_raw_obj=oj);
-
-  return oj;
+  return save(json_raw_obj=save(fnm=basename(fj)));
 }
 
 func oxjsb_read (o, rootdir=, onm=, memapsz=)
@@ -582,9 +580,9 @@ func oxjsb_read (o, rootdir=, onm=, memapsz=)
   for (i=1; i<=o(*); i++) {
     oi= o(noop(i));
     oinm= o(*,i);
-    write,rootdir,onm,oinm,format="rootdir, onm, oinm in oxjsb_read: %s, %s, %s\n";
     if (o(*)==1 && is_obj(o,json_raw_obj,1)>=0)
-      return use_method(oxjsb_in, rootdir=pathjoin(rootdir,onm,oinm), oi, memapsz=memapsz); // pathjoin removed oinm last
+      return use_method(oxjsb_in, \
+                        rootdir=pathjoin(rootdir,onm), oi, memapsz=memapsz); // pathjoin removed oinm last
     if (is_obj(oi)) {
       if (oi(*)==0)
         return oi;
@@ -594,9 +592,12 @@ func oxjsb_read (o, rootdir=, onm=, memapsz=)
         oi= oi2;
       }
       if (oi(*)==1 && is_obj(oi,json_raw_obj,1)>=0)
-        save, oo, noop(oinm), use_method(oxjsb_in, oi(json_raw_obj),rootdir=rootdir,memapsz=memapsz);
+        save, oo, noop(oinm), use_method(oxjsb_in,oi(json_raw_obj), \
+                                         rootdir=pathjoin(rootdir,onm), \
+                                         memapsz=memapsz);
       else
-        save, oo, noop(oinm), use_method(oxjsb_read,oi,rootdir=rootdir,onm=onm+("/"+oinm), \
+        save, oo, noop(oinm), use_method(oxjsb_read,oi,rootdir=rootdir, \
+                                         onm= pathjoin(onm,oinm),  \
                                          memapsz=memapsz);
     } else
       save, oo, noop(oinm), oi;
@@ -612,7 +613,6 @@ func oxjsb_in (o, memapsz=, rootdir=)
 // shp = array(long,1)
 // bige = array(string)
 {
-  write,rootdir,format="rootdir in oxjsb_in: %s\n";
   // open file
   oin= oxjsn(text_lines(pathjoin([rootdir,o(fnm)])));
   f= open(pathjoin([rootdir,dirname(o(fnm)),oin(fnm)]),"rb");
@@ -748,8 +748,36 @@ func jsbox (o, fnmout, szmx=)
   write,open(fnmout,"w"),s,format="%s";
 }
 
-#if 0
+#if 1
+cd,"~/tmp/"
+remove,"b.dat";
+remove,"b.json";
+b= random(200);
+bb= oxjsb_bin(jsbox_bin(b));
+statarr,b-bb;
+if (check_file("b.dat","b.json",quiet=1)==0) error;
+remove,"b.dat";
+remove,"b.json";
 
+removeall,"~/tmp/jsbjk";
+o= save(a=save(b=random(200)));
+// > info,o
+//  object with 1 members:
+//    a = object with 1 members:
+//      b = array(double,200)
+oo= jsbox_bin(o,rootdir="~/tmp/jsbjk/");
+// > info,oo
+//  object with 1 members:
+//    a = object with 1 members:
+//      b = object with 1 members:
+//        json_raw_obj = object with 1 members:
+//          fnm = array(string)
+ooo= oxjsb_bin(oo,rootdir="~/tmp/jsbjk/");
+oxeq(o,ooo,2);
+removeall,"~/tmp/jsbjk";
+# endif
+
+#if 0
 dir= "/home/trm/dev/yorick/yorick-json/samples/";
 l= lsdir(dir);
 l= l(where(strgrepm(".json$",l)));
@@ -762,10 +790,6 @@ for (i=1;i<=numberof(l);i++) {
   ss= jsnox(o);
   save,ojd,strpart(l(i),:-5),save(s,o,ss);
 }
-
-
-// // dict special VAL cases
-
 #endif
 
 

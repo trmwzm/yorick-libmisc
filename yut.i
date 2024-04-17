@@ -425,6 +425,55 @@ func sizeallof (obj)
   return size;
 }
 
+func fixdir (&idir)
+/* DOCUMENT > fixdir, dir
+            > new_dir = fixdir(old_dir)
+  Given a directory, this will ensure that it ends with a trailing slash.
+  The first form will update the variable dir in-place. The second form
+  will return the validated directory, but will not clobber the original.
+*/
+{
+  if (is_void(idir))
+    return;
+  dir= idir;
+  l= strlen(dir);
+  if (numberof(dir) == 1) {
+    if (l && "/"!=strpart(dir,0:0))
+      dir= dir+"/";
+  } else {
+    m= l>0 & strgrepm("/$",dir);
+    if (anyof(m)) {
+      w= where(m);
+      dir(w) = dir(w)+"/";
+    }
+  }
+  if (am_subroutine())
+    idir= dir;
+  return dir;
+}
+
+
+func removeall (path,..)
+/* DOCUMENT removeall, path
+  Removes a path and everything under it, equivalent to rm -rf.
+*/
+{
+  while (more_args())
+    path= _(path,net_arg());
+
+  fixdir,path;
+  local subdirs;
+  files= lsdir(path,subdirs);
+  // This signifies the path doesn't exist.
+  if (structof(files)==long)
+    return;
+  for (i=1; i<=numberof(subdirs); i++)
+    removeall, path+subdirs(i);
+  for(i=1; i<=numberof(files); i++)
+    remove, path+files(i);
+  rmdir, path;
+}
+
 func find_in_dir (din, nm, dir=, reg=, quiet=, take1=, hid=)
 /* DOCUMENT x= find_in_dir(din, nm, dir=, quiet=, take1=, hid=)
    Exact match, or regex match if REG==1,file or directory search:
@@ -578,7 +627,7 @@ func diradd (s1, s2)
 }
 
 func pathjoin (list, ..)
-/* DOCUMENT p= pathjoin(list);
+/* DOCUMENT p= pathjoin(list, ..);
    UNIX
    join path elements in string array LIST after
    appending /, if not present, to each part.
@@ -612,8 +661,8 @@ func strtimestamp (dum)
 {
   s= timestamp();
   s= streplace(s,strfind("  ",s,n=1)," ");
-  return streplace(s,strfind(" ",s,n=5),"_")
-    }
+  return streplace(s,strfind(" ",s,n=5),"_");
+}
 
 /* -------------------------------------------------------------------*/
 
@@ -4407,8 +4456,8 @@ func add (o,..,flat=)
     else
       save,l,string(0),o;
     o= next_arg();
-  } while (more_args()>0)
-    }
+  } while (more_args()>0);
+}
 oxlist= closure(oxlist,restore(tmp));
 restore, scratch;
 

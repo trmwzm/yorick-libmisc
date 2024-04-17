@@ -189,12 +189,11 @@ func dump (fnmout, json=, szmx=, pdb=)
 
   o= use_method(todox,);
 
-  if (json==1) {
-    s= jsnox(jsbox(o,rootdir=fnmout,szmx=szmx));
-    write,(f=open(fnmout+"jsb.json","w")),s,format="%s";
-  }
+  if (json==1)
+    jsbox,o,fnmout;
+
   if (pdb==1)
-    oxsave, (f=createb(fnmout+"bin.opdb")), o;
+    oxsave, (f=createb(fnmout)), o;
 
   return f;
 }
@@ -213,9 +212,9 @@ func load (fnmin, json=, pdb=)
     if (is_void(json) && is_void(pdb))
       error,"specify flavor: pdb or json";
     if (json==1)
-      oo= oxjsb(oxjsn(text_lines(fnmin+"jsb.json")));
+      oo= oxjsb(fnmin);
     if (pdb==1)
-      oo= oxrestore((f=openb(fnmin+"bin.opdb")));
+      oo= oxrestore(openb(fnmin));
   } else if (is_obj(fnmin))
     eq_nocopy, oo, fnmin;
 

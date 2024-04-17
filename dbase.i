@@ -69,6 +69,14 @@ func dbase(base, .., read=)
               > d, fromtext, "$YORICK_LIB_SPL/conf/sys.txt",colrec=1;
               > w= d(match,save(type=["uav","asar-l"]));  // partial, or extract
 
+     LOAD/DUMP methods, both accepting "json=1" flag, otherwise PDB file/name.
+     d= dbase("nm");
+     for(i=1;i<=100;i++)
+       d,add,save(nm=swrite(i,format="x%i"),val=random(long(max(1,random()*100))));
+     d,dump,"~/tmp/dbase_dump_test.pdb";
+     dd= dbase();
+     dd,load,"~/tmp/dbase_dump_test.pdb";
+
      TOTEXT
         write a scalar record member database object to string array.
         COLREC=1:  store records as columns, default is lines.
@@ -287,7 +295,6 @@ func dump (fnmout, json=, szmx=)
     jsbox,o,fnmout,szmx=szmx;
   else
     oxsave, (f=createb(fnmout)), o;
-  return f;
 }
 func load (fnmin, json=)
 {
@@ -298,7 +305,6 @@ func load (fnmin, json=)
     oo= oxrestore(openb(fnmin));
 
   save, use(), [], use_method(fromdox, oo);  // got that wrong, at first ...
-  return;
 }
 func totext (f, colrec=, fmt=)
 /* DOCUMENT text_db (db)
