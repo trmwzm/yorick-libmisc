@@ -3,7 +3,7 @@ require, "ieee.i";
 
 scratch= save(scratch, jsn2ox, oxjsn_scan, oxjsn_match, oxjsn_cut, oxjsn_split, oxjsn_parse, \
               ox2jsn, jsnox_wrkr, jsnox_scan, jsnox_pr, ojd, str2str, jsbox_write, jsbox_out, \
-              jsbox_wrap, oxjsb_in, oxjsb_read, oxjsb_add_fcomplex);
+              jsbox_write_wrp, oxjsb_in, oxjsb_read, oxjsb_add_fcomplex);
 /* NOTES:
    1. empty array value "[]" ought to map to yorick void [] (?)
    2. empty object value "{}" ought to map to yorick empty object save() (?)
@@ -460,7 +460,7 @@ func str2str (s)
   }
 }
 
-func jsbox_wrap (args)
+func jsbox_write_wrp (args)
 {
   if (args(*)!=1)
     error,"arg required.";
@@ -478,7 +478,7 @@ func jsbox_wrap (args)
                     fcomplex= args("fcomplex"), \
                     ocall= args(*,1));
 }
-wrap_args, jsbox_wrap;
+wrap_args, jsbox_write_wrp;
 
 func jsbox_write (o, szmx=, rootdir=, onm=, append=, update=, fcomplex=, ocall=)
 {
@@ -506,32 +506,26 @@ func jsbox_write (o, szmx=, rootdir=, onm=, append=, update=, fcomplex=, ocall=)
     if (ig)
       oinm+= swrite(i,format="grp_%04d");
     if (is_obj(oi))
-      save, oo, noop(oinm), use_method(jsbox_write, oi, szmx=szmx,rootdir=rootdir,onm=onm+"/"+oinm, \
+      save, oo, noop(oinm), use_method(jsbox_write, oi, szmx=szmx, \
+                                       rootdir=rootdir,onm=pathjoin(onm,oinm), \
                                        append=append,update=update,fcomplex=fcomplex);
-    else
+    else {
       save, oo, noop(oinm), \
         ((is_numerical(oi) && sizeof(oi)>szmx)? \
-         use_method(jsbox_out,[rootdir,onm+"/"+oinm], oi,append=append,update=update,fcomplex=fcomplex): \
+         use_method(jsbox_out,pathjoin(rootdir,onm,oinm), oi,append=append,update=update,fcomplex=fcomplex): \
          oi);
+    }
   }
   return oo;
 }
 
 func jsbox_out (fnm, x, append=, update=, fcomplex=)
-// &BINIO
-//  T%FNM="out.dat",
-//  T%TNM="real(sp)            ",
-//  T%KND=4          ,
-//  T%TSZ=32         ,
-//  T%RK=2          ,
-//  T%SHP=26880      ,70         , 2*0          ,
-//  T%SZ=1881600    ,
 {
   nmf= pathjoin(fnm);
   mkdirp, dirname(nmf);
  
   fd= nmf+".dat";
-  fj= nmf+".jsb";
+  fj= nmf+".json";
  
   if (append==1)
     f= open(fd,"ab");
@@ -565,8 +559,10 @@ func jsbox_out (fnm, x, append=, update=, fcomplex=)
     save, oj, shp=_(oj(shp,:-1),fsz/(oj(tsz)*p));
 
   write, open(fj,"w"), jsnox(noop(oj)), format="%s\n";
+
   if (numberof(fnm)>1)
-    save, oj, fnm=pathjoin(fnm(2:))+".jsb";
+    save, oj, fnm=pathjoin(fnm(2:))+".json";
+
   oj= save(fnm=oj(fnm));
   oj= save(json_raw_obj=oj);
 
@@ -586,8 +582,9 @@ func oxjsb_read (o, rootdir=, onm=, memapsz=)
   for (i=1; i<=o(*); i++) {
     oi= o(noop(i));
     oinm= o(*,i);
+    write,rootdir,onm,oinm,format="rootdir, onm, oinm in oxjsb_read: %s, %s, %s\n";
     if (o(*)==1 && is_obj(o,json_raw_obj,1)>=0)
-      return use_method(oxjsb_in, rootdir+onm+"/"+oinm, oi, memapsz=memapsz);
+      return use_method(oxjsb_in, rootdir=pathjoin(rootdir,onm,oinm), oi, memapsz=memapsz); // pathjoin removed oinm last
     if (is_obj(oi)) {
       if (oi(*)==0)
         return oi;
@@ -615,6 +612,7 @@ func oxjsb_in (o, memapsz=, rootdir=)
 // shp = array(long,1)
 // bige = array(string)
 {
+  write,rootdir,format="rootdir in oxjsb_in: %s\n";
   // open file
   oin= oxjsn(text_lines(pathjoin([rootdir,o(fnm)])));
   f= open(pathjoin([rootdir,dirname(o(fnm)),oin(fnm)]),"rb");
@@ -685,56 +683,68 @@ local oxjsn;
 oxjsn = save(jsn2ox, oxjsn_scan, oxjsn_match, oxjsn_cut, oxjsn_split, oxjsn_parse, ojd, str2str);
 oxjsn = closure(oxjsn, jsn2ox);
 
-local jsbox;
-/* DOCUMENT p= jsbox(o, szmx=, rootdir=, onm=, append=, update=, fcomplex=);
+local jsbox_bin;
+/* DOCUMENT p= jsbox_bin(o, szmx=, rootdir=, onm=, append=, update=, fcomplex=);
    traverse an oxy data-only tree and write out numerical values/arrays larger
    than SZMX bytes.
    -- usage --
-   oo= jsbox(save(a=save(b=random(200))));
-   o= oxjsb(oo)
+   oo= jsbox_bin(save(a=save(b=random(200))));
+   o= oxjsb_bin(oo)
    b= random(200);
-   o= oxjsb(jsbox(b));                    // o==b
+   o= oxjsb_bin(jsbox_bin(b));                    // o==b
    SEE ALSO: oxjsb
  */
-jsbox = save(jsbox_write, jsbox_out, oxjsb_add_fcomplex, jsbox_wrap);
-jsbox = closure(jsbox, jsbox_wrap);
+jsbox_bin = save(jsbox_write, jsbox_out, oxjsb_add_fcomplex, jsbox_write_wrp);
+jsbox_bin = closure(jsbox_bin, jsbox_write_wrp);
 
-local oxjsb;
-/* DOCUMENT  p= oxjsb(o, szmx=, rootdir=, onm=, append=, update=, fcomplex=);
+local oxjsb_bin;
+/* DOCUMENT  p= oxjsb_bin(o, szmx=, rootdir=, onm=, append=, update=, fcomplex=);
    traverse an oxy data-only tree and write out numerical values/arrays larger
    than SZMX bytes.
    ROOTDIR=: optional head of directory tree miroring OXY structure
    -- usage --
-   oo= jsbox(save(a=save(b=random(200))),rootdir="jsbjk/");
-   o= oxjsb(oo,rootdir="jsbjk/");
+   o= save(a=save(b=random(200)));
+   oo= jsbox_bin(o,rootdir="~/tmp/jsbjk/");
+   ooo= oxjsb_bin(oo,rootdir="~/tmp/jsbjk/");
    //
    b= random(200);
-   o= oxjsb(jsbox(b));                    // o==b
+   o= oxjsb_bin(jsbox_bin(b));                    // o==b
    SEE ALSO: jsbox
  */
-oxjsb= save(oxjsb_read, oxjsb_in, oxjsb_add_fcomplex);
-oxjsb= closure(oxjsb, oxjsb_read);
+oxjsb_bin= save(oxjsb_read, oxjsb_in, oxjsb_add_fcomplex);
+oxjsb_bin= closure(oxjsb_bin, oxjsb_read);
 restore, scratch;
 
-func oxjsnb (fnmin)
-/* DOCUMENT o= oxjsnb(fnmin);
+func oxjsb (fnmin)
+/* DOCUMENT o= oxjsb(fnmin);
 
    SEE ALSO:
  */
 {
-  rootdir= dirname(fnmin);
-  return oxjsb(oxjsn(text_lines(fnmin)),rootdir=rootdir);
+  if (strlen(fnmin)>5 && strpart(fnmin,-4:)==".json")
+    din= strpart(fnmin,:-5)+".jsb";
+  else {
+    din= fnmin+".jsb";
+    fnmin= fnmin+".json";
+  }
+  return oxjsb_bin(oxjsn(text_lines(fnmin)),rootdir=din);
 }
 
-func jsnbox (o, fnmout, szmx=)
-/* DOCUMENT > jsnbox,o,fnmout [,szmx=];
+func jsbox (o, fnmout, szmx=)
+/* DOCUMENT > jsbox,o,fnmout [,szmx=];
    USAGE:
    o= save(pi,obj=save(a=save(b=random(200))));
-   jsnbox,o,"~/tmp/test_json/jk.json"
+   jsbox,o,"~/tmp/test_json/jk.json"
    SEE ALSO:
  */
 {
-  s= jsnox(jsbox(o,rootdir=dirname(fnmout),szmx=szmx));
+  if (strlen(fnmout)>5 && strpart(fnmout,-4:)==".json")
+    dout= strpart(fnmout,:-5)+".jsb";
+  else {
+    dout= fnmout+".jsb";
+    fnmout= fnmout+".json";
+  }
+  s= jsnox(jsbox_bin(o,rootdir=dout,szmx=szmx));
   write,open(fnmout,"w"),s,format="%s";
 }
 

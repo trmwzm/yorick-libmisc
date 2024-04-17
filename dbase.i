@@ -2,7 +2,7 @@ require, "yut.i";
 require, "json.i";
 
 scratch = save(scratch, tmp);
-tmp = save(add, key, get, record, write, read, todox, fromdox, load, dump);
+tmp = save(add, key, get, record, todox, fromdox, load, dump); //  write, read,
 save, tmp, match, totext, fromtext;
 
 func dbase(base, .., read=)
@@ -255,22 +255,21 @@ func match (ok, verbose=)
     write,format="Number of dbase records selected: %i\n",numberof(w);
   return w;
 }
+// func write (fnm)
+// {
+//     f= createb(fnm);
+//     use, keys, klist, records;
+//     oxsave,f,keys, klist, records;
+// }
 
-func write (fnm)
-{
-    f= createb(fnm);
-    use, keys, klist, records;
-    oxsave,f,keys, klist, records;
-}
-
-func read (fnm)
-{
-    f= openb(fnm);
-    use, keys, klist, records;
-    oxrestore,f, keys;
-    oxrestore,f, klist;
-    oxrestore,f, records;
-}
+// func read (fnm)
+// {
+//     f= openb(fnm);
+//     use, keys, klist, records;
+//     oxrestore,f, keys;
+//     oxrestore,f, klist;
+//     oxrestore,f, records;
+// }
 func todox (void)
 {
   return oxprune(use(),nofunc=1);
@@ -282,25 +281,24 @@ func fromdox (dox)
 func dump (fnmout, json=, szmx=)
 {
   write,format="Write dbase: %s\n",fnmout;
-
   o= use_method(todox,);
 
-  if (json==1) {
-    s= jsnox(jsbox(o,rootdir=dirname(fnmout),szmx=szmx));
-    write,open(fnmout,"w"),s,format="%s";
-  } else
+  if ((strlen(fnmout)>5 && strpart(fnmout,-4:)==".json") || json==1)
+    jsbox,o,fnmout,szmx=szmx;
+  else
     oxsave, (f=createb(fnmout)), o;
   return f;
 }
 func load (fnmin, json=)
 {
   write,format="Reading dbase: %s\n",fnmin;
-  if (json==1)
-    oo= oxjsb(oxjsn(text_lines(fnmin)));
+  if ((strlen(fnmin)>5 && strpart(fnmin,-4:)==".json") || json==1)
+    oo= oxjsb(fnmin);
   else
-    oo= oxrestore((f=openb(fnmin)));
+    oo= oxrestore(openb(fnmin));
+
   save, use(), [], use_method(fromdox, oo);  // got that wrong, at first ...
-  return f;
+  return;
 }
 func totext (f, colrec=, fmt=)
 /* DOCUMENT text_db (db)

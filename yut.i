@@ -577,7 +577,7 @@ func diradd (s1, s2)
   return merge2(s2,s1+s2,strpart(s2,1:1)=="/");
 }
 
-func pathjoin (list)
+func pathjoin (list, ..)
 /* DOCUMENT p= pathjoin(list);
    UNIX
    join path elements in string array LIST after
@@ -589,6 +589,9 @@ func pathjoin (list)
    SEE ALSO: pathsplit
  */
 {
+  while (more_args())
+    list= _(list,next_arg());
+
   m= list!="" & list!=string(0);
   if (anyof(m))
     list= list(where(m));
@@ -599,6 +602,7 @@ func pathjoin (list)
   l= list(0);
   list= list(:-1);
   list= merge2(list,list+"/",strpart(list,0:0)=="/");
+
   return sum(list)+l;
 }
 
