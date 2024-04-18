@@ -486,8 +486,8 @@ func jsbox_write (o, szmx=, rootdir=, onm=, append=, update=, fcomplex=, ocall=)
 {
   szmx= is_void(szmx)? 200: szmx;
   oo= save();
-  rootdir= is_void(rootdir)? ".": rootdir;
-  onm= is_void(onm)? ".": onm;
+  rootdir= is_void(rootdir)? "": rootdir;
+  onm= is_void(onm)? "": onm;
 
   ig= is_group(o);
 
@@ -513,8 +513,8 @@ func jsbox_write (o, szmx=, rootdir=, onm=, append=, update=, fcomplex=, ocall=)
                                        append=append,update=update,fcomplex=fcomplex);
     else {
       if (is_numerical(oi) && sizeof(oi)>szmx)
-        mvl= use_method(jsbox_out,pathjoin(rootdir,onm,oinm), oi,append=append, \
-                       update=update,fcomplex=fcomplex);
+        mvl= use_method(jsbox_out,[dirname(rootdir),pathjoin(basename(rootdir),onm,oinm)], \
+                        oi,append=append,update=update,fcomplex=fcomplex);
       else
         mvl= oi;
       save, oo, noop(oinm), mvl;
@@ -530,7 +530,7 @@ func jsbox_out (fnm, x, append=, update=, fcomplex=)
  
   fd= nmf+".dat";
   fj= nmf+".json";
- 
+
   if (append==1)
     f= open(fd,"ab");
   else if (update==1)
@@ -564,7 +564,8 @@ func jsbox_out (fnm, x, append=, update=, fcomplex=)
 
   write, open(fj,"w"), jsnox(noop(oj)), format="%s\n";
 
-  return save(json_raw_obj=save(fnm=basename(fj)));
+  fnmo= fnm(2)+".json";
+  return save(json_raw_obj=save(fnm=fnmo));
 }
 
 func oxjsb_read (o, rootdir=, onm=, memapsz=)
@@ -572,6 +573,7 @@ func oxjsb_read (o, rootdir=, onm=, memapsz=)
   oo= save();
   rootdir= is_void(rootdir)? ".": rootdir;
   onm= is_void(onm)? "": onm;
+
   if (strpart(rootdir,0:0)=="/")
     rootdir= strpart(rootdir,:-1);
   if (strpart(onm,0:0)=="/")
@@ -593,7 +595,7 @@ func oxjsb_read (o, rootdir=, onm=, memapsz=)
       }
       if (oi(*)==1 && is_obj(oi,json_raw_obj,1)>=0)
         save, oo, noop(oinm), use_method(oxjsb_in,oi(json_raw_obj), \
-                                         rootdir=pathjoin(rootdir,onm), \
+                                         rootdir=dirname(rootdir), \
                                          memapsz=memapsz);
       else
         save, oo, noop(oinm), use_method(oxjsb_read,oi,rootdir=rootdir, \
@@ -727,7 +729,8 @@ func oxjsb (fnmin)
     din= fnmin+".jsb";
     fnmin= fnmin+".json";
   }
-  return oxjsb_bin(oxjsn(text_lines(fnmin)),rootdir=din);
+  o= oxjsn(text_lines(fnmin));
+  return oxjsb_bin(o,rootdir=din);
 }
 
 func jsbox (o, fnmout, szmx=)
@@ -748,33 +751,58 @@ func jsbox (o, fnmout, szmx=)
   write,open(fnmout,"w"),s,format="%s";
 }
 
-#if 1
-cd,"~/tmp/"
-remove,"b.dat";
-remove,"b.json";
-b= random(200);
-bb= oxjsb_bin(jsbox_bin(b));
-statarr,b-bb;
-if (check_file("b.dat","b.json",quiet=1)==0) error;
-remove,"b.dat";
-remove,"b.json";
+#if 0
+func test1(rm=)
+{
+  cd,"~/tmp/";
+  if (rm==1) remove,"b.dat";
+  if (rm==1) remove,"b.json";
+  b= random(200);
+  bb= oxjsb_bin(jsbox_bin(b));
+  statarr,b-bb;
+  if (check_file("b.dat","b.json",quiet=1)==0) error;
+  if (rm==1) remove,"b.dat";
+  if (rm==1) remove,"b.json";
+}
+func test2(rm=)
+{
+  d= "~/tmp/jsbjk2";
+  if (rm==1) removeall,d;
+  o= save(a=save(b=random(200)));
+  // > info,o
+  //  object with 1 members:
+  //    a = object with 1 members:
+  //      b = array(double,200)
+  oo= jsbox_bin(o,rootdir=d);
+  //lsdir(d);
+  // > info,oo
+  //  object with 1 members:
+  //    a = object with 1 members:
+  //      b = object with 1 members:
+  //        json_raw_obj = object with 1 members:
+  //          fnm = array(string)
 
-removeall,"~/tmp/jsbjk";
-o= save(a=save(b=random(200)));
-// > info,o
-//  object with 1 members:
-//    a = object with 1 members:
-//      b = array(double,200)
-oo= jsbox_bin(o,rootdir="~/tmp/jsbjk/");
-// > info,oo
-//  object with 1 members:
-//    a = object with 1 members:
-//      b = object with 1 members:
-//        json_raw_obj = object with 1 members:
-//          fnm = array(string)
-ooo= oxjsb_bin(oo,rootdir="~/tmp/jsbjk/");
-oxeq(o,ooo,2);
-removeall,"~/tmp/jsbjk";
+  ooo= oxjsb_bin(oo,rootdir=d);
+  oxeq(o,ooo,2);
+  if (rm==1) removeall,d;
+}
+func test3(rm=)
+{
+  d= "~/tmp/jsbjk3";
+  if (rm==1) removeall,d;
+  o= save(a=save(b=save(c=random(200))));
+  // > info,o
+  //  object with 1 members:
+  //    a = object with 1 members:
+  //      b = array(double,200)
+  dd= d+"/jk.json";
+  jsbox,o,dd;
+  write,dd,format="written file: %s\n";
+  //lsdir(d);
+  oo= oxjsb(dd);
+  oxeq(o,oo,2);
+  if (rm==1) removeall,d;
+}
 # endif
 
 #if 0
