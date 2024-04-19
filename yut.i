@@ -3362,6 +3362,9 @@ func is_oxgrar (o, &s, &d)
    checks that all members are anonymous, and that members are
    all of the same type, therefore transferable to a yorick array:
    numerical, string, or pointer
+   USAGE:
+   o= arr_oxgr(random(5,4,3,2,2));
+   is_oxgrar(o)==1;
    SEE ALSO:
 */
 {
@@ -3420,9 +3423,12 @@ func oxgrar_dims_wrkr(o, &s, &d)
 }
 
 func arr_oxgr (o, &ier, row=)
-/* DOCUMENT arr_oxgr (o)
-   copy oxy group to array, or reverse cast,
-   depending on input type - oxy obj, or array
+/* DOCUMENT ra= arr_oxgr(o);  // (1)
+            o= arr_oxgr(ra);  // (2)
+   copy oxy group to array (1), or reverse cast (2), depending on input type:
+   oxy obj, or array.
+   Array-to-group (2) "leaves" are one-dimensional arrays of length equal to
+   *leading* dimension of input array.
 
    test:
    x= random(5,4,3,2);
@@ -4504,10 +4510,31 @@ func oxdir (dn)
 }
 
 func oxarr (args)
-/* DOCUMENT  oxarr (o,mbnm,bad=,ireg=)
-   extract array from a (oxy) group of oxy objects with member name MBNM
+/* DOCUMENT  oxarr (o, [mbnm,] [&nn,] [bad=,] [ireg=])
+
+   extract or collate an array from an (oxy) group. Conformable arrays
+   are gathered in an trailing dimension.
+   The group members can each be arrays, in this case MBNM is set void, else
+   the outer group members are themselves named oxy objects, all with identical
+   member names: MBNM
+   In all case BROADCASTING applies.
+   IF arrays are NOT conformable, or members are not arrays, void is returned (see IREG=.)
+   When IREG==1 (unconformable) the input arrays are concateneted on output as a 1D array,
+    the length of each segment in the output may be set on return as NN.
+
+   USAGE:
    for (o=save(),i=1;i<=3;i++)
-   save,o,string(0),save(a=random(5));
+     save,o,string(0),random(2);
+   b= oxarr(o);
+
+   o= save();
+   save,o,string(0),random(2,3);
+   save,o,string(0),random(2);
+   info,oxarr(o);              // array(double,2,3,2) !!
+
+   for (o=save(),i=1;i<=3;i++)
+     save,o,string(0),save(a=random(5));
+   b= oxarr(o,a);
    b= oxarr(o,"a");
 */
 {
@@ -4527,13 +4554,19 @@ func oxarr (args)
       ireg= [];
   o= args(1);
   n= o(*);
-  mbnm= (args(0,2)==0)? args(-,2): ((args(0,2)==1)? args(2): []);
-  if (is_void(mbnm))
-    error,"need MEMBNM string or reference name";
+  if (args(0)>1) {
+    mbnm= (args(0,2)==0)? args(-,2): ((args(0,2)==1)? args(2): []);
+    if (is_void(mbnm))
+      error,"need MEMBNM string or reference name";
+    for (i=1;i<=n;i++)
+      if (is_obj(o(noop(i)),noop(mbnm),1)<0)
+        error,"no such member name in any of the objects in group.";
+  } else {
+    mbnm= [];
+    if (!is_array(o(1)))
+      return [];
+  }
 
-  for (i=1;i<=n;i++)
-    if (is_obj(o(noop(i)),noop(mbnm),1)<0)
-      error,"no such member name in any of the objects in group.";
 
   if (ireg) {
     nn= array(0,n);
@@ -4541,8 +4574,10 @@ func oxarr (args)
       if (is_obj(o(noop(i)),noop(mbnm),1)>-1)
         nn(i)= numberof(o(noop(i),noop(mbnm)));
     out= array(structof(o(1,noop(mbnm)))(bad),long(nn(sum)));
+    if (args(0)==3 && args(0,3)==0)
+      args, 3, nn;
     for (j=0,i=1;i<=n;i++)
-      if (is_obj(o(noop(i)),noop(mbnm),1)>-1) {
+      if (is_void(mbnm) || is_obj(o(noop(i)),noop(mbnm),1)>-1) {
         out(j+1:j+nn(i))= o(noop(i))(noop(mbnm))(*);
         j+= nn(i);
       }
@@ -4550,8 +4585,13 @@ func oxarr (args)
     out1= array(structof(o(1,noop(mbnm)))(bad),dimsof(o(1,noop(mbnm))));
     out= array(out1,n);
     for (i=1;i<=n;i++)
-      if (is_obj(o(noop(i)),noop(mbnm),1)>-1)
-        out(..,i)= o(noop(i))(noop(mbnm));
+      if (is_void(mbnm) || is_obj(o(noop(i)),noop(mbnm),1)>-1) {
+        ok= dimsof(out(..,i),o(noop(i))(noop(mbnm)));
+        if (!is_void(ok))
+          out(..,i)= o(noop(i))(noop(mbnm));
+        else
+          return [];
+      }
   }
   return out;
 }
