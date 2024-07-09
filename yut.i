@@ -936,7 +936,12 @@ func rotvec (a,w,q,seq=) {
 
   if (da(2)!=3||dw(2)!=3) error,"expects a=[3,..] w=[3,..]";
 
-  uw= w/abs(w(1,..),w(2,..),w(3,..));
+  wn= abs(w(1,..),w(2,..),w(3,..));
+  uw= w/wn;
+  if (is_void(q))
+    q= wn;
+  else
+    wn= [];
 
   if (seq==1) {
     apara= (uw*a)(sum,..)(-,)*uw;
