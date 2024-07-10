@@ -50,6 +50,7 @@ PKG_I=${srcdir}/ascii.i \
       ${srcdir}/rwflat.i \
       ${srcdir}/scm.i \
       ${srcdir}/shellargs.i \
+      ${srcdir}/tile.i \
       ${srcdir}/time.i \
       ${srcdir}/vec2d.i \
       ${srcdir}/window.i \
