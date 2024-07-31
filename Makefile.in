@@ -24,7 +24,7 @@ PKG_I=${srcdir}/ascii.i \
       ${srcdir}/density.i \
       ${srcdir}/detect.i \
       ${srcdir}/digfun.i \
-			${srcdir}/dir.i \
+	  ${srcdir}/dir.i \
       ${srcdir}/dsp.i \
       ${srcdir}/fcomplex.i \
       ${srcdir}/fitpoly.i \
@@ -53,7 +53,8 @@ PKG_I=${srcdir}/ascii.i \
       ${srcdir}/shellargs.i \
       ${srcdir}/tile.i \
       ${srcdir}/time.i \
-			${srcdir}/util_str.i \
+	  ${srcdir}/util_basic.i \
+	  ${srcdir}/util_str.i \
       ${srcdir}/vec2d.i \
       ${srcdir}/window.i \
       ${srcdir}/yut.i
