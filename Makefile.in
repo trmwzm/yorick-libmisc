@@ -53,6 +53,7 @@ PKG_I=${srcdir}/ascii.i \
       ${srcdir}/shellargs.i \
       ${srcdir}/tile.i \
       ${srcdir}/time.i \
+			${srcdir}/util_str.i \
       ${srcdir}/vec2d.i \
       ${srcdir}/window.i \
       ${srcdir}/yut.i
