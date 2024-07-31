@@ -10,7 +10,7 @@ nop= 4;
 h= 0
 if (nar==nop)
   write,\
-    "yx [-i req.i] funcname arg1 arg2=v2 arg3 ...\n",  \
+    "yx [-v] [-i req.i] funcname arg1 arg2=v2 arg3 ...\n",  \
     "   examples:> yx -i yut.i exp 1.0 \n", \
     "            > yx -i yut.i strplt \\\"hello\\_world\\\"\n", \
     "            > yx save nm=\\\"hello\\_world\\\"\n", \
@@ -46,7 +46,7 @@ if (nar>nop) {
     s+= ");";
   }
   if (h)
-    write,s,format="%s\n";
+    write,s,format="Exec arg: %s\n";
   val= exec(s);
   if (is_scalar(val) && is_integer(val) && val>0)
     error;

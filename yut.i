@@ -882,6 +882,18 @@ levi_civita= array(double,3,3,3);
 levi_civita(1,2,3)=levi_civita(3,1,2)=levi_civita(2,3,1)=1;
 levi_civita(3,2,1)=levi_civita(2,1,3)=levi_civita(1,3,2)=-1;
 
+func dotvec (a,b)
+/* DOCUMENT dotvec(a,b)
+   one to one sequence of dot products, wich either potentialy broadcasted
+*/
+{
+  if (dimsof(a)(2)!=3||dimsof(b)(2)!=3)
+    error,"expects a=[3,..] b=[3,..]";
+
+  return (a*b)(sum,..);
+}
+
+
 func crossvec (a,b,seq=)
 /* DOCUMENT crossvec(a,b,seq=)
    for one to one sequence of cross products, specify seq == 1
