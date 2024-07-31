@@ -303,7 +303,7 @@ func test (&dg, n=, m=, ncheb=, nline=, nbit=)
 }
 
 
-#if 1
+#if 0
 //a = levmar1(y, x, f, a0, avar, acovar)
 // levmar1 skips autodetection and assumes
 // Y= F(X, A ,&dfda)
