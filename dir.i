@@ -1,58 +1,6 @@
 require, "util_str.i";
 require, "pathfun.i";
 
-file_dirname = dirname;
-
-func file_tail(re, fn)
-/* DOCUMENT file_tail(fn)
-  Returns the last part of the path (the file's name). Similar to Tcl's "file
-  tail". Works on arrays.
-
-  SEE ALSO: file_dirname file_extension file_rootname
-*/
-{
-  slash = match = [];
-  regmatch, re, fn, , slash, match;
-  w = where(!strlen(match) & !strlen(slash));
-  if (numberof(w))
-    match(w) = fn(w);
-  return match;
-}
-file_tail = closure(file_tail, regcomp(".*(/)([^/]*)"));
-
-func file_extension(re, fn)
-/* DOCUMENT file_extension(fn)
-  Returns all characters in fn after and including the last dot in the last
-  element in name, or the empty string. Similar to Tcl's "file extension".
-  Works on arrays.
-
-  SEE ALSO: file_dirname file_tail file_rootname
-*/
-{
-  match = [];
-  regmatch, re, file_tail(fn), , match;
-  return match;
-}
-file_extension = closure(file_extension, regcomp(".*(\\..*)"));
-
-func file_rootname(re, fn)
-/* DOCUMENT file_rootname(fn)
-  Returns all characters in fn up to but not including the last "." character
-  in the last component of fn. If it doesn't contain a dot, then it returns
-  fn. Similar to Tcl's "file rootname". Works on arrays.
-
-  SEE ALSO: dir_dirname file_tail file_extension
-  */
-{
-  match = dot = [];
-  regmatch, re, fn, , match, dot;
-  w = where(!strlen(match) & !strlen(dot));
-  if (numberof(w))
-    match(w) = fn(w);
-  return match;
-}
-file_rootname = closure(file_rootname, regcomp("(.*)(\\.)[^\\./]*"));
-
 func file_split(fn)
 /* DOCUMENT file_split(fn)
   Splits a path into its component parts and returns them as an array.
@@ -239,7 +187,7 @@ func file_commonpath(path, ..)
   if (strpart(path, 0:0) == "/")
     return strpart(path, :-1);
   else
-    return file_dirname(path);
+    return dirname(path);
 }
 
 func file_relative(base, dest)
