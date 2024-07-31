@@ -70,7 +70,7 @@ func polyfun(x, a, &grad)
   for (i=2;i<=np;i++)
     y(..,i)= y(..,i-1)*x;
 
-  if (grad=1)
+  if (grad==1)
     grad= y;
 
   return y(..,+)*a(+,..);
@@ -79,7 +79,7 @@ func polyfun(x, a, &grad)
 // chebsinc_lm closure
 scratch= save(scratch, tmp);
 tmp= save(eval_, fitparr);
-func chebsinc_lm (base, void, lanta=, lam=)
+func chebsinc_lm (base, void, lanta=, lam=, f0=)
 {
   ob= base(:);
 
@@ -87,7 +87,7 @@ func chebsinc_lm (base, void, lanta=, lam=)
     lanta= 1.7;
 
   sol= 299792458.0;      // [m/s]
-  f0= 430e6;
+  f0= is_void(f0)? 430e6: f0;
   if (is_void(lam))
     lam= sol/f0;
 
@@ -303,7 +303,7 @@ func test (&dg, n=, m=, ncheb=, nline=, nbit=)
 }
 
 
-#if 0
+#if 1
 //a = levmar1(y, x, f, a0, avar, acovar)
 // levmar1 skips autodetection and assumes
 // Y= F(X, A ,&dfda)
@@ -370,6 +370,7 @@ a0= [0.,0.,0.];
 a= levmar1(y,x,polyfun,a0); // fit=, amin=, amax, wgt= [dims Y], lu=1 (replaces SVD)
 
 xx= span(-3,3,m);
+window,0;
 fma;
 plmk,y,x,msize=.3,marker=1;
 plg,polyfun(xx,a),xx,color="red";
@@ -387,6 +388,7 @@ a0= [0.,0.,0.];
 a= levmar1(y,x,f,a0); // fit=, amin=, amax, wgt= [dims Y], lu=1 (replaces SVD)
 
 xx= span(-3,3,m);
+window,1;
 fma;
 plmk,y,x,msize=.3,marker=1;
 plg,f(xx,a),xx,color="red";
