@@ -24,6 +24,7 @@ PKG_I=${srcdir}/ascii.i \
       ${srcdir}/density.i \
       ${srcdir}/detect.i \
       ${srcdir}/digfun.i \
+			${srcdir}/dir.i \
       ${srcdir}/dsp.i \
       ${srcdir}/fcomplex.i \
       ${srcdir}/fitpoly.i \
