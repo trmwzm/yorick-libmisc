@@ -332,4 +332,16 @@ window,1;fma;pli,to(fill,a,1),cmin=0,cmax=1;limits;
 // to,dump,b,to(fill,a,1),1;
 window,2;fma;pli,b,cmin=0,cmax=1;limits;
 window,3;fma;pli,a-b,cmin=0,cmax=1;limits;
+
+nd= 2;
+dim= [40,4000];
+dimt= [40,1000];
+to= tile(dim,dimt);
+a= random(_(nd,dim));
+fd= open("jk.dat","wb+");
+add_variable,fd,-1,"x",double,_(nd,dim);
+fd.x= array(double,_(nd,dim));
+for (i=1;i<=to(out,nt);i++)
+  to,dump,fd.x,to(fill,a,i),i;
+close(fd)
 #endif
