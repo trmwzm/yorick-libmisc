@@ -1028,14 +1028,28 @@ func strtrtable(in, out, &tr)
 
 /*---------------------------------------------------------------------------*/
 
-func rjmread (f, delim)
+func rjmread (f, fields, delim=)
+/* DOCUMENT x= rjmread(f,fields,delim=);
+      F: file name (ascii), example formating below
+   "pls:  1 egi_t: 397558041.847600 sniffer: 0x00 N: 16384 AVE:  11.77 SIGMA:  27.40"
+      FIELDS: optional (if void, real all values), otherwise
+              FIELDS==["egi_t", "AVE", ...] read listed fields, output *FIRST* dim
+      DELIM:= default " "
+   SEE ALSO:
+ */
 {
   if (is_void(delim))
     delim= " ";
   l= text_lines(f);
-  n= (strpart(l(1),strword(l(1),delim,100))!=string(0))(sum);
-  return strpart(l,strword(l,delim,n));
+  if (is_void(fields)) {
+    n= (strpart(l(1),strword(l(1),delim,100))!=string(0))(sum);
+    return strpart(l,strword(l,delim,n));
+  } else {
+    pat= strpart(("("+fields+": *[A-Za-z0-9_.+-]+ *)|")(sum),:-1);
+    return tonum(strtok(strpart(l,strgrep(pat,l,n=numberof(fields))),":")(2,));
+  }
 }
+
 
 /*----------------------------------------------------------------------------*/
 
