@@ -226,9 +226,9 @@ func is_null(var)
 
 /*-------------------------------------------------------------------------------------*/
 
-func struct_element(stru, &name, &type, &strutype)
-/* DOCUMENT struct_element, stru, name, type, strutype;
-   -or-  struct_element(stru,,type)
+func struct_element(stru, &strctnm)
+/* DOCUMENT struct_element, stru, name, type, strctnm;
+   -or-  nametypeox= struct_element(stru,&structtype)
    -or-  ...
 
    Extract as string format :
@@ -242,53 +242,46 @@ func struct_element(stru, &name, &type, &strutype)
    SEE ALSO: struct_include, struct_set_value, struct_fitsRead
 */
 {
-  local name,type;
   if (typeof(stru) != "struct_definition")
     stru= structof(stru);
 
   /* print a representation of the structure */
-  stru= print(stru);
-
-  if (stru(1)=="[]") {
-    name= type= string([]);
-    return name;
-  }
+  pstru= print(stru);
 
   /* find the name of each element */
-  strutype= strpart(stru(1),8:-2);
+  strctnm= strpart(pstru(1),8:-2);
 
-  if (numberof(stru)==2) {
-    name= type= string([]);
-    return name;
+  x= stru();
+  if (numberof(pstru)==2)
+    return save(string(0),structof(x));
+
+  snm= strtok(strtrim(pstru(2:-1))," ");
+  name= strpart(snm(2,),1:-1);
+
+  o= save();
+  m= strgrep("\\(",name);
+  for (i=1;i<=numberof(name);i++) {
+    nm= m(2,i)>-1? strpart(name(i),1:m(2,i)-1): name(i);
+    xi= get_member(x,nm);
+    save,o,noop(nm),array(structof(xi),dimsof(xi));
   }
 
-  stru= strtrim(stru(2:-1));
-  stru= strtok(stru," ");
-
-  name= strpart(stru(2,),1:-1);
-  type= stru(1,);
-
-  return name;
+  return o;
 }
 
 /*-------------------------------------------------------------------------------------*/
 
-func is_member(stru,membstr,membtyp)
+func is_member(stru, membstr, membtyp)
 /* DOCUMENT is_member(stru,membstr[,membtyp])
    test whether a structure member name [and type] is found in object
    SEE ALSOL struct_element
 */
 {
-  local name,type;
-  if (typeof(stru) != "struct_definition") stru= structof(stru);
-  struct_element, stru, name, type;
-  msk= strtok(name,"(")(1,..) == membstr;
-  fnd= anyof(msk);
-  if (!fnd)return 0;
-  if (!is_void(membtyp)) {
-    if (structof(membtyp)!=string)membtyp= nameof(membtyp);
-    if (membtyp == type(where(msk))(1))return 1;else return 0;
-  }
+  o= struct_element(stru);
+  ok= is_obj(o,membstr,1)>=0;
+  if (ok && !is_void(membtyp))
+    return structof(o(noop(membstr)))==membtyp;
+
   return 1;
 }
 
@@ -337,6 +330,57 @@ func structeq (structDef1, structDef2, noname =) {
   }
   return 1;
 }
+
+func oxstruct(stru)
+/* DOCUMENT struct_element, stru, name, type, strctnm;
+   -or-  nametypeox= struct_element(stru,&structtype)
+   -or-  ...
+
+   Extract as string format :
+   name : name of each element of the structure
+   type : the type of each element of the structure, as typeof(stru.elem)
+   struname : the typeof of the structure as typeof(stru);
+
+   The function return name.
+   The stru input could be a struct_definition or a variable.
+
+   SEE ALSO: struct_include, struct_set_value, struct_fitsRead
+*/
+{
+  if (typeof(stru) == "struct_definition")
+    error,"use struct_element.";
+  if (typeof(stru) != "struct_instance")
+    error,"requires struct instance.";
+
+  ns= numberof(stru);
+  if (ns>1) {
+    o= save();
+    for (i=1;i<=ns;i++)
+      save,o,string(0),oxstruct(stru(i));
+    return o;
+  }
+  /* print a representation of the structure */
+  pstru= print(structof(stru));
+
+  /* find the name of each element */
+  strctnm= strpart(pstru(1),8:-2);
+
+  if (numberof(pstru)==2)
+    return save(string(0),structof(x));
+
+  snm= strtok(strtrim(pstru(2:-1))," ");
+  name= strpart(snm(2,),1:-1);
+
+  o= save();
+  m= strgrep("\\(",name);
+  for (i=1;i<=numberof(name);i++) {
+    nm= m(2,i)>-1? strpart(name(i),1:m(2,i)-1): name(i);
+    save,o,noop(nm),get_member(stru,nm);
+  }
+
+  return o;
+}
+
 
 func ref(var,noscalar=)
 /* DOCUMENT ref(var,noscalar=)
@@ -1042,7 +1086,19 @@ func rjmread (f, fields, delim=)
     delim= " ";
   l= text_lines(f);
   if (is_void(fields)) {
-    n= (strpart(l(1),strword(l(1),delim,100))!=string(0))(sum);
+    s1= strpart(l(1),strword(l(1),delim,100));
+    s1= s1(where(s1));
+    n= numberof(s1);
+    // m= _(1,strgrepm(":$",s1)(dif))==0;
+    // while (anyof(m)) {
+    //   w= where(m);
+    //   if (numberof(w)) {
+    //     s1(w+1)= s1(w)+delim+s1(w+1);
+    //     s1= s1(where(!m));
+    //   }
+    //   m= _(1,strgrepm(":$",s1)(dif))==0;
+    // }
+    // fields= strtok(s1(::2),":")(1,);
     return strpart(l,strword(l,delim,n));
   } else {
     pat= strpart(("("+fields+": *[A-Za-z0-9_.+-]+ *)|")(sum),:-1);
