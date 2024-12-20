@@ -559,10 +559,11 @@ q   which matches NM. Matching is done with Void.
   i= 0;
   dd= ddd= [];
   x= dir==1? d: f;
-  m= nf==0? []: (reg==1? strgrepm(nm,x): nm==x);
-  if (nf>0 && anyof(m)) {
+  xx= dir==1? nd: nf;
+  m= xx==0? []: (reg==1? strgrepm(nm,x): nm==x);
+  if (xx>0 && anyof(m)) {
     w= take1==1? where(m)(1): where(m);
-    ddd= diradd(din,f(w));
+    ddd= diradd(din,x(w));
     if (take1==1)
       return ddd;
   }
@@ -4775,28 +4776,33 @@ func use_kwdflt (args)
 /* DOCUMENT use_kwdflt,use(),kw1,kw2,...
    sets default value of listed keywords from context object,
    if found as members.
-   --- usage#1 ---
+   --- usage#1 : provide default key values *AND* default externals --
    > o= save(a=pi,e=exp(1),c=sqrt(2));
-   > func t(o, a=, e=) {use_kdef,o,a,e,c; a; e;c;}
+   > func t(o, a=, e=) {
+       use_kwdflt,o,a,e,c; a; e;c;
+     }
    > c= 1;
    > t,o;
    3.14159
    2.71828
-   1       << *NOTE* C not a keyword, thus extern value if not defined
+   1       << *NOTE* C *not* a keyword, thus extern value if not defined
    *OR* ( restore all members for convenience -- prob not a great idea)
-   > func t(o, a=) {use_kwdflt,o,a; tmp=save(a); restore,o; restore,tmp; a;}
+   > func t(o, a=) {
+       use_kwdflt,o,a; tmp=save(a); restore,o; restore,tmp; a;
+     }
    *NOTE: restoring O in func *CLOBBERS* all external values with member vals,
    unless LOCAL.
+
    --- usage#2 ---
    > scratch= save(scratch,tmp);
    > tmp= save(plg_);
-   > func graph (base,void) {
-   return base(:);
-   }
+   > func graph (base, void) {
+       return base(:);
+     }
    > func plg_ (y, x, color=, type=) {
-   use_kwdflt, use(), color, type;
-   plg, y, x, color=color, type=type;
-   }
+       use_kwdflt, use(), color, type;
+       plg, y, x, color=color, type=type;
+     }
    > graph= closure(graph,restore(tmp));
    > restore, scratch;
    ...
