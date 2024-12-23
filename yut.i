@@ -281,8 +281,7 @@ func is_member(stru, membstr, membtyp)
   ok= is_obj(o,membstr,1)>=0;
   if (ok && !is_void(membtyp))
     return structof(o(noop(membstr)))==membtyp;
-
-  return 1;
+  return ok;
 }
 
 /*-------------------------------------------------------------------------------------*/
@@ -332,19 +331,11 @@ func structeq (structDef1, structDef2, noname =) {
 }
 
 func oxstruct(stru)
-/* DOCUMENT struct_element, stru, name, type, strctnm;
-   -or-  nametypeox= struct_element(stru,&structtype)
-   -or-  ...
+/* DOCUMENT o= oxstruct(x);
+   X= struct or array of struct -- if array, array dims are ignored, flat out.
+   O oxy object(s) with identical structure as struct type.
 
-   Extract as string format :
-   name : name of each element of the structure
-   type : the type of each element of the structure, as typeof(stru.elem)
-   struname : the typeof of the structure as typeof(stru);
-
-   The function return name.
-   The stru input could be a struct_definition or a variable.
-
-   SEE ALSO: struct_include, struct_set_value, struct_fitsRead
+   SEE ALSO: struct_element
 */
 {
   if (typeof(stru) == "struct_definition")
