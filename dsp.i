@@ -2877,6 +2877,15 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, ambig=, 
     return array(peakAnl,2);
   }
 
+  // demo-debug code to detect azimuth slant of range energy
+  czz= Cabs(zz);
+  dz= dimsof(zz)(2:);
+  x= span(1,dz(1),dz(1));
+  cmx= czz(,mxx);
+  zp= interp2reg(czz,1,dz(1),1,dz(2),x,cmx);
+  zp/=  zp(max);
+  md= regress(cmx,[1,x],sigy=dz(2)/2/10/max(zp,.1));
+
   zz= deramp2d(zz,fcar=-2*pi*kcar);
 
   sunit= is_void(sunit)?array(string(0),2):sunit+array(string(0),2);
@@ -2903,7 +2912,8 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, ambig=, 
     return array(peakAnl,2);
 
   /**/local zzz1, zzz2;
-  xpeak = peak_anl(zz(*,zmx(2)),zzz1,osf=nexpand,pkpos=zmx(1),\
+  z0= bicub(x,md(1)+md(2)*x,zz,1,dz(1),1,dz(2));
+  xpeak = peak_anl(z0,zzz1,osf=nexpand,pkpos=zmx(1),\
              islrwidth=(!is_void(islrwidth)?(islrwidth(1)*double(sf(1))):[]),deg=deg);
 
   xpeak.maxPosPred= scale(1)*rndx(1);
