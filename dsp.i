@@ -2913,7 +2913,7 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, ambig=, 
 
   /**/local zzz1, zzz2;
   y= md(1)+md(2)*x;
-  y= min(dz(2)-2,max(3,y));
+  y= min(dz(2)-3,max(4,y));
   z0= bicub(x,y,zz,1,dz(1),1,dz(2));
 
   xpeak = peak_anl(z0,zzz1,osf=nexpand,pkpos=zmx(1),\
