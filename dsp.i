@@ -2913,7 +2913,7 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, ambig=, 
 
   /**/local zzz1, zzz2;
   y= md(1)+md(2)*x;
-  y= min(dz(2),max(1,y));
+  y= min(dz(2)-2,max(3,y));
   z0= bicub(x,y,zz,1,dz(1),1,dz(2));
 
   xpeak = peak_anl(z0,zzz1,osf=nexpand,pkpos=zmx(1),\
@@ -3106,8 +3106,10 @@ func bicub(x0,y0,z,xmin,xmax,ymin,ymax)
   i0= int((x0-xmin)/(xmax-xmin)*(dimsof(z)(2)-1))+1;
   // for j0 the +1 is omitted because of the indexing scheme for zvec
   j0= int((y0-ymin)/(ymax-ymin)*(dimsof(z)(3)-1));
+
   t= ((x0-xmin)/(xmax-xmin)*(dimsof(z)(2)-1))%1;
   u= ((y0-ymin)/(ymax-ymin)*(dimsof(z)(3)-1))%1;
+
   posvec= [t^3*u^3, t^3*u^2, t^3*u, t^3, t^2*u^3, t^2*u^2, t^2*u, t^2,
            t*u^3, t*u^2, t*u, t, u^3, u^2, u, 1];
   fd=dimsof(z)(2);
@@ -3119,88 +3121,49 @@ func bicub(x0,y0,z,xmin,xmax,ymin,ymax)
   a3= 1.0/3;          // .3333333333
   a9= 1.0/9;          // .1111111111
 
-  zvec= [a36*z(i0-1+ fd*(j0-1))-a12*z(i0+
-        fd*(j0-1))+ a12*z(i0+ 1+
-        fd*(j0-1))-a36*z(i0+ 2+
-        fd*(j0-1))-a12*z(i0-1+ fd*j0)+ .25*z(i0+
-        fd*j0)-.25*z(i0+ 1+ fd*j0)+ a12*z(i0+ 2+
-        fd*j0)+ a12*z(i0-1+ fd*(j0+ 1))-.25*z(i0+
-        fd*(j0+ 1))+ .25*z(i0+ 1+ fd*(j0+
-        1))-a12*z(i0+ 2+ fd*(j0+ 1))-a36*z(i0-1+
-        fd*(j0+ 2))+ a12*z(i0+ fd*(j0+
-        2))-a12*z(i0+ 1+ fd*(j0+ 2))+ a36*z(i0+
-        2+ fd*(j0+ 2)), -a12*z(i0-1+ fd*(j0-1))+
-        .25*z(i0+ fd*(j0-1))-.25*z(i0+ 1+ fd*(j0-1))+
-        a12*z(i0+ 2+ fd*(j0-1))+ a6*z(i0-1+
-        fd*j0)-.5*z(i0+ fd*j0)+ .5*z(i0+ 1+
-        fd*j0)-a6*z(i0+ 2+ fd*j0)-a12*z(i0-1+
-        fd*(j0+ 1))+ .25*z(i0+ fd*(j0+ 1))-.25*z(i0+
-        1+ fd*(j0+ 1))+ a12*z(i0+ 2+ fd*(j0+ 1)),
-        a18*z(i0-1+ fd*(j0-1))-a6*z(i0+
-        fd*(j0-1))+ a6*z(i0+ 1+
-        fd*(j0-1))-a18*z(i0+ 2+ fd*(j0-1))+
-        a12*z(i0-1+ fd*j0)-.25*z(i0+ fd*j0)+
-        .25*z(i0+ 1+ fd*j0)-a12*z(i0+ 2+
-        fd*j0)-a6*z(i0-1+ fd*(j0+ 1))+ .5*z(i0+
-        fd*(j0+ 1))-.5*z(i0+ 1+ fd*(j0+ 1))+
-        a6*z(i0+ 2+ fd*(j0+ 1))+ a36*z(i0-1+
-        fd*(j0+ 2))-a12*z(i0+ fd*(j0+ 2))+
-        a12*z(i0+ 1+ fd*(j0+ 2))-a36*z(i0+ 2+
-        fd*(j0+ 2)), -a6*z(i0-1+ fd*j0)+ .5*z(i0+
-        fd*j0)-.5*z(i0+ 1+ fd*j0)+ a6*z(i0+ 2+
-        fd*j0), -a12*z(i0-1+ fd*(j0-1))+ a6*z(i0+
-        fd*(j0-1))-a12*z(i0+ 1+ fd*(j0-1))+
-        .25*z(i0-1+ fd*j0)-.5*z(i0+ fd*j0)+
-        .25*z(i0+ 1+ fd*j0)-.25*z(i0-1+ fd*(j0+ 1))+
-        .5*z(i0+ fd*(j0+ 1))-.25*z(i0+ 1+ fd*(j0+
-        1))+ a12*z(i0-1+ fd*(j0+ 2))-a6*z(i0+
-        fd*(j0+ 2))+ a12*z(i0+ 1+ fd*(j0+ 2)),
-        .25*z(i0-1+ fd*(j0-1))-.5*z(i0+ fd*(j0-1))+
-        .25*z(i0+ 1+ fd*(j0-1))-.5*z(i0-1+ fd*j0)+
-        1.*z(i0+ fd*j0)-.5*z(i0+ 1+ fd*j0)+
-        .25*z(i0-1+ fd*(j0+ 1))-.5*z(i0+ fd*(j0+ 1))+
-        .25*z(i0+ 1+ fd*(j0+ 1)), -a6*z(i0-1+
-        fd*(j0-1))+ a3*z(i0+ fd*(j0-1))-a6*z(i0+ 1+
-        fd*(j0-1))-.25*z(i0-1+ fd*j0)+ .5*z(i0+
-        fd*j0)-.25*z(i0+ 1+ fd*j0)+ .5*z(i0-1+
-        fd*(j0+ 1))-1.*z(i0+ fd*(j0+ 1))+ .5*z(i0+ 1+ fd*(j0+
-        1))-a12*z(i0-1+ fd*(j0+ 2))+ a6*z(i0+
-        fd*(j0+ 2))-a12*z(i0+ 1+ fd*(j0+ 2)),
-        .5*z(i0-1+ fd*j0)-1.*z(i0+ fd*j0)+ .5*z(i0+
-        1+ fd*j0), a18*z(i0-1+ fd*(j0-1))+
-        a12*z(i0+ fd*(j0-1))-a6*z(i0+ 1+
-        fd*(j0-1))+ a36*z(i0+ 2+
-        fd*(j0-1))-a6*z(i0-1+ fd*j0)-.25*z(i0+
-        fd*j0)+ .5*z(i0+ 1+ fd*j0)-a12*z(i0+ 2+
-        fd*j0)+ a6*z(i0-1+ fd*(j0+ 1))+ .25*z(i0+
-        fd*(j0+ 1))-.5*z(i0+ 1+ fd*(j0+ 1))+
-        a12*z(i0+ 2+ fd*(j0+ 1))-a18*z(i0-1+
-        fd*(j0+ 2))-a12*z(i0+ fd*(j0+ 2))+
-        a6*z(i0+ 1+ fd*(j0+ 2))-a36*z(i0+ 2+
-        fd*(j0+ 2)), -a6*z(i0-1+ fd*(j0-1))-.25*z(i0+
-        fd*(j0-1))+ .5*z(i0+ 1+
-        fd*(j0-1))-a12*z(i0+ 2+ fd*(j0-1))+
-        a3*z(i0-1+ fd*j0)+ .5*z(i0+ fd*j0)-1.*z(i0+
-        1+ fd*j0)+ a6*z(i0+ 2+ fd*j0)-a6*z(i0-1+
-        fd*(j0+ 1))-.25*z(i0+ fd*(j0+ 1))+ .5*z(i0+
-        1+ fd*(j0+ 1))-a12*z(i0+ 2+ fd*(j0+ 1)),
-        a9*z(i0-1+ fd*(j0-1))+ a6*z(i0+
-        fd*(j0-1))-a3*z(i0+ 1+ fd*(j0-1))+
-        a18*z(i0+ 2+ fd*(j0-1))+ a6*z(i0-1+
-        fd*j0)+ .25*z(i0+ fd*j0)-.5*z(i0+ 1+ fd*j0)+
-        a12*z(i0+ 2+ fd*j0)-a3*z(i0-1+ fd*(j0+
-        1))-.5*z(i0+ fd*(j0+ 1))+ 1.*z(i0+ 1+ fd*(j0+
-        1))-a6*z(i0+ 2+ fd*(j0+ 1))+ a18*z(i0-1+
-        fd*(j0+ 2))+ a12*z(i0+ fd*(j0+
-        2))-a6*z(i0+ 1+ fd*(j0+ 2))+ a36*z(i0+ 2+
-        fd*(j0+ 2)), -a3*z(i0-1+ fd*j0)-.5*z(i0+
-        fd*j0)+ 1.*z(i0+ 1+ fd*j0)-a6*z(i0+ 2+ fd*j0),
-        -a6*z(i0+ fd*(j0-1))+ .5*z(i0+
-        fd*j0)-.5*z(i0+ fd*(j0+ 1))+ a6*z(i0+
-        fd*(j0+ 2)), .5*z(i0+ fd*(j0-1))-1.*z(i0+ fd*j0)+
-        .5*z(i0+ fd*(j0+ 1)), -a3*z(i0+
-        fd*(j0-1))-.5*z(i0+ fd*j0)+ 1.*z(i0+ fd*(j0+
-        1))-a6*z(i0+ fd*(j0+ 2)),1.*z(i0+ fd*j0)];
+  zvec= [a36*z(i0-1+fd*(j0-1))-a12*z(i0+fd*(j0-1))+a12*z(i0+1+fd*(j0-1))- \
+         a36*z(i0+2+fd*(j0-1))-a12*z(i0-1+fd*j0)+0.25*z(i0+fd*j0)- \
+         0.25*z(i0+1+fd*j0)+a12*z(i0+2+fd*j0)+a12*z(i0-1+fd*(j0+1))- \
+         0.25*z(i0+fd*(j0+1))+0.25*z(i0+1+fd*(j0+1))-a12*z(i0+2+fd*(j0+1))- \
+         a36*z(i0-1+fd*(j0+2))+a12*z(i0+fd*(j0+2))-a12*z(i0+1+fd*(j0+2))+ \
+         a36*z(i0+2+fd*(j0+2)), \
+         -a12*z(i0-1+fd*(j0-1))+0.25*z(i0+fd*(j0-1))-0.25*z(i0+1+fd*(j0-1))+ \
+         a12*z(i0+2+fd*(j0-1))+a6*z(i0-1+fd*j0)-0.5*z(i0+fd*j0)+0.5*z(i0+1+fd*j0)- \
+         a6*z(i0+2+fd*j0)-a12*z(i0-1+fd*(j0+1))+0.25*z(i0+fd*(j0+1))- \
+         0.25*z(i0+1+fd*(j0+1))+a12*z(i0+2+fd*(j0+1)), \
+         a18*z(i0-1+fd*(j0-1))-a6*z(i0+fd*(j0-1))+a6*z(i0+1+fd*(j0-1))-a18*z(i0+2+fd*(j0-1))+ \
+         a12*z(i0-1+fd*j0)-0.25*z(i0+fd*j0)+0.25*z(i0+1+fd*j0)-a12*z(i0+2+fd*j0)- \
+         a6*z(i0-1+fd*(j0+1))+0.5*z(i0+fd*(j0+1))-0.5*z(i0+1+fd*(j0+1))+ \
+         a6*z(i0+2+fd*(j0+1))+a36*z(i0-1+fd*(j0+2))-a12*z(i0+fd*(j0+2))+ \
+         a12*z(i0+1+fd*(j0+2))-a36*z(i0+2+fd*(j0+2)), \
+         -a6*z(i0-1+fd*j0)+0.5*z(i0+fd*j0)-0.5*z(i0+1+fd*j0)+a6*z(i0+2+fd*j0), \
+         -a12*z(i0-1+fd*(j0-1))+a6*z(i0+fd*(j0-1))-a12*z(i0+1+fd*(j0-1))+ \
+         0.25*z(i0-1+fd*j0)-0.5*z(i0+fd*j0)+0.25*z(i0+1+fd*j0)-0.25*z(i0-1+fd*(j0+1))+ \
+         0.5*z(i0+fd*(j0+1))-0.25*z(i0+1+fd*(j0+1))+a12*z(i0-1+fd*(j0+2))- \
+         a6*z(i0+fd*(j0+2))+a12*z(i0+1+fd*(j0+2)), \
+         0.25*z(i0-1+fd*(j0-1))-0.5*z(i0+fd*(j0-1))+0.25*z(i0+1+fd*(j0-1))-0.5*z(i0-1+fd*j0)+ \
+         1.*z(i0+fd*j0)-0.5*z(i0+1+fd*j0)+0.25*z(i0-1+fd*(j0+1))-0.5*z(i0+fd*(j0+1))+ \
+         0.25*z(i0+1+fd*(j0+1)), \
+         -a6*z(i0-1+fd*(j0-1))+a3*z(i0+fd*(j0-1))-a6*z(i0+1+fd*(j0-1))-0.25*z(i0-1+fd*j0)+ \
+         0.5*z(i0+fd*j0)-0.25*z(i0+1+fd*j0)+0.5*z(i0-1+fd*(j0+1))-1.*z(i0+fd*(j0+1))+ \
+         0.5*z(i0+1+fd*(j0+1))-a12*z(i0-1+fd*(j0+2))+a6*z(i0+fd*(j0+2))-a12*z(i0+1+fd*(j0+2)), \
+         0.5*z(i0-1+fd*j0)-1.*z(i0+fd*j0)+0.5*z(i0+1+fd*j0), \
+         a18*z(i0-1+fd*(j0-1))+a12*z(i0+fd*(j0-1))-a6*z(i0+1+fd*(j0-1))+a36*z(i0+2+fd*(j0-1))- \
+         a6*z(i0-1+fd*j0)-0.25*z(i0+fd*j0)+0.5*z(i0+1+fd*j0)-a12*z(i0+2+fd*j0)+a6*z(i0-1+fd*(j0+1))+ \
+         0.25*z(i0+fd*(j0+1))-0.5*z(i0+1+fd*(j0+1))+a12*z(i0+2+fd*(j0+1))-a18*z(i0-1+fd*(j0+2))- \
+         a12*z(i0+fd*(j0+2))+a6*z(i0+1+fd*(j0+2))-a36*z(i0+2+fd*(j0+2)), \
+         -a6*z(i0-1+fd*(j0-1))-0.25*z(i0+fd*(j0-1))+0.5*z(i0+1+fd*(j0-1))-a12*z(i0+2+fd*(j0-1))+ \
+         a3*z(i0-1+fd*j0)+0.5*z(i0+fd*j0)-1.*z(i0+1+fd*j0)+a6*z(i0+2+fd*j0)-a6*z(i0-1+fd*(j0+1))- \
+         0.25*z(i0+fd*(j0+1))+0.5*z(i0+1+fd*(j0+1))-a12*z(i0+2+fd*(j0+1)), \
+         a9*z(i0-1+fd*(j0-1))+a6*z(i0+fd*(j0-1))-a3*z(i0+1+fd*(j0-1))+a18*z(i0+2+fd*(j0-1))+ \
+         a6*z(i0-1+fd*j0)+0.25*z(i0+fd*j0)-0.5*z(i0+1+fd*j0)+a12*z(i0+2+fd*j0)- \
+         a3*z(i0-1+fd*(j0+1))-0.5*z(i0+fd*(j0+1))+1.*z(i0+1+fd*(j0+1))-a6*z(i0+2+fd*(j0+1))+ \
+         a18*z(i0-1+fd*(j0+2))+a12*z(i0+fd*(j0+2))-a6*z(i0+1+fd*(j0+2))+a36*z(i0+2+fd*(j0+2)), \
+         -a3*z(i0-1+fd*j0)-0.5*z(i0+fd*j0)+1.*z(i0+1+fd*j0)-a6*z(i0+2+fd*j0), \
+         -a6*z(i0+fd*(j0-1))+0.5*z(i0+fd*j0)-0.5*z(i0+fd*(j0+1))+a6*z(i0+fd*(j0+2)), \
+         0.5*z(i0+fd*(j0-1))-1.*z(i0+fd*j0)+0.5*z(i0+fd*(j0+1)), \
+         -a3*z(i0+fd*(j0-1))-0.5*z(i0+fd*j0)+1.*z(i0+fd*(j0+1))-a6*z(i0+fd*(j0+2)), \
+         1.*z(i0+fd*j0)];
 
   return((posvec*zvec)(..,sum));
 }
