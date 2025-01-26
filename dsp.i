@@ -2872,7 +2872,7 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, ambig=, 
   crq= pksamp2d(z, rndx, rpk, cpk, zz, bx, sf, zmx, cim, fftws_in, fftws_out, kcar, \
                 box=box, osf=osf, ambig=ambig, carrier=carrier, prox=prox, fcplx=fcplx);
 
-  if (is_void(crq)) {
+  if (is_void(crq) || cpk==0.0) {
     write," out of bounds: pix/img_sz: "+pr1(rndx)+" "+pr1(dimsof(z));
     return array(peakAnl,2);
   }
