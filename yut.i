@@ -1064,7 +1064,7 @@ func strtrtable(in, out, &tr)
 
 /*---------------------------------------------------------------------------*/
 
-func rjmread (f, fields, delim=)
+func rjmread (f, fields, delim=, obj=)
 /* DOCUMENT x= rjmread(f,fields,delim=);
       F: file name (ascii), example formating below
    "pls:  1 egi_t: 397558041.847600 sniffer: 0x00 N: 16384 AVE:  11.77 SIGMA:  27.40"
@@ -1077,6 +1077,7 @@ func rjmread (f, fields, delim=)
   if (is_void(delim))
     delim= " ";
   l= text_lines(f);
+  nl= numberof(l);
   if (is_void(fields)) {
     s1= strpart(l(1),strword(l(1),delim,100));
     s1= s1(where(s1));
@@ -1091,7 +1092,37 @@ func rjmread (f, fields, delim=)
     //   m= _(1,strgrepm(":$",s1)(dif))==0;
     // }
     // fields= strtok(s1(::2),":")(1,);
-    return strpart(l,strword(l,delim,n));
+    ss= strpart(l,strword(l,delim,n));
+    if (obj==1) {
+      m= ss(,1)==ss(,2);  // move to check each line
+      for (i=2;i<=nl-1;i++)
+        m&= ss(,i)==ss(,i+1);
+      wm= where(m);
+      if (numberof(wm)==0 || wm(1)!=1)
+        error,"no keys, or first column not a key.";
+      a= tonum(ss(,1));
+      m&= a==-1e+99;
+      wm= where(m);
+      v= tonum(ss);
+      k= ss(wm,1);
+      kk= strtok(k,":")(1,);
+      kkk= strtok(kk,"(")(1,);
+      wm= _(wm,n+1);
+      o= save();
+      for (i=1;i<=nl;i++) {
+        oi= save();
+        for (j=1;j<=numberof(kkk);j++) {
+          vv= (v(wm(j)+1,i)>-1e98? \
+               v(wm(j)+1:wm(j+1)-1,i):                \
+               ss(wm(j)+1:wm(j+1)-1,i));
+          vv= numberof(vv)==1? vv(1): vv;
+          save, oi, kkk(j),vv;
+        }
+        save,o,string(0),oi;
+      }
+      return o;
+    } else
+      return ss;
   } else {
     pat= strpart(("("+fields+": *[A-Za-z0-9_.+-]+ *)|")(sum),:-1);
     return tonum(strtok(strpart(l,strgrep(pat,l,n=numberof(fields))),":")(2,));
