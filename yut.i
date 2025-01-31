@@ -1106,17 +1106,17 @@ func rjmread (f, fields, delim=, obj=)
       v= tonum(ss);
       k= ss(wm,1);
       kk= strtok(k,":")(1,);
-      kkk= strtok(kk,"(")(1,);
+      // kkk= strtok(kk,"(")(1,);     // not good, key ambiguous
       wm= _(wm,n+1);
       o= save();
       for (i=1;i<=nl;i++) {
         oi= save();
-        for (j=1;j<=numberof(kkk);j++) {
+        for (j=1;j<=numberof(kk);j++) {
           vv= (v(wm(j)+1,i)>-1e98? \
                v(wm(j)+1:wm(j+1)-1,i):                \
                ss(wm(j)+1:wm(j+1)-1,i));
           vv= numberof(vv)==1? vv(1): vv;
-          save, oi, kkk(j),vv;
+          save, oi, kk(j),vv;
         }
         save,o,string(0),oi;
       }
