@@ -11,7 +11,7 @@ func dbase(base, .., read=)
          or > database = dbase(obj); // sameas > db= dbase(obj(*,));
                                                > db, add, obj;
      create a database object DB with the given key names.  In the
-     second and third forms, all scalar arrays in the *first*
+     second and third forms, all  arrays in the *first*
      record will become keys for the database.
 
      Each record of the database is itself an object.  A record
@@ -117,7 +117,10 @@ func dbase(base, .., read=)
   obj = base(:);  /* make copy of the dbase base class */
   ar1= next_arg();
   if (is_obj(ar1)) {
-    keys= ar1(*,);
+    if (is_group(ar1))
+      keys= ar1(1,*,);
+    else
+      keys= ar1(*,);
   } else {
     keys= ar1;
     while (more_args())
@@ -134,8 +137,13 @@ func dbase(base, .., read=)
   records = save();
   for (i=1 ; i<=numberof(keys) ; ++i) save, klist, keys(i), [];
   save, obj, keys, klist, records;
-  if (is_obj(ar1))
-    obj, add, ar1;
+  if (is_obj(ar1)) {
+    if (is_group(ar1)) {
+      do (i=1;i<=ar1(*);i++)
+           obj, add, ar1(noop(i));
+    } else
+      obj, add, ar1;
+  }
   return obj;
 }
 
@@ -155,10 +163,10 @@ func add (..)
       if (!n) {                        /* this is first record */
         if (is_void(keys)) {
           keys = rec(*,);
-          for (i=1 ; i<=numberof(keys) ; ++i)
-            if (!is_scalar(rec(keys(i))))
-              keys(i) = string(0);
-          keys = keys(where(keys));
+          // for (i=1 ; i<=numberof(keys) ; ++i)
+          //   if (!is_scalar(rec(keys(i))))
+          //     keys(i) = string(0);
+          // keys = keys(where(keys));
           if (!numberof(keys))
             error, "unable to guess at any dbase keys from first record";
         }
