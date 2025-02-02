@@ -10,9 +10,11 @@ func dbase(base, .., read=)
          or > database = dbase();
          or > database = dbase(obj); // sameas > db= dbase(obj(*,));
                                                > db, add, obj;
+     First form:
      create a database object DB with the given key names.  In the
      second and third forms, all  arrays in the *first*
-     record will become keys for the database.
+     record, once added in second, or OBJ in 3rd, will become keys
+     for the database.
 
      Each record of the database is itself an object.  A record
      must contain one member whose name matches every key name;
@@ -25,28 +27,36 @@ func dbase(base, .., read=)
      contains "foo", nor, if it does, that "foo" have any common
      type or shape across different records.
 
+     ADD method:
      You add record objects to a database with:
-       > database, add, obj1, obj2, ...; // ADD method
+       > database, add, obj1, obj2, ...;
+     ADD can also take another database with matching keys, or
+     a group object.
+     ADD can be used to fill an empty DBASE with and existing one, or to
+     join compatible dbases.
 
-       Records are numbered in the order they are added, and you can
+     RECORD method:
+     Records are numbered in the order they are added, and you can
      retrieve the i-th record with:
-       > obj = database(record, i);      // RECORD method, 1st use
+       > obj = database(record, i);      // first use
      Once you have retrieved a record object in this manner, you
-     are free to modify any *non-key* members of obj -- the retrieved
+     are free to modify any *NON-KEY* members of obj -- the retrieved
      obj is *not* a copy of the object in the database, but the
      object itself.  If you want to replace record i with a new
-     object (or modify the key members of an existing object),
+     object (or MODIFY a KEY members of an existing object),
      you can use a second form of the record method:
        > database, record, i, new_obj;   // RECORD method, 2nd use
      If i is an index range or an index list, database(record,i)
-     returns an object containing all the specified record objects.
+     returns a group object containing all the specified record objects.
      The replacement form (setting a new_obj) only works when i is
      a scalar record number.
 
+     GET method:
      The related method GET is like record, but it extracts the
      specified record or records *as a new database object*:
        > small_database = database(get, i); // GET method
 
+     KEY method:
      You can retrieve keys as arrays whose final index is the
      record number.  The add method builds these arrays from the
      key members as you add each record.  The syntax is:
@@ -57,19 +67,18 @@ func dbase(base, .., read=)
      and build index lists for the record or get methods:
        > list = where(database(key,"x") < 1.5);
 
-     ADD can be used to fill an empty DBASE with and existing one, or to
-     join compatible dbases.
-
+     MATCH method:
      MATCH select matching records from an object whose key/vals are used to
      match the database record/keys: for string partial matches are accepted.
-     Multiple possible values as search criteria are submitted my using ARRAY
+     Multiple possible values as search OR criteria are submitted my using ARRAY
      values to the selection object
-       !!only works for SCALAR key values !!
+     !!** only works for SCALAR key values **!!
      EXAMPLE: > d= dbase();
               > d, fromtext, "$YORICK_LIB_SPL/conf/sys.txt",colrec=1;
               > w= d(match,save(type=["uav","asar-l"]));  // partial, or extract
 
-     LOAD/DUMP methods, both accepting "json=1" flag, otherwise PDB file/name.
+     LOAD/DUMP methods:
+     ... both accepting "json=1" flag, otherwise output is a PDB file/name.
      d= dbase("nm");
      for(i=1;i<=100;i++)
        d,add,save(nm=swrite(i,format="x%i"),val=random(long(max(1,random()*100))));
@@ -77,40 +86,36 @@ func dbase(base, .., read=)
      dd= dbase();
      dd,load,"~/tmp/dbase_dump_test.pdb";
 
-     TOTEXT
-        write a scalar record member database object to string array.
-        COLREC=1:  store records as columns, default is lines.
-        usage:
-        d= dbase();
-        d, fromtext, fnm, [colrec=1]; // $YORICK_LIB_SPL/../conf/sys.txt, colrec=1
+     TOTEXT method:
+     write a scalar record member database object to string array.
+     COLREC=1:  store records as columns, default is record as line.
+     usage:
+     d= dbase();
+     d, fromtext, fnm, [colrec=1]; // $YORICK_LIB_SPL/../conf/sys.txt, colrec=1
 
-     FROMTEXT
-        returns a dbase object from a simple ascii rep. in file or str array FNM.
-        COLREC=1: treat columns are records, default is lines as records
-        TAB=1:    treat tabs as spaces, or delim
-        comma=1:  treat comma as spaces, or delim
-        Ascii representation is:
-        ^# for comments,
-        records as columns# 2,3,...
-        first column contains keynames
-        ... convenience is to use first line as "type" ... not necessary.
-        EXAMPLE: (COLREC=1)
-        sysdesc= [                                                      \
-        "type       uav-p        uav-l       uav-ka      asar-l      asar-s", \
-        "bw         20.0e6       80.0e6      80.0e6      75.0e6      75.0e6", \
-        "bws        22.5e6       90.0e6      90.0e6      83.33e6     83.33e6", \
-        ....
-        "#--- legend ---",                    \
-        "#bw        radar bandwidth [Hz]",        \
-        "#bws       complex sampling bandwidth [Hz]", \
-        ...      ]
-        DEG=1: special *_deg keys -> add radians non-key member named [*] to record
-        DB=1:  special *_db keys -> add radians non-key member named [*] to record
+     FROMTEXT method:
+     returns a dbase object from a simple ascii rep. in file or str array FNM.
+     COLREC=1: treat columns are records, default is lines as records
+     TAB=1:    treat tabs as spaces, or delim
+     comma=1:  treat comma as spaces, or delim
+     Ascii representation is:
+     ^# for comments,
+     records as columns# 2,3,...
+     first column contains keynames
+     ... convenience is to use first line as "type" ... not necessary.
+     EXAMPLE: (COLREC=1)
+     sysdesc= [                                                      \
+     "type       uav-p        uav-l       uav-ka      asar-l      asar-s", \
+     "bw         20.0e6       80.0e6      80.0e6      75.0e6      75.0e6", \
+     "bws        22.5e6       90.0e6      90.0e6      83.33e6     83.33e6", \
+     ....
+     "#--- legend ---",                    \
+     "#bw        radar bandwidth [Hz]",        \
+     "#bws       complex sampling bandwidth [Hz]", \
+     ...      ]
+     DEG=1: special *_deg keys -> add radians non-key member named [*] to record
+     DB=1:  special *_db keys -> add radians non-key member named [*] to record
 
-     To save or retrieve a database object from file
-     > db, write, filename;
-        > db= dbase();
-     > db, read, filename;
 */
 {
   local klist, records;
@@ -128,19 +133,15 @@ func dbase(base, .., read=)
   }
   if (!is_void(keys) && structof(keys)!=string)
     error, "keys= must be an array of key names";
-  if (!is_void(read)) {
-      save, obj, keys, klist, records;
-      obj,read,read;
-      return obj;
-  }
+
   klist = save();
   records = save();
   for (i=1 ; i<=numberof(keys) ; ++i) save, klist, keys(i), [];
   save, obj, keys, klist, records;
   if (is_obj(ar1)) {
     if (is_group(ar1)) {
-      do (i=1;i<=ar1(*);i++)
-           obj, add, ar1(noop(i));
+      for (i=1;i<=ar1(*);i++)
+        obj, add, ar1(noop(i));
     } else
       obj, add, ar1;
   }
@@ -158,12 +159,15 @@ func add (..)
     if ((rec(*,)(-,..)==["klist","key","get","record","keys","records"])(*)(sum)==6) {
       for (i=1;i<=rec(records,*);i++)
         use_method, add, rec(records,noop(i));
+    } else if (is_group(rec)) {       // adding each group element
+      for (i=1;i<=rec(*);i++)
+        use_method, add, rec(noop(i));
     } else {
       n = records(*);
       if (!n) {                        /* this is first record */
         if (is_void(keys)) {
           keys = rec(*,);
-          // for (i=1 ; i<=numberof(keys) ; ++i)
+          // for (i=1 ; i<=numberof(keys) ; ++i)  // change DHM's no arrays as keys on init
           //   if (!is_scalar(rec(keys(i))))
           //     keys(i) = string(0);
           // keys = keys(where(keys));
