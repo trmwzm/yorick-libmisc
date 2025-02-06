@@ -1076,7 +1076,14 @@ func rjmread (f, fields, delim=, obj=)
 {
   if (is_void(delim))
     delim= " ";
-  l= text_lines(f);
+  if (typeof(f)=="text_stream") {
+    l= rdfile(f);
+  } else if (is_string(f)) {
+    if (is_scalar(f))
+      l= text_lines(f);
+    else
+      l= f;
+  }
   nl= numberof(l);
   if (is_void(fields)) {
     s1= strpart(l(1),strword(l(1),delim,100));
