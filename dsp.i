@@ -2911,11 +2911,11 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, ambig=, 
   if (maxabs==0)
     return array(peakAnl,2);
 
-  /**/local zzz1, zzz2;
   y= md(1)+md(2)*x;
   y= min(dz(2)-3,max(4,y));
   z0= bicub(x,y,zz,1,dz(1),1,dz(2));
 
+  /**/local zzz1, zzz2;
   xpeak = peak_anl(z0,zzz1,osf=nexpand,pkpos=zmx(1),\
              islrwidth=(!is_void(islrwidth)?(islrwidth(1)*double(sf(1))):[]),deg=deg);
 
@@ -2948,11 +2948,12 @@ func peakanl2d (z, rndx, &rpk, &cpk, &fftws_in, &fftws_out, box=, osf=, ambig=, 
   azz= zz.re^2+zz.im^2;
   azzm= max(azz);
   if (is_void(pkintlev)) pkintlev= 10.0;
-  m= azz/azzm < 10^(-pkintlev/10.0);
-  if (anyof(m))
-    xpeak.pkint2= sum(azz*m);
-  else
-    xpeak.pkint2= 0.0;
+  m= azz/azzm >= 10^(-pkintlev/10.0);
+  if (anyof(m)) {
+    xpeak.pkint2= sum(azz*m)*scale(1)/double(sf(1))*scale(2)/double(sf(2));
+    ypeak.pkint2= xpeak.pkint2;
+  } else
+    xpeak.pkint2= ypeak.pkint2= 0.0;
   azz= [];
 
   if (!is_void(winpic)) {
