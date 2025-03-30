@@ -3,6 +3,7 @@
 // as /path/to/lib:/path/to/contrib to yorick load path
 require,"pathfun.i";
 require,"yut.i";
+// require,"rrequire.i";   // log reqs: require,"q.i",verbose=1;
 
 tmp= save(tmp,s,sl,m,nm,i,ss,u,cmdl,verb);
 

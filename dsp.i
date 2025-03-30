@@ -497,14 +497,17 @@ func sinc (x)
       y= x;
       w= where(q);
       y(w)=1.0-(y(w)^2.)/6.;
-      w= where(!q);
-      y(w)= sin(y(w))/y(w);
+      q= !q;
+      if (anyof(q)) {
+        w= where(q);
+        y(w)= sin(y(w))/y(w);
+      }
       return y;
     }
   }
 }
 
-/*-------------------------------------------------------------------------------------*/
+/*------------------------------------------------------------*/
 
 func dsincdx (x)
 /* DOCUMENT dincdx(x)
@@ -525,8 +528,11 @@ func dsincdx (x)
       y= x;
       w= where(q);
       y(w)= -2/6.0*y(w);
-      w= where(!q);
-      y(w)= cos(y(w))/y(w)-sin(y(w))/y(w)^2;
+      q= !q;
+      if (anyof(q)) {
+        w= where(q);
+        y(w)= cos(y(w))/y(w)-sin(y(w))/y(w)^2;
+      }
       return y;
     }
   }
