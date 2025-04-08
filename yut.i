@@ -1509,29 +1509,35 @@ func moveop(op,f,n)
   } else errror,sop+" operation not {min,max,median}";
 }
 
-func statarr(x,l,cmt=)
+func statarr(f,x,l,cmt=)
 {
+  if (typeof(f)!="text_stream" && !is_void(f)) {
+    l= x;
+    x= f;
+    f= [];
+  }
+
   slab= "      Max           Min             PTP            AVG            RMS";
   if (is_void(cmt))
     cmt= string(0);
   else
     cmt+= " ";
   if (is_void(x)) {
-    write,cmt+slab;
+    write,f,cmt+slab;
     return;
   }
   if (am_subroutine()) {
     if (structof(x)==complex) {
-      write,cmt+"real part: ";
-      statarr,x.re;
-      write,"imaginary part: ";
-      statarr,x.im,1;
+      write,f,cmt+"real part: ";
+      statarr,f,x.re;
+      write,f,"imaginary part: ";
+      statarr,f,x.im,1;
     } else {
       if (l!=1) {
-        write,cmt+"Number of elements :"+pr1(numberof(x));
-        write,slab;
+        write,f,cmt+"Number of elements :"+pr1(numberof(x));
+        write,f,slab;
       }
-      write,[x(*)(max),x(*)(min),x(*)(ptp),x(*)(avg),x(*)(rms)];
+      write,f,[x(*)(max),x(*)(min),x(*)(ptp),x(*)(avg),x(*)(rms)];
     }
   } else {
     if (structof(x)==complex)
@@ -1541,7 +1547,100 @@ func statarr(x,l,cmt=)
   }
 }
 
-/*---------------------------------------------------------------------------------------------------*/
+func diff_val (f, a, b, tol=, nvec=, v=, nm=)
+/* DOCUMENT r= diff_val(a,b[,tol=tol][v=1[,nm="varname"]]);
+            r= diff_val(f,a,b[,tol=tol][v=1[,nm="varname"]]);
+            diff_val,[f,]a,b[,tol=tol][v=1[,nm="varname"]]);
+   return 0 if no difference, up to TOL=
+          1 if differing
+   F: write text stream, or void, or no arg
+   A: first value - string or numerical, scalar or array
+   B: second value - string or numerical, scalar or array
+   TOL=: value tolerance, for real/complex values, default: 1e-3
+   V=: verbose, writes to repl or F, if F is a stream, default: 0
+   NM=: variable name, for V=1, verbose mode, default: ""
+   NVEC=: number of array elements to check individualy, default: 10
+   SEE ALSO:
+ */
+{
+  if (typeof(f)!="text_stream" && !is_void(f)) {
+    b= a;
+    a= f;
+    f= [];
+  }
+
+  nm= is_void(nm)? "": nm;
+  tol= is_void(tol)? 1e-3: tol;
+  nvec= is_void(nvec)? 10: nvec;
+  ntol= nint(abs(log10(tol)));
+
+  pref= (nm==""? "Diff": "Diff "+strtrim(nm))+ " - ";
+  na= numberof(a);
+  nb= numberof(b);
+  if (na!=nb) {
+    if (v)
+      write,f,na,nb,format=pref+"number of v1: %i, v2: %i\n";
+    return 1;
+  }
+
+  if (!is_numerical(a) ||
+      !is_numerical(b)) {
+    ta= typeof(a);
+    tb= typeof(b);
+    if (ta!=tb) {
+      if (v)
+        write,f,ta,tb,format=pref+"type of v1: %s, v2: %s\n";
+      return 1;
+    }
+    // could add oxy or struct case
+  }
+
+  if (na==1) {
+    gf= "%."+swrite(ntol+1,format="%i")+"g";
+    if (is_complex(a)) {
+      r1= diff_val(f,a.re,b.re,nm=nm+" cplx Re",tol=tol,v=v);
+      r2= diff_val(f,a.im,b.im,nm=nm+" cplx Im",tol=tol,v=v);
+      return r1 | r2;
+    } else if (is_integer(a) && b-a!=0) {
+      if (v)
+        write,f,a,b,format=pref+"val v1: %i, v2: %i\n";
+      return 1;
+    } else if (is_real(a) && abs(b-a)>tol) {
+      if (v)
+        write,f,a,b,format=pref+"val v1: "+gf+", v2: "+gf+"\n";
+      return 1;
+    } else if (is_string(a) && a!=b) {
+      if (v)
+        write,f,a,b,format=pref+"val v1: %s, v2: %s\n";
+      return 1;
+    }
+  } else if (na<=nvec) {
+    for (i=1,ri=0;i<=na;i++)
+      ri|= diff_val(f,a(i),b(i),nm=nm+swrite(i,format="(%i)"),tol=tol,v=v);
+    return ri;
+  } else { // not dealing with strings, structs...
+    if (is_string(a)) {
+      m= a!=b;
+      if (anyof(m)) {
+        w1= where(m)(1);
+        if (v)
+          write,f,w1,a(w1),b(w1),format=pref+"el. (%i): %s - val v1: %s, v2: %s\n";
+        return 1;
+      }
+    } else {
+      m= abs(a-b)>tol;
+      if (anyof(m)) {
+        if (v)
+          statarr,f,a-b,cmt=pref+"v1-v2 array stats:";
+        return 1;
+      }
+    }
+  }
+
+  return 0;
+}
+
+/*-------------------------------------------------------------------*/
 
 func cycleIndex (i,init,end)
 /* DOCUMENT cycleIndex (i,init,end)
@@ -1558,7 +1657,7 @@ func cycleIndex (i,init,end)
   return ii+init;
 }
 
-/*---------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------*/
 
 func cycle(x,xinit,xend) {
   /* DOCUMENT cycle(x,xinit,xend)
@@ -3747,7 +3846,7 @@ func oxtypeq (o1, o2, nodim=)
 }
 
 
-func oxeq (o1, o2, strict)
+func oxeq (o1, o2, strict, vnm, tol=, v=)
 /* DOCUMENT oxeq (o1, o2[, strict])
    checks that all member names and values are identical
    STRICT= 2, check *types*, *dimensions* - including *rank*, and *values*
@@ -3785,7 +3884,7 @@ func oxeq (o1, o2, strict)
     while (l==1 && i++<n) {
       o1i= o1(noop(i));
       o2i= s1(i)? o2(ss1(++j)): o2(wn2(++k));
-      l&= oxeq(o1i,o2i,strict);
+      l&= oxeq(o1i,o2i,strict,s1(i),tol=tol,v=v);
     }
   } else {
     l= structof(o1)==structof(o2);     // type check
@@ -3793,8 +3892,10 @@ func oxeq (o1, o2, strict)
     l&= d1(1)==d2(1);                  // rank check
     if (l && strict==1)
       l&= allof(d1==d2);               // dimesion check
-    if (l && strict==2)
-      l&= allof(o1==o2);               // value check
+    if (l && strict==2) {
+      ll= diff_val(o1,o2,tol=tol,v=v,nm=vnm);
+      l&= !ll;               // value check
+    }
   }
   return l;
 }
