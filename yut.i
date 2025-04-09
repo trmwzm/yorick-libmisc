@@ -1551,8 +1551,8 @@ func diff_val (f, a, b, tol=, nvec=, v=, nm=)
 /* DOCUMENT r= diff_val(a,b[,tol=tol][v=1[,nm="varname"]]);
             r= diff_val(f,a,b[,tol=tol][v=1[,nm="varname"]]);
             diff_val,[f,]a,b[,tol=tol][v=1[,nm="varname"]]);
-   return 0 if no difference, up to TOL=
-          1 if differing
+   return 0: if no difference up to TOL=
+          1: if differing
    F: write text stream, or void, or no arg
    A: first value - string or numerical, scalar or array
    B: second value - string or numerical, scalar or array
@@ -3846,7 +3846,7 @@ func oxtypeq (o1, o2, nodim=)
 }
 
 
-func oxeq (o1, o2, strict, vnm, tol=, v=)
+func oxeq (o1, o2, strict, vnm, tol=, v=, diff=)
 /* DOCUMENT oxeq (o1, o2[, strict])
    checks that all member names and values are identical
    STRICT= 2, check *types*, *dimensions* - including *rank*, and *values*
@@ -3854,37 +3854,50 @@ func oxeq (o1, o2, strict, vnm, tol=, v=)
    STRICT= void OR 0, *DEFAULT* check *types* and *ranks*
    ORDER may be different, BUT unnamed members MUST keep
    order between themselves, object-to-object
-   NOTE: values identity checks are DUMB FIXME:
+   V=: vrebose comparison, or difference if DIFF==1
+   TOL=: numerical comparison tolerance
+   DIFF=: if ==1, do not stop at the first detection of difference
+
    SEE ALSO:
 */
 {
   strict= is_void(strict)? 0: strict;
+  diff= is_void(diff)? 0: diff;
+
   // id. # of members ?
   if(is_obj(o1)) {
-    if (o1(*)!=o2(*))
+    if (o1(*)!=o2(*)) {
+      if (v)
+        write,"different number of members",format="%s\n";
       return 0;
+    }
     n= o1(*);
     s1= o1(*,);
     s2= o2(*,);
     w1= where(s1);      // where named
     nnm= numberof(w1);  // how many named
     w2= where(s2);
-    if (numberof(w2)!=nnm)
+    if (numberof(w2)!=nnm) {
+      if (v)
+        write,"different number of named members",format="%s\n";
       return 0;
+    }
     wn2= where(!s2);
     ss1= nnm? o2(*,s1(w1)): []; // O2 indices of O1 named members
-    if (nnm && anyof(ss1==0))   // id. # named members, all found or False
+    if (nnm && anyof(ss1==0)) {  // id. # named members, all found or False
+      if (v)
+        write,"different named members",format="%s\n";
       return 0;
-    else
+    } else
       l= 1;
 
     i= 0;                   // all members count
     j= 0;                   // named members of O1 count
     k= 0;                   // un-named membr of O1 count
-    while (l==1 && i++<n) {
+    while ((diff || l) && i++<n) {
       o1i= o1(noop(i));
       o2i= s1(i)? o2(ss1(++j)): o2(wn2(++k));
-      l&= oxeq(o1i,o2i,strict,s1(i),tol=tol,v=v);
+      l&= oxeq(o1i,o2i,strict,s1(i),tol=tol,v=v,diff=diff);
     }
   } else {
     l= structof(o1)==structof(o2);     // type check
@@ -3892,7 +3905,7 @@ func oxeq (o1, o2, strict, vnm, tol=, v=)
     l&= d1(1)==d2(1);                  // rank check
     if (l && strict==1)
       l&= allof(d1==d2);               // dimesion check
-    if (l && strict==2) {
+    if ((diff || l) && strict==2) {
       ll= diff_val(o1,o2,tol=tol,v=v,nm=vnm);
       l&= !ll;               // value check
     }
